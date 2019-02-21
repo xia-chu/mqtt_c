@@ -543,8 +543,9 @@ static int Mqtt_Dispatch(struct MqttContext *ctx, char fh,  char *pkt, size_t si
 int Mqtt_RecvPkt(struct MqttContext *ctx,char *data,int bytes,int *customed) {
     uint32_t remaining_len = 0;
     char *cursor = data,*end = data + bytes;
-    int  ret = MQTTERR_NOERROR;
+    int ret = MQTTERR_NOERROR;
 
+    *customed = 0;
     while(end - cursor >= 2) {
         //第一个字节是固定字节(fixed header)，bytes等于长度字段所占字节数
         bytes = Mqtt_ReadLength(cursor + 1, end - cursor - 1, &remaining_len);
