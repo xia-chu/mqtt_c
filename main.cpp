@@ -12,6 +12,5 @@ int main() {
     std::cout << "Hello, World!" << std::endl;
 
     MqttContext contex;
-    Mqtt_InitContext(&contex,1024);
     return 0;
 }
