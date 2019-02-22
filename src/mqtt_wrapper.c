@@ -74,8 +74,12 @@ int connet_server(const char *host, unsigned short port,int second){
             LOGW("connect failed, errno = %d, host %s port %d \r\n", errno, host, port);
             break;
         }
+
         //connect success!
         LOGI("connect server %s %d success!\r\n",host,port);
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 0;
+        setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeof(timeout));
         return sockfd;
     }while (0);
 
