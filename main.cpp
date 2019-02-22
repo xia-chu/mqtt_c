@@ -8,6 +8,8 @@ extern "C" {
 }
 #endif // __cplusplus
 
+#include <sys/signal.h>
+#include <unistd.h>
 #include "Network/TcpClient.h"
 #include "Util/logger.h"
 #include "Util/CMD.h"
@@ -40,7 +42,8 @@ public:
             Mqtt *thiz = (Mqtt *) arg;
             DebugL << "handle_conn_ack " << (int)flags << " " << (int)ret_code ;
 //            thiz->sendPublish("publishTopic","publishPayload",MQTT_QOS_LEVEL1, true);
-            thiz->sendSubscribe(MQTT_QOS_LEVEL1,{"publishTopic"});
+            const char *argv [] = {"publishTopic","willTopic"};
+            thiz->sendSubscribe(MQTT_QOS_LEVEL1,&(argv[0]),2);
             return 0;
         };
 
@@ -131,7 +134,7 @@ public:
                      const string &id,
                      bool clean_session,
                      const string &will_topic,
-                     const string &will_msg,
+                     const string &will_payload,
                      enum MqttQosLevel qos,
                      bool will_retain,
                      const string &user,
@@ -144,11 +147,11 @@ public:
                                 id.data(),
                                 clean_session,
                                 !will_topic.empty() ? will_topic.data(): nullptr,
-                                !will_msg.empty() ? will_msg.data(): nullptr,
-                                will_msg.size(),
+                                !will_payload.empty() ? will_payload.data(): nullptr,
+                                will_payload.size(),
                                 qos,
                                 will_retain,
-                                user.data(),
+                                !user.empty() ? user.data(): nullptr,
                                 !password.empty() ? password.data(): nullptr,
                                 password.size());
             sendPacket();
@@ -204,13 +207,12 @@ private:
                             0);
         sendPacket();
     }
-    void sendSubscribe(enum MqttQosLevel qos, const std::vector<string> &topics){
-        const char *first_topic_ptr = topics.front().data();
+    void sendSubscribe(enum MqttQosLevel qos, const char *topics[],int topics_len){
         Mqtt_PackSubscribePkt(&_buf,
-                            ++_pkt_id,
-                            qos,
-                            &first_topic_ptr,
-                            topics.size());
+                              ++_pkt_id,
+                              qos,
+                              topics,
+                              topics_len);
         sendPacket();
     }
 private:
