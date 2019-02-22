@@ -10,6 +10,7 @@ extern "C" {
 
 #include "Network/TcpClient.h"
 #include "Util/logger.h"
+#include "Util/CMD.h"
 
 using namespace toolkit;
 
@@ -26,7 +27,7 @@ public:
                 auto ptr = iov++;
                 str.append((char *)ptr->iov_base,ptr->iov_len);
             }
-            DebugL << hexdump(str.data(),str.size());
+            TraceL << "send " << hexdump(str.data(),str.size());
             return thiz->send(std::move(str));
         };
         _contex.handle_ping_resp = [](void *arg){
@@ -38,6 +39,7 @@ public:
         _contex.handle_conn_ack = [](void *arg, char flags, char ret_code){
             Mqtt *thiz = (Mqtt *) arg;
             DebugL << "handle_conn_ack" ;
+            thiz->sendPublish("publishTopic","publishPayload",MQTT_QOS_LEVEL1, true);
             return 0;
         };
 
@@ -118,7 +120,7 @@ public:
     virtual void onManager() {
         if(_ticker.elapsedTime() > _keepAlive / 2 * 1000){
             _ticker.resetTime();
-            keepAlive();
+//            keepAlive();
         }
     }
 
@@ -187,6 +189,21 @@ private:
         Mqtt_SendPkt(&_contex,&_buf,0);
         MqttBuffer_Reset(&_buf);
     }
+    void sendPublish(const string &topic,
+                     const string &payload,
+                     enum MqttQosLevel qos,
+                     bool retain){
+        Mqtt_PackPublishPkt(&_buf,
+                            ++_pkt_id,
+                            topic.data(),
+                            payload.data(),
+                            payload.size(),
+                            qos,
+                            retain,
+                            0);
+        sendPacket();
+    }
+
 private:
     MqttContext _contex;
     MqttBuffer _buf;
@@ -194,13 +211,14 @@ private:
     string _remain;
     int _keepAlive;
     Ticker _ticker;
+    uint16_t _pkt_id = 0;
 };
 
 int main() {
     Logger::Instance().add(std::make_shared<ConsoleChannel>());
 
     Mqtt::Ptr mqtt = std::make_shared<Mqtt>();
-    mqtt->connectMqtt("10.0.60.27",1883,10,"clientId",true,"willTopic","willMsg",MQTT_QOS_LEVEL1, true,"admin","public");
+    mqtt->connectMqtt("10.0.9.56",1883,10,"clientId",true,"willTopic","willMsg",MQTT_QOS_LEVEL1, true,"admin","public");
 
     //退出程序事件处理
     static semaphore sem;

@@ -4,7 +4,7 @@
 #include <assert.h>
 #include "mqtt.h"
 
-static const uint32_t MQTT_MIN_EXTENT_SIZE = 1024;
+static const uint32_t MQTT_MIN_EXTENT_SIZE = 256;
 
 void MqttBuffer_Init(struct MqttBuffer *buf)
 {
