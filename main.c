@@ -14,18 +14,18 @@ extern "C" {
 
 
 int sock_send(struct mqtt_context_t *ctx, const struct iovec *iov, int iovcnt){
-    return writev(ctx->_fd,iov,iovcnt);
+    return writev((int)ctx->_user_data,iov,iovcnt);
 }
 
 int main() {
     mqtt_context context;
     mqtt_init_contex(&context,sock_send);
-    mqtt_connect_host(&context,"10.0.9.56",1883,3);
+    context._user_data = (void *)connet_server("10.0.9.56",1883,3);
     mqtt_send_connect_pkt(&context,10,"JIMIMAX",1,"/Service/JIMIMAX/will","willPayload",0,MQTT_QOS_LEVEL1, 1,"admin","public");
 
-    char buffer[4];
+    char buffer[1024];
     while (1){
-        int recv = read(context._fd,buffer, sizeof(buffer));
+        int recv = read((int)context._user_data,buffer, sizeof(buffer));
         if(recv == 0){
             LOGE("read eof\r\n");
             break;

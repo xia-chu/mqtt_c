@@ -153,7 +153,6 @@ static int handle_unsub_ack(void *arg, uint16_t pkt_id){
 
 int mqtt_init_contex(mqtt_context *ctx,FUNC_send_sock on_send){
     memset(ctx,0, sizeof(mqtt_context));
-    ctx->_fd = -1;
 
     MqttBuffer_Init(&ctx->_buffer);
     ctx->_ctx.user_data = ctx;
@@ -174,22 +173,8 @@ int mqtt_init_contex(mqtt_context *ctx,FUNC_send_sock on_send){
 
 void mqtt_release_contex(mqtt_context *ctx){
     MqttBuffer_Destroy(&ctx->_buffer);
-    if(ctx->_fd != -1){
-        close(ctx->_fd);
-    }
     memset(ctx,0, sizeof(mqtt_context));
-    ctx->_fd = -1;
 }
-int mqtt_connect_host(mqtt_context *ctx,
-                      const char *host,
-                      unsigned short port,int timeout){
-    ctx->_fd = connet_server(host,port,timeout);
-    if(ctx->_fd == -1){
-        return -1;
-    }
-    return 0;
-}
-
 
 int mqtt_send_packet(mqtt_context *ctx){
     CHECK_CTX(ctx);

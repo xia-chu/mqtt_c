@@ -35,7 +35,7 @@ do{ \
 
 #define CHECK_CTX(ctx) \
 do{ \
-    if(!ctx || -1 == ctx->_fd) { \
+    if(!ctx) { \
         LOGW("mqtt_context invalid :%p\r\n",ctx);\
         return -1; \
     } \
@@ -59,20 +59,17 @@ typedef int (*FUNC_send_sock)(struct mqtt_context_t *ctx, const struct iovec *io
 typedef struct mqtt_context_t{
     struct MqttContext _ctx;
     struct MqttBuffer _buffer;
-
     FUNC_send_sock _on_send;
-    int _fd;
     void *_user_data;
     buffer _remain_data;
 } mqtt_context;
 
 
-int mqtt_init_contex(mqtt_context *ctx,FUNC_send_sock on_send);
-void mqtt_release_contex(mqtt_context *ctx);
+int connet_server(const char *host, unsigned short port,int second);
 
-int mqtt_connect_host(mqtt_context *ctx,
-                      const char *host,
-                      unsigned short port,int timeout);
+int mqtt_init_contex(mqtt_context *ctx,FUNC_send_sock on_send);
+
+void mqtt_release_contex(mqtt_context *ctx);
 
 int mqtt_send_connect_pkt(mqtt_context *ctx,
                           int keep_alive,
