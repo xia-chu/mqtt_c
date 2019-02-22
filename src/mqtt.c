@@ -266,10 +266,6 @@ static int Mqtt_HandlePublish(struct MqttContext *ctx, char flags,
         return MQTTERR_ILLEGAL_PKT;
     }
 
-    if(retain) {
-        return MQTTERR_ILLEGAL_PKT;
-    }
-
     topic_len = Mqtt_RB16(pkt);
     if(size < (size_t)(2 + topic_len)) {
         return MQTTERR_ILLEGAL_PKT;

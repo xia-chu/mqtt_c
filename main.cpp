@@ -27,19 +27,20 @@ public:
                 auto ptr = iov++;
                 str.append((char *)ptr->iov_base,ptr->iov_len);
             }
-            TraceL << "send " << hexdump(str.data(),str.size());
+//            TraceL << "send " << hexdump(str.data(),str.size());
             return thiz->send(std::move(str));
         };
         _contex.handle_ping_resp = [](void *arg){
             Mqtt *thiz = (Mqtt *) arg;
-            DebugL << "handle_ping_resp";
+//            DebugL << "handle_ping_resp";
             return 0;
         };
 
         _contex.handle_conn_ack = [](void *arg, char flags, char ret_code){
             Mqtt *thiz = (Mqtt *) arg;
-            DebugL << "handle_conn_ack" ;
-            thiz->sendPublish("publishTopic","publishPayload",MQTT_QOS_LEVEL1, true);
+            DebugL << "handle_conn_ack " << (int)flags << " " << (int)ret_code ;
+//            thiz->sendPublish("publishTopic","publishPayload",MQTT_QOS_LEVEL1, true);
+            thiz->sendSubscribe(MQTT_QOS_LEVEL1,{"publishTopic"});
             return 0;
         };
 
@@ -47,7 +48,7 @@ public:
                                     const char *payload, uint32_t payloadsize,
                                     int dup, enum MqttQosLevel qos){
             Mqtt *thiz = (Mqtt *) arg;
-            DebugL << "handle_publish" ;
+            DebugL << "handle_publish " << pkt_id << " " << topic << " " << payload << " " << dup << " " << " " << qos ;
             return 0;
         };
 
@@ -78,7 +79,7 @@ public:
         _contex.handle_sub_ack = [](void *arg, uint16_t pkt_id,
                                     const char *codes, uint32_t count){
             Mqtt *thiz = (Mqtt *) arg;
-            DebugL << "handle_sub_ack";
+            DebugL << "handle_sub_ack " << codes << " " << count;
             return 0;
         };
 
@@ -120,7 +121,7 @@ public:
     virtual void onManager() {
         if(_ticker.elapsedTime() > _keepAlive / 2 * 1000){
             _ticker.resetTime();
-//            keepAlive();
+            keepAlive();
         }
     }
 
@@ -159,7 +160,7 @@ private:
         int customed = 0;
         auto ret = Mqtt_RecvPkt(&_contex,data,len,&customed);
         if(ret != MQTTERR_NOERROR){
-            WarnL << "Mqtt_RecvPkt failed:" << ret;
+            WarnL << "Mqtt_RecvPkt failed:" << hexdump(data,len);
             shutdown();
             return;
         }
@@ -203,7 +204,15 @@ private:
                             0);
         sendPacket();
     }
-
+    void sendSubscribe(enum MqttQosLevel qos, const std::vector<string> &topics){
+        const char *first_topic_ptr = topics.front().data();
+        Mqtt_PackSubscribePkt(&_buf,
+                            ++_pkt_id,
+                            qos,
+                            &first_topic_ptr,
+                            topics.size());
+        sendPacket();
+    }
 private:
     MqttContext _contex;
     MqttBuffer _buf;
