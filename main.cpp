@@ -41,8 +41,8 @@ public:
         _contex.handle_conn_ack = [](void *arg, char flags, char ret_code){
             Mqtt *thiz = (Mqtt *) arg;
             DebugL << "handle_conn_ack " << (int)flags << " " << (int)ret_code ;
-//            thiz->sendPublish("publishTopic","publishPayload",MQTT_QOS_LEVEL1, true);
-            thiz->sendSubscribe(MQTT_QOS_LEVEL1,{"publishTopic","willTopic"});
+            thiz->sendPublish("/Service/JIMIMAX/publish","publishPayload",MQTT_QOS_LEVEL1, true);
+            thiz->sendSubscribe(MQTT_QOS_LEVEL1,{"/Service/JIMIMAX/publish","/Service/JIMIMAX/will"});
             return 0;
         };
 
@@ -229,7 +229,7 @@ int main() {
     Logger::Instance().add(std::make_shared<ConsoleChannel>());
 
     Mqtt::Ptr mqtt = std::make_shared<Mqtt>();
-    mqtt->connectMqtt("10.0.9.56",1883,10,"clientId",true,"willTopic","willPayload",MQTT_QOS_LEVEL1, true,"admin","public");
+    mqtt->connectMqtt("10.0.9.56",1883,10,"clientId",true,"/Service/JIMIMAX/will","willPayload",MQTT_QOS_LEVEL1, true,"admin","public");
 
     //退出程序事件处理
     static semaphore sem;
