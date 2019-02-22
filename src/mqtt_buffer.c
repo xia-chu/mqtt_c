@@ -52,7 +52,6 @@ struct MqttExtent *MqttBuffer_AllocExtent(struct MqttBuffer *buf, uint32_t bytes
             if(NULL == tmp) {
                 return NULL;
             }
-
             memset(tmp, 0, max_count * sizeof(char**));
             memcpy(tmp, buf->allocations, buf->alloc_max_count * sizeof(char**));
             free(buf->allocations);

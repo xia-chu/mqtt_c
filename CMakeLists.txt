@@ -33,7 +33,7 @@ endif ()
 #添加库
 add_library(zltoolkit STATIC ${ToolKit_src_list})
 add_library(mqtt STATIC ${Mqtt_src_Root})
-add_executable(client main.cpp )
+add_executable(client main.c)
 target_link_libraries(client mqtt zltoolkit pthread)
 
 
