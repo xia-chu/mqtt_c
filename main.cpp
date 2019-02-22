@@ -42,8 +42,7 @@ public:
             Mqtt *thiz = (Mqtt *) arg;
             DebugL << "handle_conn_ack " << (int)flags << " " << (int)ret_code ;
 //            thiz->sendPublish("publishTopic","publishPayload",MQTT_QOS_LEVEL1, true);
-            const char *argv [] = {"publishTopic","willTopic"};
-            thiz->sendSubscribe(MQTT_QOS_LEVEL1,&(argv[0]),2);
+            thiz->sendSubscribe(MQTT_QOS_LEVEL1,{"publishTopic","willTopic"});
             return 0;
         };
 
@@ -207,12 +206,13 @@ private:
                             0);
         sendPacket();
     }
-    void sendSubscribe(enum MqttQosLevel qos, const char *topics[],int topics_len){
+
+    void sendSubscribe(enum MqttQosLevel qos,const std::initializer_list<const char *> &topics){
         Mqtt_PackSubscribePkt(&_buf,
                               ++_pkt_id,
                               qos,
-                              topics,
-                              topics_len);
+                              topics.begin(),
+                              topics.size());
         sendPacket();
     }
 private:
@@ -229,7 +229,7 @@ int main() {
     Logger::Instance().add(std::make_shared<ConsoleChannel>());
 
     Mqtt::Ptr mqtt = std::make_shared<Mqtt>();
-    mqtt->connectMqtt("10.0.9.56",1883,10,"clientId",true,"willTopic","willMsg",MQTT_QOS_LEVEL1, true,"admin","public");
+    mqtt->connectMqtt("10.0.9.56",1883,10,"clientId",true,"willTopic","willPayload",MQTT_QOS_LEVEL1, true,"admin","public");
 
     //退出程序事件处理
     static semaphore sem;

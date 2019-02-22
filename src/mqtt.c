@@ -951,7 +951,7 @@ static int Mqtt_PackPubCompPkt(struct MqttBuffer *buf, uint16_t pkt_id)
 }
 
 int Mqtt_PackSubscribePkt(struct MqttBuffer *buf, uint16_t pkt_id,
-                          enum MqttQosLevel qos, const char *topics[], int topics_len)
+                          enum MqttQosLevel qos, const char *const *topics, int topics_len)
 {
 
     int ret;

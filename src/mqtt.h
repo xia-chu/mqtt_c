@@ -215,7 +215,7 @@ int Mqtt_SetPktDup(struct MqttBuffer *buf);
  * @return 成功返回MQTTERR_NOERROR
  */
 int Mqtt_PackSubscribePkt(struct MqttBuffer *buf, uint16_t pkt_id,
-                          enum MqttQosLevel qos, const char *topics[], int topics_len);
+                          enum MqttQosLevel qos, const char *const *topics, int topics_len);
 
 /**
  * 添加需要订阅的Topic到已有的订阅数据包中
