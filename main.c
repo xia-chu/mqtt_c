@@ -14,12 +14,12 @@
 #endif
 
 
-int sock_send(struct mqtt_context_t *ctx, const struct iovec *iov, int iovcnt){
+int data_output(void *user_data, const struct iovec *iov, int iovcnt){
     int ret = 0;
     int sent;
     while(iovcnt--){
         const struct iovec *ptr = iov++;
-        sent = write((int)ctx->_user_data,ptr->iov_base , ptr->iov_len);
+        sent = write((int)user_data,ptr->iov_base , ptr->iov_len);
         if(-1 == sent){
             return -1;
         }
@@ -44,17 +44,19 @@ int application_start(int argc, char *argv[]){
     netmgr_start(false);
 #endif
 
-    mqtt_context context;
-    mqtt_init_contex(&context,sock_send);
-    context._user_data = (void *)net_connet_server("10.0.9.56",1883,3);
-    if(context._user_data == (void *)-1){
+    int fd = net_connet_server("10.0.9.56",1883,3);
+    if(fd == -1){
         return -1;
     }
+
+    mqtt_callback callback = {data_output};
+    mqtt_context context;
+    mqtt_init_contex(&context,callback,(void *)fd);
     mqtt_send_connect_pkt(&context,120,"JIMIMAX",1,"/Service/JIMIMAX/will","willPayload",0,MQTT_QOS_LEVEL1, 1,"admin","public");
 
     char buffer[1024];
     while (1){
-        int recv = read((int)context._user_data,buffer, sizeof(buffer));
+        int recv = read(fd,buffer, sizeof(buffer));
         if(recv == 0){
             LOGE("read eof\r\n");
             break;

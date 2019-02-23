@@ -14,13 +14,14 @@
 #define _STR(...) #__VA_ARGS__
 #define STR(...) _STR(__VA_ARGS__)
 
-#define CHECK_CTX(ctx) \
+#define CHECK_PTR(ptr) \
 do{ \
-    if(!ctx) { \
-        LOGW("mqtt_context invalid :%p\r\n",ctx);\
+    if(!ptr) { \
+        LOGW("invalid ptr:%s\r\n",#ptr);\
         return -1; \
     } \
 }while(0)
+
 
 #define CHECK_RET(n,...) \
 do{\
@@ -34,19 +35,41 @@ do{\
 
 struct mqtt_context_t;
 
-typedef int (*FUNC_send_sock)(struct mqtt_context_t *ctx, const struct iovec *iov, int iovcnt);
 
+typedef struct {
+    int (*mqtt_data_output)(void *arg, const struct iovec *iov, int iovcnt);
+    int (*mqtt_handle_ping_resp)(void *arg);
+    int (*mqtt_handle_conn_ack)(void *arg, char flags, char ret_code);
+    int (*mqtt_handle_publish)(void *arg,
+                              uint16_t pkt_id,
+                              const char *topic,
+                              const char *payload,
+                              uint32_t payloadsize,
+                              int dup,
+                              enum MqttQosLevel qos);
+
+    int (*mqtt_handle_pub_ack)(void *arg, uint16_t pkt_id);
+    int (*mqtt_handle_pub_rec)(void *arg, uint16_t pkt_id);
+    int (*mqtt_handle_pub_rel)(void *arg, uint16_t pkt_id);
+    int (*mqtt_handle_pub_comp)(void *arg, uint16_t pkt_id);
+    int (*mqtt_handle_sub_ack)(void *arg, uint16_t pkt_id,const char *codes, uint32_t count);
+    int (*mqtt_handle_unsub_ack)(void *arg, uint16_t pkt_id);
+} mqtt_callback;
 
 typedef struct mqtt_context_t{
+    //回调指针
+    mqtt_callback _callback;
+    //回调用户数据指针
+    void *_user_data;
+    //只读，最近包id
+    unsigned int _pkt_id;
+    //私有成员变量，请勿访问
     struct MqttContext _ctx;
     struct MqttBuffer _buffer;
-    FUNC_send_sock _on_send;
-    void *_user_data;
     buffer _remain_data;
-    unsigned int _pkt_id;
 } mqtt_context;
 
-int mqtt_init_contex(mqtt_context *ctx,FUNC_send_sock on_send);
+int mqtt_init_contex(mqtt_context *ctx,mqtt_callback callback , void *user_data);
 
 void mqtt_release_contex(mqtt_context *ctx);
 
