@@ -117,13 +117,14 @@ int application_start(int argc, char *argv[]){
     if(user_data._fd  == -1){
         return -1;
     }
-    net_set_sock_timeout(user_data._fd ,1,1);
 
     mqtt_callback callback = {data_output,handle_conn_ack,handle_ping_resp,handle_publish,handle_publish_rel,&user_data};
     user_data._ctx = mqtt_alloc_contex(callback);
     mqtt_send_connect_pkt(user_data._ctx,5,"JIMIMAX",1,"/Service/JIMIMAX/will","willPayload",0,MQTT_QOS_LEVEL1, 1,"admin","public");
 
+    net_set_sock_timeout(user_data._fd ,1,1);
     char buffer[1024];
+    int timeout = 10;
     while (1){
         int recv = read(user_data._fd,buffer, sizeof(buffer));
         if(recv == 0){
@@ -132,6 +133,9 @@ int application_start(int argc, char *argv[]){
         }
         if(recv == -1){
             mqtt_timer_schedule(user_data._ctx);
+            if(--timeout == 0){
+                break;
+            }
             continue;
         }
         mqtt_input_data(user_data._ctx,buffer,recv);
