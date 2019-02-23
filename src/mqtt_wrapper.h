@@ -32,7 +32,16 @@ do{\
 }while(0)
 
 //////////////////////////////////////////////////////////////////////
+/**
+ * mqtt事件回调列表
+ */
 typedef struct {
+    /**
+     * 对象输出协议数据
+     * @param arg 用户数据指针
+     * @param iov
+     * @param iovcnt
+     */
     int (*mqtt_data_output)(void *arg, const struct iovec *iov, int iovcnt);
     void (*mqtt_handle_conn_ack)(void *arg, char flags, char ret_code);
     void (*mqtt_handle_ping_resp)(void *arg);
@@ -47,6 +56,8 @@ typedef struct {
 
     void (*mqtt_handle_publish_rel)(void *arg,
                                     uint16_t pkt_id);
+
+    void *_user_data;
 } mqtt_callback;
 //////////////////////////////////////////////////////////////////////
 typedef enum {
@@ -61,7 +72,7 @@ typedef void (*mqtt_handle_sub_ack)(void *arg,const char *codes, uint32_t count)
 typedef void (*mqtt_handle_unsub_ack)(void *arg);
 
 //////////////////////////////////////////////////////////////////////
-void *mqtt_alloc_contex(mqtt_callback callback , void *user_data);
+void *mqtt_alloc_contex(mqtt_callback callback);
 
 int mqtt_free_contex(void *ctx);
 

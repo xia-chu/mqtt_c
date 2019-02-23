@@ -13,8 +13,6 @@
 typedef struct{
     //回调指针
     mqtt_callback _callback;
-    //回调用户数据指针
-    void *_user_data;
     //只读，最近包id
     unsigned int _pkt_id;
     //私有成员变量，请勿访问
@@ -76,14 +74,14 @@ static int mqtt_write_sock(void *arg, const struct iovec *iov, int iovcnt){
     mqtt_context *ctx = (mqtt_context *)arg;
     CHECK_PTR(ctx);
     CHECK_PTR(ctx->_callback.mqtt_data_output);
-    return ctx->_callback.mqtt_data_output(ctx->_user_data,iov,iovcnt);
+    return ctx->_callback.mqtt_data_output(ctx->_callback._user_data,iov,iovcnt);
 }
 
 static int handle_ping_resp(void *arg){/**< 处理ping响应的回调函数，成功则返回非负数 */
     mqtt_context *ctx = (mqtt_context *)arg;
     LOGD("");
     CHECK_PTR(ctx->_callback.mqtt_handle_ping_resp);
-    ctx->_callback.mqtt_handle_ping_resp(ctx->_user_data);
+    ctx->_callback.mqtt_handle_ping_resp(ctx->_callback._user_data);
     return 0;
 }
 
@@ -92,7 +90,7 @@ static int handle_conn_ack(void *arg, char flags, char ret_code){
     mqtt_context *ctx = (mqtt_context *)arg;
     LOGD("flags:%d , ret_code:%d",(int)flags,(int)(ret_code));
     CHECK_PTR(ctx->_callback.mqtt_handle_conn_ack);
-    ctx->_callback.mqtt_handle_conn_ack(ctx->_user_data,flags,ret_code);
+    ctx->_callback.mqtt_handle_conn_ack(ctx->_callback._user_data,flags,ret_code);
     return 0;
 }
 
@@ -106,7 +104,7 @@ static int handle_publish(void *arg,
     mqtt_context *ctx = (mqtt_context *)arg;
     LOGD("pkt_id:%d , topic: %s , payload:%s , dup:%d , qos:%d",(int)pkt_id,topic,payload,dup,(int)qos);
     CHECK_PTR(ctx->_callback.mqtt_handle_publish);
-    ctx->_callback.mqtt_handle_publish(ctx->_user_data,pkt_id,topic,payload,payloadsize,dup,qos);
+    ctx->_callback.mqtt_handle_publish(ctx->_callback._user_data,pkt_id,topic,payload,payloadsize,dup,qos);
     return 0;
 }
 
@@ -120,7 +118,7 @@ static int handle_pub_rel(void *arg, uint16_t pkt_id){
     mqtt_context *ctx = (mqtt_context *)arg;
     LOGD("pkt_id: %d",(int)pkt_id);
     CHECK_PTR(ctx->_callback.mqtt_handle_publish_rel);
-    ctx->_callback.mqtt_handle_publish_rel(ctx->_user_data,pkt_id);
+    ctx->_callback.mqtt_handle_publish_rel(ctx->_callback._user_data,pkt_id);
     return 0;
 }
 
@@ -219,7 +217,7 @@ static int handle_unsub_ack(void *arg, uint16_t pkt_id){
 }
 
 //////////////////////////////////////////////////////////////////////
-void *mqtt_alloc_contex(mqtt_callback callback,void *user_data){
+void *mqtt_alloc_contex(mqtt_callback callback){
     mqtt_context *ctx = (mqtt_context *)malloc(sizeof(mqtt_context));
     if(!ctx){
         LOGE("malloc mqtt_context failed!");
@@ -227,7 +225,6 @@ void *mqtt_alloc_contex(mqtt_callback callback,void *user_data){
     }
     memset(ctx,0, sizeof(mqtt_context));
     memcpy(ctx,&callback, sizeof(callback));
-    ctx->_user_data = user_data;
 
     ctx->_ctx.user_data = ctx;
     ctx->_ctx.writev_func = mqtt_write_sock;
