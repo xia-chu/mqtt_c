@@ -136,7 +136,7 @@ static int handle_pub_ack(void *arg, uint16_t pkt_id){
         return 0;
     }
     if(value->_callback._mqtt_handle_pub_ack){
-        value->_callback._mqtt_handle_pub_ack(value->_user_data,pub_ack);
+        value->_callback._mqtt_handle_pub_ack(value->_user_data,0,pub_ack);
     }
     hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
     return 0;
@@ -158,7 +158,7 @@ static int handle_pub_rec(void *arg, uint16_t pkt_id){
         return 0;
     }
     if(value->_callback._mqtt_handle_pub_ack){
-        value->_callback._mqtt_handle_pub_ack(value->_user_data,pub_rec);
+        value->_callback._mqtt_handle_pub_ack(value->_user_data,0,pub_rec);
     }
     //中间态不移除监听
 //    hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
@@ -181,7 +181,7 @@ static int handle_pub_comp(void *arg, uint16_t pkt_id){
         return 0;
     }
     if(value->_callback._mqtt_handle_pub_ack){
-        value->_callback._mqtt_handle_pub_ack(value->_user_data,pub_comp);
+        value->_callback._mqtt_handle_pub_ack(value->_user_data,0,pub_comp);
     }
     hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
     return 0;
@@ -197,7 +197,7 @@ static int handle_sub_ack(void *arg, uint16_t pkt_id,const char *codes, uint32_t
         return 0;
     }
     if(value->_callback._mqtt_handle_sub_ack){
-        value->_callback._mqtt_handle_sub_ack(value->_user_data,codes,count);
+        value->_callback._mqtt_handle_sub_ack(value->_user_data,0,codes,count);
     }
     hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
     return 0;
@@ -213,7 +213,7 @@ static int handle_unsub_ack(void *arg, uint16_t pkt_id){
         return 0;
     }
     if(value->_callback._mqtt_handle_unsub_ack){
-        value->_callback._mqtt_handle_unsub_ack(value->_user_data);
+        value->_callback._mqtt_handle_unsub_ack(value->_user_data,0);
     }
     hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
     return 0;

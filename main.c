@@ -35,12 +35,12 @@ int data_output(void *arg, const struct iovec *iov, int iovcnt){
     return ret;
 }
 
-void handle_pub_ack(void *arg,pub_type type){
+void handle_pub_ack(void *arg,int time_out,pub_type type){
     LOGT("%d",type);
     memset(arg,0,4);
 }
 
-void handle_sub_ack(void *arg,const char *codes, uint32_t count){
+void handle_sub_ack(void *arg,int time_out,const char *codes, uint32_t count){
     LOGT("%d",count);
     memset(arg,0,4);
 }

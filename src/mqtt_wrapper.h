@@ -111,7 +111,7 @@ typedef void(*free_user_data)(void *arg);
  * @param arg 用户数据指针
  * @param arg 服务器回复类型
  */
-typedef void (*mqtt_handle_pub_ack)(void *arg,pub_type type);
+typedef void (*mqtt_handle_pub_ack)(void *arg,int time_out,pub_type type);
 
 /**
  * 用户订阅主体时，服务器回复回调函数
@@ -119,13 +119,13 @@ typedef void (*mqtt_handle_pub_ack)(void *arg,pub_type type);
  * @param codes @see MqttRetCode，按顺序对应订阅数据包中的Topic结果数组
  * @param count codes数组成员个数
  */
-typedef void (*mqtt_handle_sub_ack)(void *arg,const char *codes, uint32_t count);
+typedef void (*mqtt_handle_sub_ack)(void *arg,int time_out,const char *codes, uint32_t count);
 
 /**
  * 取消订阅回调
  * @param arg 用户数据指针
  */
-typedef void (*mqtt_handle_unsub_ack)(void *arg);
+typedef void (*mqtt_handle_unsub_ack)(void *arg,int time_out);
 
 //////////////////////////////////////////////////////////////////////
 /**
