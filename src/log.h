@@ -8,7 +8,9 @@
 #include <stdio.h>
 
 #define CLEAR_COLOR "\033[0m"
+
 extern const char *LOG_CONST_TABLE[][3];
+extern void get_now_time_str(char *buf,int buf_size);
 
 typedef enum {
     log_trace = 0,
@@ -17,8 +19,6 @@ typedef enum {
     log_warn ,
     log_error ,
 } e_log_lev;
-
-extern const char *g_log_lev_str[];
 
 #ifdef __alios__
 
@@ -35,7 +35,14 @@ do{ \
 #define PRINT(lev,fmt,...) \
 do{ \
     printf("%s %d\r\n",__FILE__,__LINE__);\
-    printf("%s %s | %s " fmt CLEAR_COLOR,LOG_CONST_TABLE[lev][1],LOG_CONST_TABLE[lev][2],__FUNCTION__,##__VA_ARGS__);\
+    char time_str[32];\
+    get_now_time_str(time_str,sizeof(time_str)); \
+    printf("%s %s %s | %s " fmt CLEAR_COLOR "\r\n",\
+            LOG_CONST_TABLE[lev][1],\
+            time_str ,\
+            LOG_CONST_TABLE[lev][2],\
+            __FUNCTION__,\
+            ##__VA_ARGS__);\
 } while(0)
 
 #endif
