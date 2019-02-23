@@ -21,51 +21,55 @@ static int handle_ping_resp(void *arg){/**< 处理ping响应的回调函数，�
 
 static int handle_conn_ack(void *arg, char flags, char ret_code){
     mqtt_context *ctx = (mqtt_context *)arg;
-    LOGD("\r\n");
+    LOGD("flags:%d , ret_code:%d\r\n",(int)flags,(int)(ret_code));
     return 0;
 }
 
-static int handle_publish(void *arg, uint16_t pkt_id, const char *topic,
-                   const char *payload, uint32_t payloadsize,
-                   int dup, enum MqttQosLevel qos){
+static int handle_publish(void *arg,
+                          uint16_t pkt_id,
+                          const char *topic,
+                          const char *payload,
+                          uint32_t payloadsize,
+                          int dup,
+                          enum MqttQosLevel qos){
     mqtt_context *ctx = (mqtt_context *)arg;
-    LOGD("%s %s\r\n",topic,payload);
+    LOGD("pkt_id:%d , topic: %s , payload:%s , dup:%d , qos:%d\r\n",(int)pkt_id,topic,payload,dup,(int)qos);
     return 0;
 }
 
 static int handle_pub_ack(void *arg, uint16_t pkt_id){
     mqtt_context *ctx = (mqtt_context *)arg;
-    LOGD("\r\n");
+    LOGD("pkt_id: %d\r\n",(int)pkt_id);
     return 0;
 }
 
 static int handle_pub_rec(void *arg, uint16_t pkt_id){
     mqtt_context *ctx = (mqtt_context *)arg;
-    LOGD("\r\n");
+    LOGD("pkt_id: %d\r\n",(int)pkt_id);
     return 0;
 }
 
 static int handle_pub_rel(void *arg, uint16_t pkt_id){
     mqtt_context *ctx = (mqtt_context *)arg;
-    LOGD("\r\n");
+    LOGD("pkt_id: %d\r\n",(int)pkt_id);
     return 0;
 }
 
 static int handle_pub_comp(void *arg, uint16_t pkt_id){
     mqtt_context *ctx = (mqtt_context *)arg;
-    LOGD("\r\n");
+    LOGD("pkt_id: %d\r\n",(int)pkt_id);
     return 0;
 }
 
 static int handle_sub_ack(void *arg, uint16_t pkt_id,const char *codes, uint32_t count){
     mqtt_context *ctx = (mqtt_context *)arg;
-    LOGD("\r\n");
+    LOGD("pkt_id: %d , codes:%s , count:%d \r\n",(int)pkt_id,codes,(int)count);
     return 0;
 }
 
 static int handle_unsub_ack(void *arg, uint16_t pkt_id){
     mqtt_context *ctx = (mqtt_context *)arg;
-    LOGD("\r\n");
+    LOGD("pkt_id: %d\r\n",(int)pkt_id);
     return 0;
 }
 

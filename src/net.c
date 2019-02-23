@@ -48,9 +48,21 @@ int get_server_addr(const char *host, unsigned short port, struct sockaddr_in *s
     return 0;
 }
 
-int net_connet_server(const char *host, unsigned short port,int second){
-    int sockfd ;
+int net_set_sock_timeout(int fd, int recv, float second){
     struct timeval timeout;
+    unsigned int milli_sec = second * 1000;
+    timeout.tv_sec = milli_sec / 1000;
+    timeout.tv_usec = 1000 * (milli_sec % 1000);
+
+    int opt = recv ? SO_RCVTIMEO : SO_SNDTIMEO;
+    if (setsockopt(fd, SOL_SOCKET, opt , (char *) &timeout, sizeof(timeout)) == -1) {
+        LOGW("setsockopt %d failed, errno: %d(%s)\r\n", opt , errno,strerror(errno));
+        return -1;
+    }
+    return 0;
+}
+int net_connet_server(const char *host, unsigned short port,float second){
+    int sockfd ;
     struct sockaddr_in server_addr;
     if(-1 == get_server_addr(host,port,&server_addr)){
         LOGW("get_server_addr failed, domain %s \r\n", host);
@@ -63,12 +75,8 @@ int net_connet_server(const char *host, unsigned short port,int second){
         return -1;
     }
 
-    timeout.tv_sec = second;
-    timeout.tv_usec = 0;
-
     do {
-        if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeof(timeout)) == -1) {
-            LOGW("setsockopt failed, errno: %d(%s)\r\n", errno,strerror(errno));
+        if (net_set_sock_timeout(sockfd,1,second) == -1) {
             break;
         }
 
@@ -79,9 +87,7 @@ int net_connet_server(const char *host, unsigned short port,int second){
 
         //connect success!
         LOGI("connect server %s %d success!\r\n",host,port);
-        timeout.tv_sec = 0;
-        timeout.tv_usec = 0;
-        setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeof(timeout));
+        net_set_sock_timeout(sockfd,1,0);
         return sockfd;
     }while (0);
 
