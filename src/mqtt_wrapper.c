@@ -262,11 +262,14 @@ void *mqtt_alloc_contex(mqtt_callback callback){
     return ctx;
 }
 
+void for_each_map(HashTable *hash_table,int flush);
+
 int mqtt_free_contex(void *arg){
     mqtt_context *ctx = (mqtt_context *)arg;
     CHECK_PTR(ctx);
     MqttBuffer_Destroy(&ctx->_buffer);
     buffer_release(&ctx->_remain_data);
+    for_each_map(ctx->_req_cb_map,1);
     hash_table_free(ctx->_req_cb_map);
     free(ctx);
     return 0;
@@ -476,14 +479,14 @@ int mqtt_send_disconnect_pkt(void *arg){
 }
 
 
-void for_each_map(mqtt_context *ctx){
+void for_each_map(HashTable *hash_table,int flush){
     time_t now = time(NULL);
     HashTableIterator it;
-    hash_table_iterate(ctx->_req_cb_map,&it);
+    hash_table_iterate(hash_table,&it);
     while(hash_table_iter_has_more(&it)) {
         HashTablePair pr = hash_table_iter_next(&it);
         mqtt_req_cb_value *value = (mqtt_req_cb_value *)pr.value;
-        if(value->_end_time_line > now){
+        if(value->_end_time_line > now && !flush){
             continue;
         }
 
@@ -504,14 +507,14 @@ void for_each_map(mqtt_context *ctx){
                 LOGE("bad response callback type:%d",(int)value->_cb_type);
                 break;
         }
-        hash_table_remove(ctx->_req_cb_map,pr.key);
+        hash_table_remove(hash_table,pr.key);
     }
 }
 
 int mqtt_timer_schedule(void *arg){
     mqtt_context *ctx = (mqtt_context *)arg;
     CHECK_PTR(ctx);
-    for_each_map(ctx);
+    for_each_map(ctx->_req_cb_map,0);
 
     time_t now = time(NULL);
     if(now - ctx->_last_ping > ctx->_keep_alive){
