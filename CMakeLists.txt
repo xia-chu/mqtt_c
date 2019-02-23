@@ -4,6 +4,8 @@ project(mqtt)
 #使能c++11
 #add_compile_options(-std=c++11)
 set(CMAKE_CXX_STANDARD 11)
+add_definitions(-Wno-int-to-void-pointer-cast)
+
 
 #加载自定义模块
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake")

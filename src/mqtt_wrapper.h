@@ -32,23 +32,25 @@ do{\
 
 typedef struct {
     int (*mqtt_data_output)(void *arg, const struct iovec *iov, int iovcnt);
-    int (*mqtt_handle_ping_resp)(void *arg);
-    int (*mqtt_handle_conn_ack)(void *arg, char flags, char ret_code);
-    int (*mqtt_handle_publish)(void *arg,
-                              uint16_t pkt_id,
-                              const char *topic,
-                              const char *payload,
-                              uint32_t payloadsize,
-                              int dup,
-                              enum MqttQosLevel qos);
-
-    int (*mqtt_handle_pub_ack)(void *arg, uint16_t pkt_id);
-    int (*mqtt_handle_pub_rec)(void *arg, uint16_t pkt_id);
-    int (*mqtt_handle_pub_rel)(void *arg, uint16_t pkt_id);
-    int (*mqtt_handle_pub_comp)(void *arg, uint16_t pkt_id);
-    int (*mqtt_handle_sub_ack)(void *arg, uint16_t pkt_id,const char *codes, uint32_t count);
-    int (*mqtt_handle_unsub_ack)(void *arg, uint16_t pkt_id);
+    void (*mqtt_handle_ping_resp)(void *arg);
+    void (*mqtt_handle_conn_ack)(void *arg, char flags, char ret_code);
+    void (*mqtt_handle_publish)(void *arg,
+                                uint16_t pkt_id,
+                                const char *topic,
+                                const char *payload,
+                                uint32_t payloadsize,
+                                int dup,
+                                enum MqttQosLevel qos);
 } mqtt_callback;
+
+
+typedef void(*free_user_data)(void *arg);
+typedef void (*mqtt_handle_pub_ack)(void *arg, uint16_t pkt_id);
+typedef void (*mqtt_handle_pub_rec)(void *arg, uint16_t pkt_id);
+typedef void (*mqtt_handle_pub_rel)(void *arg, uint16_t pkt_id);
+typedef void (*mqtt_handle_pub_comp)(void *arg, uint16_t pkt_id);
+typedef void (*mqtt_handle_sub_ack)(void *arg, uint16_t pkt_id,const char *codes, uint32_t count);
+typedef void (*mqtt_handle_unsub_ack)(void *arg, uint16_t pkt_id);
 
 
 void *mqtt_alloc_contex(mqtt_callback callback , void *user_data);

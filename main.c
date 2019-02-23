@@ -28,6 +28,22 @@ int data_output(void *user_data, const struct iovec *iov, int iovcnt){
     return ret;
 }
 
+void (mqtt_handle_ping_resp)(void *arg){
+
+}
+void (mqtt_handle_conn_ack)(void *arg, char flags, char ret_code){
+
+}
+void (mqtt_handle_publish)(void *arg,
+                            uint16_t pkt_id,
+                            const char *topic,
+                            const char *payload,
+                            uint32_t payloadsize,
+                            int dup,
+                            enum MqttQosLevel qos){
+
+}
+
 int application_start(int argc, char *argv[]){
 #ifdef __alios__
     #if AOS_ATCMD
