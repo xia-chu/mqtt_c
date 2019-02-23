@@ -36,18 +36,18 @@ int data_output(void *arg, const struct iovec *iov, int iovcnt){
 }
 
 void handle_pub_ack(void *arg,int time_out,pub_type type){
-    LOGT("%d",type);
+    LOGI("%d - %d",time_out,type);
     memset(arg,0,4);
 }
 
 void handle_sub_ack(void *arg,int time_out,const char *codes, uint32_t count){
-    LOGT("%d",count);
+    LOGI("%d",time_out);
     memset(arg,0,4);
 }
 
 void handle_conn_ack(void *arg, char flags, char ret_code){
     mqtt_user_data *user_data = (mqtt_user_data *)arg;
-    LOGT("");
+    LOGI("");
     if(ret_code == 0){
         //success
         const char *topics[] = {"/Service/JIMIMAX/publish","/Service/JIMIMAX/will"};
@@ -75,7 +75,7 @@ void handle_conn_ack(void *arg, char flags, char ret_code){
 }
 void handle_ping_resp(void *arg){
     mqtt_user_data *user_data = (mqtt_user_data *)arg;
-    LOGT("");
+    LOGI("");
 }
 void handle_publish(void *arg,
                          uint16_t pkt_id,
@@ -85,13 +85,13 @@ void handle_publish(void *arg,
                          int dup,
                          enum MqttQosLevel qos){
     mqtt_user_data *user_data = (mqtt_user_data *)arg;
-    LOGT("");
+    LOGI("");
 }
 
 void handle_publish_rel(void *arg,
                          uint16_t pkt_id){
     mqtt_user_data *user_data = (mqtt_user_data *)arg;
-    LOGT("");
+    LOGI("");
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -95,6 +95,7 @@ typedef struct {
  * 发布消息时，服务器回复的类型
  */
 typedef enum {
+  pub_invalid = -1,
   pub_ack = 0,
   pub_rec,
   pub_comp,

@@ -27,6 +27,12 @@ typedef struct{
 } mqtt_context;
 
 
+typedef enum {
+    res_pub_ack = 0,
+    res_sub_ack,
+    res_unsub_ack,
+} res_type;
+
 typedef struct {
     void *_user_data;
     free_user_data _free_user_data;
@@ -35,8 +41,10 @@ typedef struct {
         mqtt_handle_sub_ack _mqtt_handle_sub_ack;
         mqtt_handle_unsub_ack _mqtt_handle_unsub_ack;
     } _callback;
+    res_type _cb_type;
     time_t _end_time_line;
 } mqtt_req_cb_value;
+
 
 //////////////////////////////////////////////////////////////////////
 static mqtt_req_cb_value *lookup_req_cb_value(mqtt_context *ctx,uint16_t pkt_id){
@@ -381,6 +389,7 @@ int mqtt_send_publish_pkt(void *arg,
         value->_user_data = user_data;
         value->_free_user_data = free_cb;
         value->_callback._mqtt_handle_pub_ack = cb;
+        value->_cb_type = res_pub_ack;
         value->_end_time_line = time(NULL) + timeout_sec;
         hash_table_insert(ctx->_req_cb_map,(HashTableKey)ctx->_pkt_id,value);
     }
@@ -410,6 +419,7 @@ int mqtt_send_subscribe_pkt(void *arg,
         value->_user_data = user_data;
         value->_free_user_data = free_cb;
         value->_callback._mqtt_handle_sub_ack = cb;
+        value->_cb_type = res_sub_ack;
         value->_end_time_line = time(NULL) + timeout_sec;
         hash_table_insert(ctx->_req_cb_map,(HashTableKey)ctx->_pkt_id,value);
     }
@@ -436,6 +446,7 @@ int mqtt_send_unsubscribe_pkt(void *arg,
         value->_user_data = user_data;
         value->_free_user_data = free_cb;
         value->_callback._mqtt_handle_unsub_ack = cb;
+        value->_cb_type = res_unsub_ack;
         value->_end_time_line = time(NULL) + timeout_sec;
         hash_table_insert(ctx->_req_cb_map,(HashTableKey)ctx->_pkt_id,value);
     }
@@ -472,11 +483,28 @@ void for_each_map(mqtt_context *ctx){
     while(hash_table_iter_has_more(&it)) {
         HashTablePair pr = hash_table_iter_next(&it);
         mqtt_req_cb_value *value = (mqtt_req_cb_value *)pr.value;
-        if(value->_end_time_line <= now){
-            //timeouted
-        }else{
-
+        if(value->_end_time_line > now){
+            continue;
         }
+
+        LOGT("wait response callback timeouted:%d",value->_cb_type);
+        //触发超时回调
+        switch (value->_cb_type){
+            case res_pub_ack:
+                value->_callback._mqtt_handle_pub_ack(value->_user_data,1,pub_invalid);
+                break;
+            case res_sub_ack:
+                value->_callback._mqtt_handle_sub_ack(value->_user_data,1,NULL,0);
+                break;
+            case res_unsub_ack:
+                value->_callback._mqtt_handle_unsub_ack(value->_user_data,1);
+                break;
+
+            default:
+                LOGE("bad response callback type:%d",(int)value->_cb_type);
+                break;
+        }
+        hash_table_remove(ctx->_req_cb_map,pr.key);
     }
 }
 
