@@ -130,7 +130,7 @@ int mqtt_free_contex(void *arg){
     CHECK_PTR(ctx);
     MqttBuffer_Destroy(&ctx->_buffer);
     buffer_release(&ctx->_remain_data);
-    memset(ctx,0, sizeof(mqtt_context));
+    free(ctx);
     return 0;
 }
 

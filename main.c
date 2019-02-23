@@ -48,6 +48,7 @@ int application_start(int argc, char *argv[]){
     if(fd == -1){
         return -1;
     }
+    net_set_sock_timeout(fd,1,3);
 
     mqtt_callback callback = {data_output};
     void *mqtt = mqtt_alloc_contex(callback,(void *)fd);

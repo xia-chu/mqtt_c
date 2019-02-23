@@ -5,6 +5,7 @@
 #include "log.h"
 #include <unistd.h>
 #include <sys/time.h>
+#include <time.h>
 
 const char *LOG_CONST_TABLE[][3] = {
         {"\033[44;37m", "\033[34m" , "T"},
