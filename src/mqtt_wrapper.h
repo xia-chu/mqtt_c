@@ -4,6 +4,9 @@
 
 #ifndef MQTT_MQTT_WRAPPER_H
 #define MQTT_MQTT_WRAPPER_H
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
 
 #include "mqtt.h"
 #include "log.h"
@@ -92,4 +95,7 @@ int mqtt_send_ping_pkt(void *ctx);
 
 int mqtt_send_disconnect_pkt(void *ctx);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif // __cplusplus
 #endif //MQTT_MQTT_WRAPPER_H

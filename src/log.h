@@ -4,9 +4,11 @@
 
 #ifndef MQTT_LOG_H
 #define MQTT_LOG_H
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
 
 #include <stdio.h>
-
 #define CLEAR_COLOR "\033[0m"
 
 extern const char *LOG_CONST_TABLE[][3];
@@ -57,4 +59,7 @@ do{ \
 #define LOGE(...) PRINT(log_error,##__VA_ARGS__)
 
 
+#ifdef __cplusplus
+} // extern "C"
+#endif // __cplusplus
 #endif //MQTT_LOG_H
