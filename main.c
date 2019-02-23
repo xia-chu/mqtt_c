@@ -29,8 +29,8 @@ int sock_send(struct mqtt_context_t *ctx, const struct iovec *iov, int iovcnt){
 }
 
 int application_start(int argc, char *argv[]){
-#if __alios__
-#if AOS_ATCMD
+#ifdef __alios__
+    #if AOS_ATCMD
     at.set_mode(ASYN);
     at.init(AT_RECV_PREFIX, AT_RECV_SUCCESS_POSTFIX,
             AT_RECV_FAIL_POSTFIX, AT_SEND_DELIMITER, 1000);
@@ -56,7 +56,7 @@ int application_start(int argc, char *argv[]){
     while (1){
         int recv = read((int)context._user_data,buffer, sizeof(buffer));
         if(recv == 0){
-//            LOGE("read eof\r\n");
+            LOGE("read eof\r\n");
             break;
         }
         if(recv == -1){
