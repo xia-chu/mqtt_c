@@ -13,6 +13,7 @@
 #include <sys/errno.h>
 #include <memory.h>
 #include <unistd.h>
+#include <string.h>
 
 #ifndef INADDR_NONE
 #define INADDR_NONE ((uint32_t)0xffffffffUL)
@@ -27,7 +28,7 @@ in_addr_t get_host_addr(const char *host){
     }
 
     if ((hostinfo = gethostbyname(host)) == NULL) {
-        LOGW("gethostbyname failed, errno: %d domain %s \r\n", errno, host);
+        LOGW("gethostbyname failed, errno: %d(%s) domain %s \r\n", errno,strerror(errno), host);
         return INADDR_NONE;
     }
 
@@ -58,7 +59,7 @@ int net_connet_server(const char *host, unsigned short port,int second){
 
     sockfd = socket(AF_INET,SOCK_STREAM,0);
     if(sockfd == -1){
-        LOGW("create socket failed, errno %d \r\n", errno);
+        LOGW("create socket failed, errno %d(%s) \r\n", errno,strerror(errno));
         return -1;
     }
 
@@ -67,12 +68,12 @@ int net_connet_server(const char *host, unsigned short port,int second){
 
     do {
         if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout, sizeof(timeout)) == -1) {
-            LOGW("setsockopt failed, errno: %d\r\n", errno);
+            LOGW("setsockopt failed, errno: %d(%s)\r\n", errno,strerror(errno));
             break;
         }
 
         if (connect(sockfd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
-            LOGW("connect failed, errno = %d, host %s port %d \r\n", errno, host, port);
+            LOGW("connect failed, errno = %d(%s), host %s port %d \r\n", errno,strerror(errno), host, port);
             break;
         }
 

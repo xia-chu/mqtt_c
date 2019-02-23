@@ -21,20 +21,18 @@ extern const char *g_log_lev_str[];
 
 #include <aos/aos.h>
 
-#define PRINT(lev,...) \
+#define PRINT(lev,fmt,...) \
 do{ \
     LOG("%s %d\r\n",__FILE__,__LINE__);\
-    LOG("%s | %s ",g_log_lev_str[lev],__FUNCTION__);\
-    LOG(__VA_ARGS__);\
+    LOG("%s | %s " fmt,g_log_lev_str[lev],__FUNCTION__,##__VA_ARGS__);\
 } while(0)
 
 #else
 
-#define PRINT(lev,...) \
+#define PRINT(lev,fmt,...) \
 do{ \
     printf("%s %d\r\n",__FILE__,__LINE__);\
-    printf("%s | %s ",g_log_lev_str[lev],__FUNCTION__);\
-    printf(__VA_ARGS__);\
+    printf("%s | %s " fmt,g_log_lev_str[lev],__FUNCTION__,##__VA_ARGS__);\
 } while(0)
 
 #endif
