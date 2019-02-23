@@ -20,38 +20,41 @@ typedef enum {
     log_error ,
 } e_log_lev;
 
-#ifdef __alios__
 
-#include <aos/aos.h>
-
-#define PRINT(lev,fmt,...) \
+#define _PRINT_(encble_color,func,lev,fmt,...) \
 do{ \
-    LOG("%s %d\r\n",__FILE__,__LINE__);\
-    LOG("%s | %s " fmt,LOG_CONST_TABLE[lev][1],__FUNCTION__,##__VA_ARGS__);\
-} while(0)
-
-#else
-
-#define PRINT(lev,fmt,...) \
-do{ \
-    printf("%s %d\r\n",__FILE__,__LINE__);\
-    char time_str[32];\
+    func("%s %d\r\n",__FILE__,__LINE__);\
+    char time_str[26];\
     get_now_time_str(time_str,sizeof(time_str)); \
-    printf("%s %s %s | %s " fmt CLEAR_COLOR "\r\n",\
-            LOG_CONST_TABLE[lev][1],\
-            time_str ,\
-            LOG_CONST_TABLE[lev][2],\
-            __FUNCTION__,\
-            ##__VA_ARGS__);\
+    if(!encble_color){\
+        func("%s %s | %s " fmt "\r\n",\
+                time_str ,\
+                LOG_CONST_TABLE[lev][2],\
+                __FUNCTION__,\
+                ##__VA_ARGS__);\
+    }else{\
+        func("%s %s %s | %s " fmt CLEAR_COLOR "\r\n",\
+                LOG_CONST_TABLE[lev][1],\
+                time_str ,\
+                LOG_CONST_TABLE[lev][2],\
+                __FUNCTION__,\
+                ##__VA_ARGS__);\
+    }\
 } while(0)
 
+#ifdef __alios__
+#include <aos/aos.h>
+    extern int csp_printf(const char *fmt, ...);
+    #define PRINT(lev,fmt,...)  _PRINT_(0,csp_printf,lev,fmt,##__VA_ARGS__)
+#else
+#define PRINT(lev,fmt,...) _PRINT_(1,printf,lev,fmt,##__VA_ARGS__)
 #endif
 
-#define LOGT(...) PRINT(log_trace,__VA_ARGS__)
-#define LOGD(...) PRINT(log_debug,__VA_ARGS__)
-#define LOGI(...) PRINT(log_info,__VA_ARGS__)
-#define LOGW(...) PRINT(log_warn,__VA_ARGS__)
-#define LOGE(...) PRINT(log_error,__VA_ARGS__)
+#define LOGT(...) PRINT(log_trace,##__VA_ARGS__)
+#define LOGD(...) PRINT(log_debug,##__VA_ARGS__)
+#define LOGI(...) PRINT(log_info,##__VA_ARGS__)
+#define LOGW(...) PRINT(log_warn,##__VA_ARGS__)
+#define LOGE(...) PRINT(log_error,##__VA_ARGS__)
 
 
 #endif //MQTT_LOG_H
