@@ -27,9 +27,6 @@ typedef struct{
 typedef struct {
     free_user_data _free_user_data;
     mqtt_handle_pub_ack _mqtt_handle_pub_ack;
-    mqtt_handle_pub_rec _mqtt_handle_pub_rec;
-    mqtt_handle_pub_rel _mqtt_handle_pub_rel;
-    mqtt_handle_pub_comp _mqtt_handle_pub_comp;
     mqtt_handle_sub_ack _mqtt_handle_sub_ack;
     mqtt_handle_unsub_ack _mqtt_handle_unsub_ack;
 } mqtt_req_callback;
@@ -92,7 +89,7 @@ static int handle_pub_ack(void *arg, uint16_t pkt_id){
         return 0;
     }
     if(value->_callback._mqtt_handle_pub_ack){
-        value->_callback._mqtt_handle_pub_ack(value->_user_data,pkt_id);
+        value->_callback._mqtt_handle_pub_ack(value->_user_data,pub_ack);
     }
     hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
     return 0;
@@ -107,8 +104,8 @@ static int handle_pub_rec(void *arg, uint16_t pkt_id){
         LOGW("can not find callback!");
         return 0;
     }
-    if(value->_callback._mqtt_handle_pub_rec){
-        value->_callback._mqtt_handle_pub_rec(value->_user_data,pkt_id);
+    if(value->_callback._mqtt_handle_pub_ack){
+        value->_callback._mqtt_handle_pub_ack(value->_user_data,pub_rec);
     }
     hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
     return 0;
@@ -124,8 +121,8 @@ static int handle_pub_rel(void *arg, uint16_t pkt_id){
         LOGW("can not find callback!");
         return 0;
     }
-    if(value->_callback._mqtt_handle_pub_rel){
-        value->_callback._mqtt_handle_pub_rel(value->_user_data,pkt_id);
+    if(value->_callback._mqtt_handle_pub_ack){
+        value->_callback._mqtt_handle_pub_ack(value->_user_data,pub_rel);
     }
     hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
     return 0;
@@ -140,8 +137,8 @@ static int handle_pub_comp(void *arg, uint16_t pkt_id){
         LOGW("can not find callback!");
         return 0;
     }
-    if(value->_callback._mqtt_handle_pub_comp){
-        value->_callback._mqtt_handle_pub_comp(value->_user_data,pkt_id);
+    if(value->_callback._mqtt_handle_pub_ack){
+        value->_callback._mqtt_handle_pub_ack(value->_user_data,pub_comp);
     }
     hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
     return 0;
@@ -157,7 +154,7 @@ static int handle_sub_ack(void *arg, uint16_t pkt_id,const char *codes, uint32_t
         return 0;
     }
     if(value->_callback._mqtt_handle_sub_ack){
-        value->_callback._mqtt_handle_sub_ack(value->_user_data,pkt_id,codes,count);
+        value->_callback._mqtt_handle_sub_ack(value->_user_data,codes,count);
     }
     hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
     return 0;
@@ -173,7 +170,7 @@ static int handle_unsub_ack(void *arg, uint16_t pkt_id){
         return 0;
     }
     if(value->_callback._mqtt_handle_unsub_ack){
-        value->_callback._mqtt_handle_unsub_ack(value->_user_data,pkt_id);
+        value->_callback._mqtt_handle_unsub_ack(value->_user_data);
     }
     hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
     return 0;

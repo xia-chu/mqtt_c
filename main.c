@@ -28,21 +28,23 @@ int data_output(void *user_data, const struct iovec *iov, int iovcnt){
     return ret;
 }
 
-void (mqtt_handle_ping_resp)(void *arg){
-
+void mqtt_handle_conn_ack(void *user_data, char flags, char ret_code){
+    LOGT("");
 }
-void (mqtt_handle_conn_ack)(void *arg, char flags, char ret_code){
-
+void mqtt_handle_ping_resp(void *user_data){
+    LOGT("");
 }
-void (mqtt_handle_publish)(void *arg,
-                            uint16_t pkt_id,
-                            const char *topic,
-                            const char *payload,
-                            uint32_t payloadsize,
-                            int dup,
-                            enum MqttQosLevel qos){
-
+void mqtt_handle_publish(void *user_data,
+                         uint16_t pkt_id,
+                         const char *topic,
+                         const char *payload,
+                         uint32_t payloadsize,
+                         int dup,
+                         enum MqttQosLevel qos){
+    LOGT("");
 }
+
+//////////////////////////////////////////////////////////////////////
 
 int application_start(int argc, char *argv[]){
 #ifdef __alios__
@@ -66,7 +68,7 @@ int application_start(int argc, char *argv[]){
     }
     net_set_sock_timeout(fd,1,3);
 
-    mqtt_callback callback = {data_output};
+    mqtt_callback callback = {data_output,mqtt_handle_conn_ack,mqtt_handle_ping_resp,mqtt_handle_publish};
     void *mqtt = mqtt_alloc_contex(callback,(void *)fd);
     mqtt_send_connect_pkt(mqtt,120,"JIMIMAX",1,"/Service/JIMIMAX/will","willPayload",0,MQTT_QOS_LEVEL1, 1,"admin","public");
 
