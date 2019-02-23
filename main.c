@@ -50,9 +50,8 @@ int application_start(int argc, char *argv[]){
     }
 
     mqtt_callback callback = {data_output};
-    mqtt_context context;
-    mqtt_init_contex(&context,callback,(void *)fd);
-    mqtt_send_connect_pkt(&context,120,"JIMIMAX",1,"/Service/JIMIMAX/will","willPayload",0,MQTT_QOS_LEVEL1, 1,"admin","public");
+    void *context = mqtt_alloc_contex(callback,(void *)fd);
+    mqtt_send_connect_pkt(context,120,"JIMIMAX",1,"/Service/JIMIMAX/will","willPayload",0,MQTT_QOS_LEVEL1, 1,"admin","public");
 
     char buffer[1024];
     while (1){
@@ -65,9 +64,9 @@ int application_start(int argc, char *argv[]){
             LOGE("read interupted :%d %s\r\n",errno,strerror(errno));
             break;
         }
-        mqtt_input_data(&context,buffer,recv);
+        mqtt_input_data(context,buffer,recv);
     }
 
-    mqtt_release_contex(&context);
+    mqtt_free_contex(context);
     return 0;
 }

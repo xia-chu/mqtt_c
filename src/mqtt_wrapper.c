@@ -3,8 +3,23 @@
 //
 
 #include "mqtt_wrapper.h"
+#include "mqtt_buffer.h"
 #include "buffer.h"
 #include <memory.h>
+#include <stdlib.h>
+
+typedef struct{
+    //回调指针
+    mqtt_callback _callback;
+    //回调用户数据指针
+    void *_user_data;
+    //只读，最近包id
+    unsigned int _pkt_id;
+    //私有成员变量，请勿访问
+    struct MqttContext _ctx;
+    struct MqttBuffer _buffer;
+    buffer _remain_data;
+} mqtt_context;
 
 static int mqtt_write_sock(void *arg, const struct iovec *iov, int iovcnt){
     mqtt_context *ctx = (mqtt_context *)arg;
@@ -83,8 +98,11 @@ static int handle_unsub_ack(void *arg, uint16_t pkt_id){
     return ctx->_callback.mqtt_handle_unsub_ack(ctx->_user_data,pkt_id);
 }
 
-int mqtt_init_contex(mqtt_context *ctx,mqtt_callback callback,void *user_data){
-    CHECK_PTR(ctx);
+void *mqtt_alloc_contex(mqtt_callback callback,void *user_data){
+    mqtt_context *ctx = (mqtt_context *)malloc(sizeof(mqtt_context));
+    if(!ctx){
+        return NULL;
+    }
     memset(ctx,0, sizeof(mqtt_context));
     memcpy(ctx,&callback, sizeof(callback));
     ctx->_user_data = user_data;
@@ -102,15 +120,19 @@ int mqtt_init_contex(mqtt_context *ctx,mqtt_callback callback,void *user_data){
     ctx->_ctx.handle_sub_ack = handle_sub_ack;
     ctx->_ctx.handle_unsub_ack = handle_unsub_ack;
     buffer_init(&ctx->_remain_data);
+    return ctx;
+}
+
+int mqtt_free_contex(void *arg){
+    mqtt_context *ctx = (mqtt_context *)arg;
+    CHECK_PTR(ctx);
+    MqttBuffer_Destroy(&ctx->_buffer);
+    memset(ctx,0, sizeof(mqtt_context));
     return 0;
 }
 
-void mqtt_release_contex(mqtt_context *ctx){
-    MqttBuffer_Destroy(&ctx->_buffer);
-    memset(ctx,0, sizeof(mqtt_context));
-}
-
-int mqtt_send_packet(mqtt_context *ctx){
+int mqtt_send_packet(void *arg){
+    mqtt_context *ctx = (mqtt_context *)arg;
     CHECK_PTR(ctx);
     CHECK_RET(0,Mqtt_SendPkt(&ctx->_ctx,&ctx->_buffer,0));
     MqttBuffer_Reset(&ctx->_buffer);
@@ -118,7 +140,9 @@ int mqtt_send_packet(mqtt_context *ctx){
 }
 
 
-int mqtt_input_data_l(mqtt_context *ctx,char *data,int len) {
+int mqtt_input_data_l(void *arg,char *data,int len) {
+    mqtt_context *ctx = (mqtt_context *)arg;
+    CHECK_PTR(ctx);
     int customed = 0;
     int ret = Mqtt_RecvPkt(&ctx->_ctx,data,len,&customed);
     if(ret != MQTTERR_NOERROR){
@@ -145,7 +169,9 @@ int mqtt_input_data_l(mqtt_context *ctx,char *data,int len) {
     return 0;
 }
 
-int mqtt_input_data(mqtt_context *ctx,char *data,int len){
+int mqtt_input_data(void *arg,char *data,int len){
+    mqtt_context *ctx = (mqtt_context *)arg;
+    CHECK_PTR(ctx);
     if(!ctx->_remain_data._len){
         return mqtt_input_data_l(ctx,data,len);
     }
@@ -153,7 +179,7 @@ int mqtt_input_data(mqtt_context *ctx,char *data,int len){
     return mqtt_input_data_l(ctx,ctx->_remain_data._data,ctx->_remain_data._len);
 }
 
-int mqtt_send_connect_pkt(mqtt_context *ctx,
+int mqtt_send_connect_pkt(void *arg,
                           int keep_alive,
                           const char *id,
                           int clean_session,
@@ -167,6 +193,7 @@ int mqtt_send_connect_pkt(mqtt_context *ctx,
     if(will_payload_len <= 0){
         will_payload_len = strlen(will_payload);
     }
+    mqtt_context *ctx = (mqtt_context *)arg;
     CHECK_PTR(ctx);
     CHECK_RET(-1,Mqtt_PackConnectPkt(&ctx->_buffer,
                                      keep_alive,
@@ -184,7 +211,7 @@ int mqtt_send_connect_pkt(mqtt_context *ctx,
     return 0;
 }
 
-int mqtt_send_publish_pkt(mqtt_context *ctx,
+int mqtt_send_publish_pkt(void *arg,
                           const char *topic,
                           const char *payload,
                           int payload_len,
@@ -194,7 +221,7 @@ int mqtt_send_publish_pkt(mqtt_context *ctx,
     if(payload_len <= 0){
         payload_len = strlen(payload);
     }
-
+    mqtt_context *ctx = (mqtt_context *)arg;
     CHECK_PTR(ctx);
     CHECK_RET(-1,Mqtt_PackPublishPkt(&ctx->_buffer,
                                      ++ctx->_pkt_id,
@@ -212,10 +239,11 @@ int mqtt_send_publish_pkt(mqtt_context *ctx,
 }
 
 
-int mqtt_send_subscribe_pkt(mqtt_context *ctx,
+int mqtt_send_subscribe_pkt(void *arg,
                             enum MqttQosLevel qos,
                             const char *const *topics,
                             int topics_len){
+    mqtt_context *ctx = (mqtt_context *)arg;
     CHECK_PTR(ctx);
     CHECK_RET(-1,Mqtt_PackSubscribePkt(&ctx->_buffer,
                                        ++ctx->_pkt_id,
@@ -226,9 +254,10 @@ int mqtt_send_subscribe_pkt(mqtt_context *ctx,
     return 0;
 }
 
-int mqtt_send_unsubscribe_pkt(mqtt_context *ctx,
+int mqtt_send_unsubscribe_pkt(void *arg,
                             const char *const *topics,
                             int topics_len){
+    mqtt_context *ctx = (mqtt_context *)arg;
     CHECK_PTR(ctx);
     CHECK_RET(-1,Mqtt_PackUnsubscribePkt(&ctx->_buffer,
                                          ++ctx->_pkt_id,
@@ -239,14 +268,16 @@ int mqtt_send_unsubscribe_pkt(mqtt_context *ctx,
 }
 
 
-int mqtt_send_ping_pkt(mqtt_context *ctx){
+int mqtt_send_ping_pkt(void *arg){
+    mqtt_context *ctx = (mqtt_context *)arg;
     CHECK_PTR(ctx);
     CHECK_RET(-1,Mqtt_PackPingReqPkt(&ctx->_buffer));
     CHECK_RET(-1,mqtt_send_packet(ctx));
     return 0;
 }
 
-int mqtt_send_disconnect_pkt(mqtt_context *ctx){
+int mqtt_send_disconnect_pkt(void *arg){
+    mqtt_context *ctx = (mqtt_context *)arg;
     CHECK_PTR(ctx);
     CHECK_RET(-1,Mqtt_PackDisconnectPkt(&ctx->_buffer));
     CHECK_RET(-1,mqtt_send_packet(ctx));
