@@ -490,7 +490,7 @@ void for_each_map(HashTable *hash_table,int flush){
             continue;
         }
 
-        LOGT("wait response callback timeouted:%d",value->_cb_type);
+        LOGW("wait response callback timeouted,callback type:%d",value->_cb_type);
         //触发超时回调
         switch (value->_cb_type){
             case res_pub_ack:
