@@ -28,7 +28,7 @@ in_addr_t get_host_addr(const char *host){
     }
 
     if ((hostinfo = gethostbyname(host)) == NULL) {
-        LOGW("gethostbyname failed, errno: %d(%s) domain %s \r\n", errno,strerror(errno), host);
+        LOGW("gethostbyname failed, errno: %d(%s) domain %s ", errno,strerror(errno), host);
         return INADDR_NONE;
     }
 
@@ -56,7 +56,7 @@ int net_set_sock_timeout(int fd, int recv, float second){
 
     int opt = recv ? SO_RCVTIMEO : SO_SNDTIMEO;
     if (setsockopt(fd, SOL_SOCKET, opt , (char *) &timeout, sizeof(timeout)) == -1) {
-        LOGW("setsockopt %d failed, errno: %d(%s)\r\n", opt , errno,strerror(errno));
+        LOGW("setsockopt %d failed, errno: %d(%s)", opt , errno,strerror(errno));
         return -1;
     }
     return 0;
@@ -65,13 +65,13 @@ int net_connet_server(const char *host, unsigned short port,float second){
     int sockfd ;
     struct sockaddr_in server_addr;
     if(-1 == get_server_addr(host,port,&server_addr)){
-        LOGW("get_server_addr failed, domain %s \r\n", host);
+        LOGW("get_server_addr failed, domain %s ", host);
         return -1;
     }
 
     sockfd = socket(AF_INET,SOCK_STREAM,0);
     if(sockfd == -1){
-        LOGW("create socket failed, errno %d(%s) \r\n", errno,strerror(errno));
+        LOGW("create socket failed, errno %d(%s) ", errno,strerror(errno));
         return -1;
     }
 
@@ -81,12 +81,12 @@ int net_connet_server(const char *host, unsigned short port,float second){
         }
 
         if (connect(sockfd, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
-            LOGW("connect failed, errno = %d(%s), host %s port %d \r\n", errno,strerror(errno), host, port);
+            LOGW("connect failed, errno = %d(%s), host %s port %d ", errno,strerror(errno), host, port);
             break;
         }
 
         //connect success!
-        LOGI("connect server %s %d success!\r\n",host,port);
+        LOGI("connect server %s %d success!",host,port);
         net_set_sock_timeout(sockfd,1,0);
         return sockfd;
     }while (0);

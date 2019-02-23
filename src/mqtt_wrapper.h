@@ -16,7 +16,7 @@ extern "C" {
 #define CHECK_PTR(ptr) \
 do{ \
     if(!ptr) { \
-        LOGW("invalid ptr:%s\r\n",#ptr);\
+        LOGW("invalid ptr:%s",#ptr);\
         return -1; \
     } \
 }while(0)
@@ -26,7 +26,7 @@ do{ \
 do{\
     int ret = __VA_ARGS__;\
     if(ret <= n){ \
-        LOGW("%s <= %d\r\n",#__VA_ARGS__,n);\
+        LOGW("%s <= %d",#__VA_ARGS__,n);\
         return -1;\
     } \
 }while(0)
@@ -83,16 +83,28 @@ int mqtt_send_publish_pkt(void *ctx,
                           int payload_len,
                           enum MqttQosLevel qos,
                           int retain,
-                          int dup);
+                          int dup,
+                          mqtt_handle_pub_ack cb,
+                          void *user_data,
+                          free_user_data free_cb,
+                          int timeout_sec  );
 
 int mqtt_send_subscribe_pkt(void *ctx,
                             enum MqttQosLevel qos,
                             const char *const *topics,
-                            int topics_len);
+                            int topics_len,
+                            mqtt_handle_sub_ack cb,
+                            void *user_data,
+                            free_user_data free_cb,
+                            int timeout_sec);
 
 int mqtt_send_unsubscribe_pkt(void *ctx,
                               const char *const *topics,
-                              int topics_len);
+                              int topics_len,
+                              mqtt_handle_unsub_ack cb,
+                              void *user_data,
+                              free_user_data free_cb,
+                              int timeout_sec);
 
 int mqtt_send_ping_pkt(void *ctx);
 

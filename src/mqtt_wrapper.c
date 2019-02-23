@@ -9,6 +9,7 @@
 #include <memory.h>
 #include <stdlib.h>
 
+//////////////////////////////////////////////////////////////////////
 typedef struct{
     //回调指针
     mqtt_callback _callback;
@@ -37,143 +38,9 @@ typedef struct {
     time_t _end_time_line;
 } mqtt_req_cb_value;
 
+//////////////////////////////////////////////////////////////////////
 static mqtt_req_cb_value *lookup_req_cb_value(mqtt_context *ctx,uint16_t pkt_id){
     return (mqtt_req_cb_value *)hash_table_lookup(ctx->_req_cb_map,(HashTableKey)pkt_id);
-}
-
-static int mqtt_write_sock(void *arg, const struct iovec *iov, int iovcnt){
-    mqtt_context *ctx = (mqtt_context *)arg;
-    CHECK_PTR(ctx);
-    CHECK_PTR(ctx->_callback.mqtt_data_output);
-    return ctx->_callback.mqtt_data_output(ctx->_user_data,iov,iovcnt);
-}
-
-static int handle_ping_resp(void *arg){/**< 处理ping响应的回调函数，成功则返回非负数 */
-    mqtt_context *ctx = (mqtt_context *)arg;
-    LOGD("\r\n");
-    CHECK_PTR(ctx->_callback.mqtt_handle_ping_resp);
-    ctx->_callback.mqtt_handle_ping_resp(ctx->_user_data);
-    return 0;
-}
-
-
-static int handle_conn_ack(void *arg, char flags, char ret_code){
-    mqtt_context *ctx = (mqtt_context *)arg;
-    LOGD("flags:%d , ret_code:%d\r\n",(int)flags,(int)(ret_code));
-    CHECK_PTR(ctx->_callback.mqtt_handle_conn_ack);
-    ctx->_callback.mqtt_handle_conn_ack(ctx->_user_data,flags,ret_code);
-    return 0;
-}
-
-static int handle_publish(void *arg,
-                          uint16_t pkt_id,
-                          const char *topic,
-                          const char *payload,
-                          uint32_t payloadsize,
-                          int dup,
-                          enum MqttQosLevel qos){
-    mqtt_context *ctx = (mqtt_context *)arg;
-    LOGD("pkt_id:%d , topic: %s , payload:%s , dup:%d , qos:%d\r\n",(int)pkt_id,topic,payload,dup,(int)qos);
-    CHECK_PTR(ctx->_callback.mqtt_handle_publish);
-    ctx->_callback.mqtt_handle_publish(ctx->_user_data,pkt_id,topic,payload,payloadsize,dup,qos);
-    return 0;
-}
-
-static int handle_pub_ack(void *arg, uint16_t pkt_id){
-    mqtt_context *ctx = (mqtt_context *)arg;
-    LOGD("pkt_id: %d\r\n",(int)pkt_id);
-
-    mqtt_req_cb_value *value = lookup_req_cb_value(ctx,pkt_id);
-    if(!value){
-        LOGW("can not find callback!");
-        return 0;
-    }
-    if(value->_callback._mqtt_handle_pub_ack){
-        value->_callback._mqtt_handle_pub_ack(value->_user_data,pub_ack);
-    }
-    hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
-    return 0;
-}
-
-static int handle_pub_rec(void *arg, uint16_t pkt_id){
-    mqtt_context *ctx = (mqtt_context *)arg;
-    LOGD("pkt_id: %d\r\n",(int)pkt_id);
-
-    mqtt_req_cb_value *value = lookup_req_cb_value(ctx,pkt_id);
-    if(!value){
-        LOGW("can not find callback!");
-        return 0;
-    }
-    if(value->_callback._mqtt_handle_pub_ack){
-        value->_callback._mqtt_handle_pub_ack(value->_user_data,pub_rec);
-    }
-    hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
-    return 0;
-}
-
-static int handle_pub_rel(void *arg, uint16_t pkt_id){
-    mqtt_context *ctx = (mqtt_context *)arg;
-    LOGD("pkt_id: %d\r\n",(int)pkt_id);
-
-
-    mqtt_req_cb_value *value = lookup_req_cb_value(ctx,pkt_id);
-    if(!value){
-        LOGW("can not find callback!");
-        return 0;
-    }
-    if(value->_callback._mqtt_handle_pub_ack){
-        value->_callback._mqtt_handle_pub_ack(value->_user_data,pub_rel);
-    }
-    hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
-    return 0;
-}
-
-static int handle_pub_comp(void *arg, uint16_t pkt_id){
-    mqtt_context *ctx = (mqtt_context *)arg;
-    LOGD("pkt_id: %d\r\n",(int)pkt_id);
-
-    mqtt_req_cb_value *value = lookup_req_cb_value(ctx,pkt_id);
-    if(!value){
-        LOGW("can not find callback!");
-        return 0;
-    }
-    if(value->_callback._mqtt_handle_pub_ack){
-        value->_callback._mqtt_handle_pub_ack(value->_user_data,pub_comp);
-    }
-    hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
-    return 0;
-}
-
-static int handle_sub_ack(void *arg, uint16_t pkt_id,const char *codes, uint32_t count){
-    mqtt_context *ctx = (mqtt_context *)arg;
-    LOGD("pkt_id: %d , codes:%s , count:%d \r\n",(int)pkt_id,codes,(int)count);
-
-    mqtt_req_cb_value *value = lookup_req_cb_value(ctx,pkt_id);
-    if(!value){
-        LOGW("can not find callback!");
-        return 0;
-    }
-    if(value->_callback._mqtt_handle_sub_ack){
-        value->_callback._mqtt_handle_sub_ack(value->_user_data,codes,count);
-    }
-    hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
-    return 0;
-}
-
-static int handle_unsub_ack(void *arg, uint16_t pkt_id){
-    mqtt_context *ctx = (mqtt_context *)arg;
-    LOGD("pkt_id: %d\r\n",(int)pkt_id);
-
-    mqtt_req_cb_value *value = lookup_req_cb_value(ctx,pkt_id);
-    if(!value){
-        LOGW("can not find callback!");
-        return 0;
-    }
-    if(value->_callback._mqtt_handle_unsub_ack){
-        value->_callback._mqtt_handle_unsub_ack(value->_user_data);
-    }
-    hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
-    return 0;
 }
 
 /**
@@ -203,10 +70,149 @@ static void mqtt_HashTableValueFreeFunc(HashTableValue value){
     }
     free(cb);
 }
+
+//////////////////////////////////////////////////////////////////////
+static int mqtt_write_sock(void *arg, const struct iovec *iov, int iovcnt){
+    mqtt_context *ctx = (mqtt_context *)arg;
+    CHECK_PTR(ctx);
+    CHECK_PTR(ctx->_callback.mqtt_data_output);
+    return ctx->_callback.mqtt_data_output(ctx->_user_data,iov,iovcnt);
+}
+
+static int handle_ping_resp(void *arg){/**< 处理ping响应的回调函数，成功则返回非负数 */
+    mqtt_context *ctx = (mqtt_context *)arg;
+    LOGD("");
+    CHECK_PTR(ctx->_callback.mqtt_handle_ping_resp);
+    ctx->_callback.mqtt_handle_ping_resp(ctx->_user_data);
+    return 0;
+}
+
+
+static int handle_conn_ack(void *arg, char flags, char ret_code){
+    mqtt_context *ctx = (mqtt_context *)arg;
+    LOGD("flags:%d , ret_code:%d",(int)flags,(int)(ret_code));
+    CHECK_PTR(ctx->_callback.mqtt_handle_conn_ack);
+    ctx->_callback.mqtt_handle_conn_ack(ctx->_user_data,flags,ret_code);
+    return 0;
+}
+
+static int handle_publish(void *arg,
+                          uint16_t pkt_id,
+                          const char *topic,
+                          const char *payload,
+                          uint32_t payloadsize,
+                          int dup,
+                          enum MqttQosLevel qos){
+    mqtt_context *ctx = (mqtt_context *)arg;
+    LOGD("pkt_id:%d , topic: %s , payload:%s , dup:%d , qos:%d",(int)pkt_id,topic,payload,dup,(int)qos);
+    CHECK_PTR(ctx->_callback.mqtt_handle_publish);
+    ctx->_callback.mqtt_handle_publish(ctx->_user_data,pkt_id,topic,payload,payloadsize,dup,qos);
+    return 0;
+}
+
+//////////////////////////////////////////////////////////////////////
+static int handle_pub_ack(void *arg, uint16_t pkt_id){
+    mqtt_context *ctx = (mqtt_context *)arg;
+    LOGD("pkt_id: %d",(int)pkt_id);
+
+    mqtt_req_cb_value *value = lookup_req_cb_value(ctx,pkt_id);
+    if(!value){
+        LOGW("can not find callback!");
+        return 0;
+    }
+    if(value->_callback._mqtt_handle_pub_ack){
+        value->_callback._mqtt_handle_pub_ack(value->_user_data,pub_ack);
+    }
+    hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
+    return 0;
+}
+
+static int handle_pub_rec(void *arg, uint16_t pkt_id){
+    mqtt_context *ctx = (mqtt_context *)arg;
+    LOGD("pkt_id: %d",(int)pkt_id);
+
+    mqtt_req_cb_value *value = lookup_req_cb_value(ctx,pkt_id);
+    if(!value){
+        LOGW("can not find callback!");
+        return 0;
+    }
+    if(value->_callback._mqtt_handle_pub_ack){
+        value->_callback._mqtt_handle_pub_ack(value->_user_data,pub_rec);
+    }
+    hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
+    return 0;
+}
+
+static int handle_pub_rel(void *arg, uint16_t pkt_id){
+    mqtt_context *ctx = (mqtt_context *)arg;
+    LOGD("pkt_id: %d",(int)pkt_id);
+
+
+    mqtt_req_cb_value *value = lookup_req_cb_value(ctx,pkt_id);
+    if(!value){
+        LOGW("can not find callback!");
+        return 0;
+    }
+    if(value->_callback._mqtt_handle_pub_ack){
+        value->_callback._mqtt_handle_pub_ack(value->_user_data,pub_rel);
+    }
+    hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
+    return 0;
+}
+
+static int handle_pub_comp(void *arg, uint16_t pkt_id){
+    mqtt_context *ctx = (mqtt_context *)arg;
+    LOGD("pkt_id: %d",(int)pkt_id);
+
+    mqtt_req_cb_value *value = lookup_req_cb_value(ctx,pkt_id);
+    if(!value){
+        LOGW("can not find callback!");
+        return 0;
+    }
+    if(value->_callback._mqtt_handle_pub_ack){
+        value->_callback._mqtt_handle_pub_ack(value->_user_data,pub_comp);
+    }
+    hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
+    return 0;
+}
+
+static int handle_sub_ack(void *arg, uint16_t pkt_id,const char *codes, uint32_t count){
+    mqtt_context *ctx = (mqtt_context *)arg;
+    LOGD("pkt_id: %d , codes:%s , count:%d ",(int)pkt_id,codes,(int)count);
+
+    mqtt_req_cb_value *value = lookup_req_cb_value(ctx,pkt_id);
+    if(!value){
+        LOGW("can not find callback!");
+        return 0;
+    }
+    if(value->_callback._mqtt_handle_sub_ack){
+        value->_callback._mqtt_handle_sub_ack(value->_user_data,codes,count);
+    }
+    hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
+    return 0;
+}
+
+static int handle_unsub_ack(void *arg, uint16_t pkt_id){
+    mqtt_context *ctx = (mqtt_context *)arg;
+    LOGD("pkt_id: %d",(int)pkt_id);
+
+    mqtt_req_cb_value *value = lookup_req_cb_value(ctx,pkt_id);
+    if(!value){
+        LOGW("can not find callback!");
+        return 0;
+    }
+    if(value->_callback._mqtt_handle_unsub_ack){
+        value->_callback._mqtt_handle_unsub_ack(value->_user_data);
+    }
+    hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
+    return 0;
+}
+
+//////////////////////////////////////////////////////////////////////
 void *mqtt_alloc_contex(mqtt_callback callback,void *user_data){
     mqtt_context *ctx = (mqtt_context *)malloc(sizeof(mqtt_context));
     if(!ctx){
-        LOGE("malloc mqtt_context failed!\r\n");
+        LOGE("malloc mqtt_context failed!");
         return NULL;
     }
     memset(ctx,0, sizeof(mqtt_context));
@@ -230,7 +236,7 @@ void *mqtt_alloc_contex(mqtt_callback callback,void *user_data){
 
     ctx->_req_cb_map = hash_table_new(mqtt_HashTableHashFunc,mqtt_HashTableEqualFunc);
     if(!ctx->_req_cb_map){
-        LOGE("malloc hash_table_new failed!\r\n");
+        LOGE("malloc hash_table_new failed!");
         mqtt_free_contex(ctx);
         return NULL;
     }
@@ -263,7 +269,7 @@ int mqtt_input_data_l(void *arg,char *data,int len) {
     int customed = 0;
     int ret = Mqtt_RecvPkt(&ctx->_ctx,data,len,&customed);
     if(ret != MQTTERR_NOERROR){
-        LOGW("Mqtt_RecvPkt failed:%d\r\n", ret);
+        LOGW("Mqtt_RecvPkt failed:%d", ret);
         return -1;
     }
 
@@ -334,7 +340,11 @@ int mqtt_send_publish_pkt(void *arg,
                           int payload_len,
                           enum MqttQosLevel qos,
                           int retain,
-                          int dup){
+                          int dup,
+                          mqtt_handle_pub_ack cb,
+                          void *user_data,
+                          free_user_data free_cb,
+                          int timeout_sec){
     if(payload_len <= 0){
         payload_len = strlen(payload);
     }
@@ -352,6 +362,15 @@ int mqtt_send_publish_pkt(void *arg,
         CHECK_RET(-1,Mqtt_SetPktDup(&ctx->_buffer));
     }
     CHECK_RET(-1,mqtt_send_packet(ctx));
+
+    mqtt_req_cb_value *value = malloc(sizeof(mqtt_req_cb_value));
+    if(value){
+        value->_user_data = user_data;
+        value->_callback._free_user_data = free_cb;
+        value->_callback._mqtt_handle_pub_ack = cb;
+        value->_end_time_line = time(NULL) + timeout_sec;
+        hash_table_insert(ctx->_req_cb_map,(HashTableKey)ctx->_pkt_id,value);
+    }
     return 0;
 }
 
@@ -359,7 +378,11 @@ int mqtt_send_publish_pkt(void *arg,
 int mqtt_send_subscribe_pkt(void *arg,
                             enum MqttQosLevel qos,
                             const char *const *topics,
-                            int topics_len){
+                            int topics_len,
+                            mqtt_handle_sub_ack cb,
+                            void *user_data,
+                            free_user_data free_cb,
+                            int timeout_sec){
     mqtt_context *ctx = (mqtt_context *)arg;
     CHECK_PTR(ctx);
     CHECK_RET(-1,Mqtt_PackSubscribePkt(&ctx->_buffer,
@@ -368,12 +391,25 @@ int mqtt_send_subscribe_pkt(void *arg,
                                        topics,
                                        topics_len));
     CHECK_RET(-1,mqtt_send_packet(ctx));
+
+    mqtt_req_cb_value *value = malloc(sizeof(mqtt_req_cb_value));
+    if(value){
+        value->_user_data = user_data;
+        value->_callback._free_user_data = free_cb;
+        value->_callback._mqtt_handle_sub_ack = cb;
+        value->_end_time_line = time(NULL) + timeout_sec;
+        hash_table_insert(ctx->_req_cb_map,(HashTableKey)ctx->_pkt_id,value);
+    }
     return 0;
 }
 
 int mqtt_send_unsubscribe_pkt(void *arg,
-                            const char *const *topics,
-                            int topics_len){
+                              const char *const *topics,
+                              int topics_len,
+                              mqtt_handle_unsub_ack cb,
+                              void *user_data,
+                              free_user_data free_cb,
+                              int timeout_sec){
     mqtt_context *ctx = (mqtt_context *)arg;
     CHECK_PTR(ctx);
     CHECK_RET(-1,Mqtt_PackUnsubscribePkt(&ctx->_buffer,
@@ -381,6 +417,15 @@ int mqtt_send_unsubscribe_pkt(void *arg,
                                          topics,
                                          topics_len));
     CHECK_RET(-1,mqtt_send_packet(ctx));
+
+    mqtt_req_cb_value *value = malloc(sizeof(mqtt_req_cb_value));
+    if(value){
+        value->_user_data = user_data;
+        value->_callback._free_user_data = free_cb;
+        value->_callback._mqtt_handle_unsub_ack = cb;
+        value->_end_time_line = time(NULL) + timeout_sec;
+        hash_table_insert(ctx->_req_cb_map,(HashTableKey)ctx->_pkt_id,value);
+    }
     return 0;
 }
 
