@@ -21,18 +21,20 @@ typedef struct{
     buffer _remain_data;
     //hash树回调列表
     HashTable *_req_cb_map;
+    //心跳包相关
+    int _keep_alive;
+    time_t _last_ping;
 } mqtt_context;
 
-typedef struct {
-    free_user_data _free_user_data;
-    mqtt_handle_pub_ack _mqtt_handle_pub_ack;
-    mqtt_handle_sub_ack _mqtt_handle_sub_ack;
-    mqtt_handle_unsub_ack _mqtt_handle_unsub_ack;
-} mqtt_req_callback;
 
 typedef struct {
-    mqtt_req_callback _callback;
     void *_user_data;
+    free_user_data _free_user_data;
+    union {
+        mqtt_handle_pub_ack _mqtt_handle_pub_ack;
+        mqtt_handle_sub_ack _mqtt_handle_sub_ack;
+        mqtt_handle_unsub_ack _mqtt_handle_unsub_ack;
+    } _callback;
     time_t _end_time_line;
 } mqtt_req_cb_value;
 
@@ -63,8 +65,8 @@ static int mqtt_HashTableEqualFunc(HashTableKey value1, HashTableKey value2){
 
 static void mqtt_HashTableValueFreeFunc(HashTableValue value){
     mqtt_req_cb_value *cb = (mqtt_req_cb_value *)value;
-    if(cb->_callback._free_user_data && cb->_user_data){
-        cb->_callback._free_user_data(cb->_user_data);
+    if(cb->_free_user_data && cb->_user_data){
+        cb->_free_user_data(cb->_user_data);
     }
     free(cb);
 }
@@ -82,6 +84,7 @@ static int handle_ping_resp(void *arg){/**< 处理ping响应的回调函数，�
     LOGD("");
     CHECK_PTR(ctx->_callback.mqtt_handle_ping_resp);
     ctx->_callback.mqtt_handle_ping_resp(ctx->_callback._user_data);
+    ctx->_last_ping = time(NULL);
     return 0;
 }
 
@@ -338,6 +341,9 @@ int mqtt_send_connect_pkt(void *arg,
                                      password,
                                      strlen(password)));
     CHECK_RET(-1,mqtt_send_packet(ctx));
+
+    ctx->_keep_alive = keep_alive;
+    ctx->_last_ping = time(NULL);
     return 0;
 }
 
@@ -373,7 +379,7 @@ int mqtt_send_publish_pkt(void *arg,
     mqtt_req_cb_value *value = malloc(sizeof(mqtt_req_cb_value));
     if(value){
         value->_user_data = user_data;
-        value->_callback._free_user_data = free_cb;
+        value->_free_user_data = free_cb;
         value->_callback._mqtt_handle_pub_ack = cb;
         value->_end_time_line = time(NULL) + timeout_sec;
         hash_table_insert(ctx->_req_cb_map,(HashTableKey)ctx->_pkt_id,value);
@@ -402,7 +408,7 @@ int mqtt_send_subscribe_pkt(void *arg,
     mqtt_req_cb_value *value = malloc(sizeof(mqtt_req_cb_value));
     if(value){
         value->_user_data = user_data;
-        value->_callback._free_user_data = free_cb;
+        value->_free_user_data = free_cb;
         value->_callback._mqtt_handle_sub_ack = cb;
         value->_end_time_line = time(NULL) + timeout_sec;
         hash_table_insert(ctx->_req_cb_map,(HashTableKey)ctx->_pkt_id,value);
@@ -428,7 +434,7 @@ int mqtt_send_unsubscribe_pkt(void *arg,
     mqtt_req_cb_value *value = malloc(sizeof(mqtt_req_cb_value));
     if(value){
         value->_user_data = user_data;
-        value->_callback._free_user_data = free_cb;
+        value->_free_user_data = free_cb;
         value->_callback._mqtt_handle_unsub_ack = cb;
         value->_end_time_line = time(NULL) + timeout_sec;
         hash_table_insert(ctx->_req_cb_map,(HashTableKey)ctx->_pkt_id,value);
@@ -437,6 +443,11 @@ int mqtt_send_unsubscribe_pkt(void *arg,
 }
 
 
+/**
+ * 发送心跳包
+ * @param ctx mqtt客户端对象
+ * @return 0代表成功，否则为错误代码，@see MqttError
+ */
 int mqtt_send_ping_pkt(void *arg){
     mqtt_context *ctx = (mqtt_context *)arg;
     CHECK_PTR(ctx);
@@ -450,5 +461,33 @@ int mqtt_send_disconnect_pkt(void *arg){
     CHECK_PTR(ctx);
     CHECK_RET(-1,Mqtt_PackDisconnectPkt(&ctx->_buffer));
     CHECK_RET(-1,mqtt_send_packet(ctx));
+    return 0;
+}
+
+
+void for_each_map(mqtt_context *ctx){
+    time_t now = time(NULL);
+    HashTableIterator it;
+    hash_table_iterate(ctx->_req_cb_map,&it);
+    while(hash_table_iter_has_more(&it)) {
+        HashTablePair pr = hash_table_iter_next(&it);
+        mqtt_req_cb_value *value = (mqtt_req_cb_value *)pr.value;
+        if(value->_end_time_line <= now){
+            //timeouted
+        }else{
+
+        }
+    }
+}
+
+int mqtt_timer_schedule(void *arg){
+    mqtt_context *ctx = (mqtt_context *)arg;
+    CHECK_PTR(ctx);
+    for_each_map(ctx);
+
+    time_t now = time(NULL);
+    if(now - ctx->_last_ping > ctx->_keep_alive){
+        return mqtt_send_ping_pkt(arg);
+    }
     return 0;
 }

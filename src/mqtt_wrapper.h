@@ -153,6 +153,13 @@ int mqtt_free_contex(void *ctx);
 int mqtt_input_data(void *ctx,char *data,int len);
 
 /**
+ * 定时器轮询，建议每1秒调用一次;内部会触发心跳包以及回复超时回调
+ * @param ctx  mqtt客户端对象
+ * @return 0成功 @see MqttError
+ */
+int mqtt_timer_schedule(void *ctx);
+
+/**
  * 发送登录包给服务器
  * @param ctx mqtt客户端对象
  * @param keep_alive 心跳包间隔时间，单位秒
@@ -246,14 +253,6 @@ int mqtt_send_unsubscribe_pkt(void *ctx,
                               void *user_data,
                               free_user_data free_cb,
                               int timeout_sec);
-
-/**
- * 发送心跳包
- * @param ctx mqtt客户端对象
- * @return 0代表成功，否则为错误代码，@see MqttError
- */
-int mqtt_send_ping_pkt(void *ctx);
-
 /**
  * 发送登出包
  * @param ctx mqtt客户端对象
