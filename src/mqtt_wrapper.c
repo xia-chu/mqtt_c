@@ -277,7 +277,7 @@ int mqtt_input_data_l(void *arg,char *data,int len) {
     int ret = Mqtt_RecvPkt(&ctx->_ctx,data,len,&customed);
     if(ret != MQTTERR_NOERROR){
         LOGW("Mqtt_RecvPkt failed:%d", ret);
-        return -1;
+        return ret;
     }
 
     if(customed == 0){

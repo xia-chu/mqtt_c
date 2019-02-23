@@ -14,14 +14,15 @@ extern "C" {
 /** MQTT错误码 */
 enum MqttError {
     MQTTERR_NOERROR                  = 0,  /**< 成功，无错误*/
-    MQTTERR_OUTOFMEMORY              = -1, /**< 内存不足 */
-    MQTTERR_ILLEGAL_PKT              = -2, /**< 非法的数据包 */
-    MQTTERR_ILLEGAL_CHARACTER        = -3, /**< 非法的字符 */
-    MQTTERR_NOT_UTF8                 = -4, /**< 字符编码不是UTF-8 */
-    MQTTERR_INVALID_PARAMETER        = -5, /**< 参数错误 */
-    MQTTERR_PKT_TOO_LARGE            = -6, /**< 数据包过大 */
-    MQTTERR_INTERNAL                 = -7,/**< 系统内部错误 */
-    MQTTERR_FAILED_SEND_RESPONSE     = -8 /**< 处理publish系列消息后，发送响应包失败 */
+    MQTTERR_OTHER                    = -1, /**其他错误*/
+    MQTTERR_OUTOFMEMORY              = -2, /**< 内存不足 */
+    MQTTERR_ILLEGAL_PKT              = -3, /**< 非法的数据包 */
+    MQTTERR_ILLEGAL_CHARACTER        = -4, /**< 非法的字符 */
+    MQTTERR_NOT_UTF8                 = -5, /**< 字符编码不是UTF-8 */
+    MQTTERR_INVALID_PARAMETER        = -6, /**< 参数错误 */
+    MQTTERR_PKT_TOO_LARGE            = -7, /**< 数据包过大 */
+    MQTTERR_INTERNAL                 = -8,/**< 系统内部错误 */
+    MQTTERR_FAILED_SEND_RESPONSE     = -9 /**< 处理publish系列消息后，发送响应包失败 */
 };
 
 /** MQTT数据包类型 */
