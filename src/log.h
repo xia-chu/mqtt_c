@@ -17,18 +17,33 @@ typedef enum {
 
 extern const char *g_log_lev_str[];
 
-#define LOG(lev,...) \
+#ifdef __alios__
+
+#include <aos/aos.h>
+
+#define PRINT(lev,...) \
+do{ \
+    LOG("%s %d\r\n",__FILE__,__LINE__);\
+    LOG("%s | %s ",g_log_lev_str[lev],__FUNCTION__);\
+    LOG(__VA_ARGS__);\
+} while(0)
+
+#else
+
+#define PRINT(lev,...) \
 do{ \
     printf("%s %d\r\n",__FILE__,__LINE__);\
     printf("%s | %s ",g_log_lev_str[lev],__FUNCTION__);\
     printf(__VA_ARGS__);\
 } while(0)
 
-#define LOGT(...) LOG(log_trace,__VA_ARGS__)
-#define LOGD(...) LOG(log_debug,__VA_ARGS__)
-#define LOGI(...) LOG(log_info,__VA_ARGS__)
-#define LOGW(...) LOG(log_warn,__VA_ARGS__)
-#define LOGE(...) LOG(log_error,__VA_ARGS__)
+#endif
+
+#define LOGT(...) PRINT(log_trace,__VA_ARGS__)
+#define LOGD(...) PRINT(log_debug,__VA_ARGS__)
+#define LOGI(...) PRINT(log_info,__VA_ARGS__)
+#define LOGW(...) PRINT(log_warn,__VA_ARGS__)
+#define LOGE(...) PRINT(log_error,__VA_ARGS__)
 
 
 #endif //MQTT_LOG_H

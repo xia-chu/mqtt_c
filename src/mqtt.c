@@ -1054,7 +1054,7 @@ int Mqtt_AppendSubscribeTopic(struct MqttBuffer *buf, const char *topic, enum Mq
     return MQTTERR_NOERROR;
 }
 
-int Mqtt_PackUnsubscribePkt(struct MqttBuffer *buf, uint16_t pkt_id, const char *topics[], int topics_len)
+int Mqtt_PackUnsubscribePkt(struct MqttBuffer *buf, uint16_t pkt_id, const char *const *topics, int topics_len)
 {
     struct MqttExtent *fixed_head, *ext;
     size_t topic_len;

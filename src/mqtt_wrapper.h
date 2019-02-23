@@ -40,6 +40,7 @@ typedef struct mqtt_context_t{
     FUNC_send_sock _on_send;
     void *_user_data;
     buffer _remain_data;
+    unsigned int _pkt_id;
 } mqtt_context;
 
 int mqtt_init_contex(mqtt_context *ctx,FUNC_send_sock on_send);
@@ -61,6 +62,26 @@ int mqtt_send_connect_pkt(mqtt_context *ctx,
 int mqtt_input_data(mqtt_context *ctx,char *data,int len);
 
 
+int mqtt_send_publish_pkt(mqtt_context *ctx,
+                          const char *topic,
+                          const char *payload,
+                          int payload_len,
+                          enum MqttQosLevel qos,
+                          int retain,
+                          int dup);
 
+
+int mqtt_send_subscribe_pkt(mqtt_context *ctx,
+                            enum MqttQosLevel qos,
+                            const char *const *topics,
+                            int topics_len);
+
+int mqtt_send_unsubscribe_pkt(mqtt_context *ctx,
+                              const char *const *topics,
+                              int topics_len);
+
+int mqtt_send_ping_pkt(mqtt_context *ctx);
+
+int mqtt_send_disconnect_pkt(mqtt_context *ctx);
 
 #endif //MQTT_MQTT_WRAPPER_H

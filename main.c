@@ -1,12 +1,5 @@
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
 #include "mqtt_wrapper.h"
 #include "net.h"
-#ifdef __cplusplus
-}
-#endif // __cplusplus
-
 #include <sys/signal.h>
 #include <unistd.h>
 #include <errno.h>

@@ -234,7 +234,7 @@ int Mqtt_AppendSubscribeTopic(struct MqttBuffer *buf, const char *topic, enum Mq
  * @param topics_len
  * @return 成功返回MQTTERR_NOERROR
  */
-int Mqtt_PackUnsubscribePkt(struct MqttBuffer *buf, uint16_t pkt_id, const char *topics[], int topics_len);
+int Mqtt_PackUnsubscribePkt(struct MqttBuffer *buf, uint16_t pkt_id, const char *const *topics, int topics_len);
 
 /**
  * 添加需要取消订阅的Topic到已有的取消订阅数据包中

@@ -3,9 +3,13 @@
 //
 
 #include "net.h"
+#ifdef __alios__
+#include <aos/network.h>
+#else
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#endif
 #include <sys/errno.h>
 #include <memory.h>
 #include <unistd.h>

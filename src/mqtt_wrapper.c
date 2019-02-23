@@ -4,14 +4,7 @@
 
 #include "mqtt_wrapper.h"
 #include "buffer.h"
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <sys/errno.h>
 #include <memory.h>
-#include <unistd.h>
-
-
 
 static int mqtt_write_sock(void *arg, const struct iovec *iov, int iovcnt){
     mqtt_context *ctx = (mqtt_context *)arg;
@@ -109,36 +102,6 @@ int mqtt_send_packet(mqtt_context *ctx){
     return 0;
 }
 
-int mqtt_send_connect_pkt(mqtt_context *ctx,
-                          int keep_alive,
-                          const char *id,
-                          int clean_session,
-                          const char *will_topic,
-                          const char *will_payload,
-                          int will_payload_len,
-                          enum MqttQosLevel qos,
-                          int will_retain,
-                          const char *user,
-                          const char *password){
-    if(will_payload_len <= 0){
-        will_payload_len = strlen(will_payload);
-    }
-    CHECK_CTX(ctx);
-    CHECK_RET(-1,Mqtt_PackConnectPkt(&ctx->_buffer,
-                                     keep_alive,
-                                     id,
-                                     clean_session,
-                                     will_topic,
-                                     will_payload,
-                                     will_payload_len,
-                                     qos,
-                                     will_retain,
-                                     user,
-                                     password,
-                                     strlen(password)));
-    CHECK_RET(-1,mqtt_send_packet(ctx));
-    return 0;
-}
 
 int mqtt_input_data_l(mqtt_context *ctx,char *data,int len) {
     int customed = 0;
@@ -173,4 +136,104 @@ int mqtt_input_data(mqtt_context *ctx,char *data,int len){
     }
     buffer_append(&ctx->_remain_data,data,len);
     return mqtt_input_data_l(ctx,ctx->_remain_data._data,ctx->_remain_data._len);
+}
+
+int mqtt_send_connect_pkt(mqtt_context *ctx,
+                          int keep_alive,
+                          const char *id,
+                          int clean_session,
+                          const char *will_topic,
+                          const char *will_payload,
+                          int will_payload_len,
+                          enum MqttQosLevel qos,
+                          int will_retain,
+                          const char *user,
+                          const char *password){
+    if(will_payload_len <= 0){
+        will_payload_len = strlen(will_payload);
+    }
+    CHECK_CTX(ctx);
+    CHECK_RET(-1,Mqtt_PackConnectPkt(&ctx->_buffer,
+                                     keep_alive,
+                                     id,
+                                     clean_session,
+                                     will_topic,
+                                     will_payload,
+                                     will_payload_len,
+                                     qos,
+                                     will_retain,
+                                     user,
+                                     password,
+                                     strlen(password)));
+    CHECK_RET(-1,mqtt_send_packet(ctx));
+    return 0;
+}
+
+int mqtt_send_publish_pkt(mqtt_context *ctx,
+                          const char *topic,
+                          const char *payload,
+                          int payload_len,
+                          enum MqttQosLevel qos,
+                          int retain,
+                          int dup){
+    if(payload_len <= 0){
+        payload_len = strlen(payload);
+    }
+
+    CHECK_CTX(ctx);
+    CHECK_RET(-1,Mqtt_PackPublishPkt(&ctx->_buffer,
+                                     ++ctx->_pkt_id,
+                                     topic,
+                                     payload,
+                                     payload_len,
+                                     qos,
+                                     retain,
+                                     1));
+    if(dup){
+        CHECK_RET(-1,Mqtt_SetPktDup(&ctx->_buffer));
+    }
+    CHECK_RET(-1,mqtt_send_packet(ctx));
+    return 0;
+}
+
+
+int mqtt_send_subscribe_pkt(mqtt_context *ctx,
+                            enum MqttQosLevel qos,
+                            const char *const *topics,
+                            int topics_len){
+    CHECK_CTX(ctx);
+    CHECK_RET(-1,Mqtt_PackSubscribePkt(&ctx->_buffer,
+                                       ++ctx->_pkt_id,
+                                       qos,
+                                       topics,
+                                       topics_len));
+    CHECK_RET(-1,mqtt_send_packet(ctx));
+    return 0;
+}
+
+int mqtt_send_unsubscribe_pkt(mqtt_context *ctx,
+                            const char *const *topics,
+                            int topics_len){
+    CHECK_CTX(ctx);
+    CHECK_RET(-1,Mqtt_PackUnsubscribePkt(&ctx->_buffer,
+                                         ++ctx->_pkt_id,
+                                         topics,
+                                         topics_len));
+    CHECK_RET(-1,mqtt_send_packet(ctx));
+    return 0;
+}
+
+
+int mqtt_send_ping_pkt(mqtt_context *ctx){
+    CHECK_CTX(ctx);
+    CHECK_RET(-1,Mqtt_PackPingReqPkt(&ctx->_buffer));
+    CHECK_RET(-1,mqtt_send_packet(ctx));
+    return 0;
+}
+
+int mqtt_send_disconnect_pkt(mqtt_context *ctx){
+    CHECK_CTX(ctx);
+    CHECK_RET(-1,Mqtt_PackDisconnectPkt(&ctx->_buffer));
+    CHECK_RET(-1,mqtt_send_packet(ctx));
+    return 0;
 }

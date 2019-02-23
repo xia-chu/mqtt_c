@@ -3,14 +3,12 @@
 
 #include <stddef.h>
 
-#ifdef WIN32
-#pragma warning(disable:4819)
-#pragma warning(disable:4996)
+#if  defined(WIN32) || defined(__alios__)
 struct iovec {
     void *iov_base;
     size_t iov_len;
 };
-#else // UNIX
+#else
 #include <sys/uio.h>
 #endif // _WIN32
 
