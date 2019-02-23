@@ -12,9 +12,6 @@ extern "C" {
 #include "log.h"
 #include <stdio.h>
 
-#define _STR(...) #__VA_ARGS__
-#define STR(...) _STR(__VA_ARGS__)
-
 #define CHECK_PTR(ptr) \
 do{ \
     if(!ptr) { \
@@ -28,7 +25,7 @@ do{ \
 do{\
     int ret = __VA_ARGS__;\
     if(ret <= n){ \
-        LOGW("%s <= %d\r\n",STR(__VA_ARGS__),n);\
+        LOGW("%s <= %d\r\n",#__VA_ARGS__,n);\
         return -1;\
     } \
 }while(0)
