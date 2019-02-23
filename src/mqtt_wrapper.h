@@ -36,6 +36,7 @@ typedef struct {
     int (*mqtt_data_output)(void *arg, const struct iovec *iov, int iovcnt);
     void (*mqtt_handle_conn_ack)(void *arg, char flags, char ret_code);
     void (*mqtt_handle_ping_resp)(void *arg);
+
     void (*mqtt_handle_publish)(void *arg,
                                 uint16_t pkt_id,
                                 const char *topic,
@@ -43,12 +44,14 @@ typedef struct {
                                 uint32_t payloadsize,
                                 int dup,
                                 enum MqttQosLevel qos);
+
+    void (*mqtt_handle_publish_rel)(void *arg,
+                                    uint16_t pkt_id);
 } mqtt_callback;
 //////////////////////////////////////////////////////////////////////
 typedef enum {
   pub_ack = 0,
   pub_rec,
-  pub_rel,
   pub_comp,
 } pub_type;
 

@@ -110,6 +110,20 @@ static int handle_publish(void *arg,
     return 0;
 }
 
+/**
+ * 服务器发布消息给我，然后移除消息，最终态
+ * @param arg
+ * @param pkt_id
+ * @return
+ */
+static int handle_pub_rel(void *arg, uint16_t pkt_id){
+    mqtt_context *ctx = (mqtt_context *)arg;
+    LOGD("pkt_id: %d",(int)pkt_id);
+    CHECK_PTR(ctx->_callback.mqtt_handle_publish_rel);
+    ctx->_callback.mqtt_handle_publish_rel(ctx->_user_data,pkt_id);
+    return 0;
+}
+
 //////////////////////////////////////////////////////////////////////
 static int handle_pub_ack(void *arg, uint16_t pkt_id){
     mqtt_context *ctx = (mqtt_context *)arg;
@@ -127,6 +141,12 @@ static int handle_pub_ack(void *arg, uint16_t pkt_id){
     return 0;
 }
 
+/**
+ * 服务器收到我发布的消息，中间态
+ * @param arg
+ * @param pkt_id
+ * @return
+ */
 static int handle_pub_rec(void *arg, uint16_t pkt_id){
     mqtt_context *ctx = (mqtt_context *)arg;
     LOGD("pkt_id: %d",(int)pkt_id);
@@ -139,27 +159,17 @@ static int handle_pub_rec(void *arg, uint16_t pkt_id){
     if(value->_callback._mqtt_handle_pub_ack){
         value->_callback._mqtt_handle_pub_ack(value->_user_data,pub_rec);
     }
-    hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
+    //中间态不移除监听
+//    hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
     return 0;
 }
 
-static int handle_pub_rel(void *arg, uint16_t pkt_id){
-    mqtt_context *ctx = (mqtt_context *)arg;
-    LOGD("pkt_id: %d",(int)pkt_id);
-
-
-    mqtt_req_cb_value *value = lookup_req_cb_value(ctx,pkt_id);
-    if(!value){
-        LOGW("can not find callback!");
-        return 0;
-    }
-    if(value->_callback._mqtt_handle_pub_ack){
-        value->_callback._mqtt_handle_pub_ack(value->_user_data,pub_rel);
-    }
-    hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
-    return 0;
-}
-
+/**
+ * 服务器完成收到我发送的消息，最终态
+ * @param arg
+ * @param pkt_id
+ * @return
+ */
 static int handle_pub_comp(void *arg, uint16_t pkt_id){
     mqtt_context *ctx = (mqtt_context *)arg;
     LOGD("pkt_id: %d",(int)pkt_id);
