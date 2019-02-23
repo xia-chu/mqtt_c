@@ -101,13 +101,13 @@ static int handle_unsub_ack(void *arg, uint16_t pkt_id){
 void *mqtt_alloc_contex(mqtt_callback callback,void *user_data){
     mqtt_context *ctx = (mqtt_context *)malloc(sizeof(mqtt_context));
     if(!ctx){
+        LOGE("malloc mqtt_context failed!\r\n");
         return NULL;
     }
     memset(ctx,0, sizeof(mqtt_context));
     memcpy(ctx,&callback, sizeof(callback));
     ctx->_user_data = user_data;
 
-    MqttBuffer_Init(&ctx->_buffer);
     ctx->_ctx.user_data = ctx;
     ctx->_ctx.writev_func = mqtt_write_sock;
     ctx->_ctx.handle_ping_resp = handle_ping_resp;
@@ -119,6 +119,8 @@ void *mqtt_alloc_contex(mqtt_callback callback,void *user_data){
     ctx->_ctx.handle_pub_comp = handle_pub_comp;
     ctx->_ctx.handle_sub_ack = handle_sub_ack;
     ctx->_ctx.handle_unsub_ack = handle_unsub_ack;
+
+    MqttBuffer_Init(&ctx->_buffer);
     buffer_init(&ctx->_remain_data);
     return ctx;
 }
@@ -127,6 +129,7 @@ int mqtt_free_contex(void *arg){
     mqtt_context *ctx = (mqtt_context *)arg;
     CHECK_PTR(ctx);
     MqttBuffer_Destroy(&ctx->_buffer);
+    buffer_release(&ctx->_remain_data);
     memset(ctx,0, sizeof(mqtt_context));
     return 0;
 }
