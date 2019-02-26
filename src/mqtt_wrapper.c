@@ -399,7 +399,7 @@ int mqtt_send_connect_pkt(void *arg,
                           int will_retain,
                           const char *user,
                           const char *password){
-    if(will_payload_len <= 0){
+    if(will_payload && will_payload_len <= 0){
         will_payload_len = strlen(will_payload);
     }
     mqtt_context *ctx = (mqtt_context *)arg;
@@ -415,7 +415,7 @@ int mqtt_send_connect_pkt(void *arg,
                                      will_retain,
                                      user,
                                      password,
-                                     strlen(password)));
+                                     password ? strlen(password) : 0));
     CHECK_RET(-1,mqtt_send_packet(ctx));
 
     ctx->_keep_alive = keep_alive;
@@ -434,7 +434,7 @@ int mqtt_send_publish_pkt(void *arg,
                           void *user_data,
                           free_user_data free_cb,
                           int timeout_sec){
-    if(payload_len <= 0){
+    if(payload && payload_len <= 0){
         payload_len = strlen(payload);
     }
     mqtt_context *ctx = (mqtt_context *)arg;
@@ -446,7 +446,7 @@ int mqtt_send_publish_pkt(void *arg,
                                      payload_len,
                                      qos,
                                      retain,
-                                     1));
+                                     0));
     if(dup){
         CHECK_RET(-1,Mqtt_SetPktDup(&ctx->_buffer));
     }

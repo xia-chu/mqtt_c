@@ -5,6 +5,7 @@
 #include <string.h>
 #include <memory.h>
 #include <stdlib.h>
+#include "iot_proto.h"
 
 #ifdef __alios__
 #include <netmgr.h>
@@ -22,6 +23,7 @@ typedef struct {
 
 int data_output(void *arg, const struct iovec *iov, int iovcnt){
     mqtt_user_data *user_data = (mqtt_user_data *)arg;
+#ifdef __alios__
     int ret = 0;
     int sent;
     while(iovcnt--){
@@ -33,6 +35,9 @@ int data_output(void *arg, const struct iovec *iov, int iovcnt){
         ret += sent;
     }
     return ret;
+#else
+    return writev(user_data->_fd,iov,iovcnt);
+#endif
 }
 
 void handle_pub_ack(void *arg,int time_out,pub_type type){
@@ -55,22 +60,22 @@ void handle_conn_ack(void *arg, char flags, char ret_code){
         mqtt_send_subscribe_pkt(user_data->_ctx,
                                 MQTT_QOS_LEVEL2,
                                 topics,
-                                1,
+                                2,
                                 handle_sub_ack,
                                 malloc(4),
                                 free,
                                 10);
 
-//        mqtt_send_publish_pkt(user_data->_ctx,
-//                              "/Service/JIMIMAX/publish",
-//                              "publishPayload",0,
-//                              MQTT_QOS_LEVEL2,
-//                              1,
-//                              0,
-//                              handle_pub_ack,
-//                              malloc(4),
-//                              free,
-//                              10);
+        mqtt_send_publish_pkt(user_data->_ctx,
+                              "/Service/JIMIMAX/publish",
+                              "publishPayload",0,
+                              MQTT_QOS_LEVEL2,
+                              1,
+                              0,
+                              handle_pub_ack,
+                              malloc(4),
+                              free,
+                              10);
     }
 }
 void handle_ping_resp(void *arg){
@@ -111,6 +116,8 @@ int application_start(int argc, char *argv[]){
     netmgr_init();
     netmgr_start(false);
 #endif
+
+    test_iot_packet();
 
     mqtt_user_data user_data;
     user_data._fd = net_connet_server("10.0.9.56",1883,3);
