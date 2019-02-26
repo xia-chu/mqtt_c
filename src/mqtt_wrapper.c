@@ -27,12 +27,14 @@ typedef struct{
 } mqtt_context;
 
 
+//回复回调函数类型
 typedef enum {
     res_pub_ack = 0,
     res_sub_ack,
     res_unsub_ack,
 } res_type;
 
+//请求包发送后等待回复的处理对象
 typedef struct {
     void *_user_data;
     free_user_data _free_user_data;
@@ -47,6 +49,12 @@ typedef struct {
 
 
 //////////////////////////////////////////////////////////////////////
+/**
+ * 根据回复包序号查找回调函数
+ * @param ctx
+ * @param pkt_id
+ * @return
+ */
 static mqtt_req_cb_value *lookup_req_cb_value(mqtt_context *ctx,uint16_t pkt_id){
     return (mqtt_req_cb_value *)hash_table_lookup(ctx->_req_cb_map,(HashTableKey)pkt_id);
 }
@@ -71,40 +79,72 @@ static int mqtt_HashTableEqualFunc(HashTableKey value1, HashTableKey value2){
     return value1 == value2;
 }
 
+/**
+ * 释放hash表value的回调函数
+ * @param value
+ */
 static void mqtt_HashTableValueFreeFunc(HashTableValue value){
     mqtt_req_cb_value *cb = (mqtt_req_cb_value *)value;
-    if(cb->_free_user_data && cb->_user_data){
+    if(cb->_free_user_data){
         cb->_free_user_data(cb->_user_data);
     }
     free(cb);
 }
 
 //////////////////////////////////////////////////////////////////////
+/**
+ * mqtt对象输出数据到网络
+ * @param arg 用户数据指针
+ * @param iov 数据数组
+ * @param iovcnt 数组长度
+ * @return 0成功，其他错误
+ */
 static int mqtt_write_sock(void *arg, const struct iovec *iov, int iovcnt){
     mqtt_context *ctx = (mqtt_context *)arg;
-    CHECK_PTR(ctx);
-    CHECK_PTR(ctx->_callback.mqtt_data_output);
+    CHECK_PTR(ctx->_callback.mqtt_data_output,-1);
     return ctx->_callback.mqtt_data_output(ctx->_callback._user_data,iov,iovcnt);
 }
 
+/**
+ * 收到心跳回复消息
+ * @param arg
+ * @return
+ */
 static int handle_ping_resp(void *arg){/**< 处理ping响应的回调函数，成功则返回非负数 */
     mqtt_context *ctx = (mqtt_context *)arg;
     LOGT("");
-    CHECK_PTR(ctx->_callback.mqtt_handle_ping_resp);
+    CHECK_PTR(ctx->_callback.mqtt_handle_ping_resp,-1);
     ctx->_callback.mqtt_handle_ping_resp(ctx->_callback._user_data);
     ctx->_last_ping = time(NULL);
     return 0;
 }
 
-
+/**
+ * 收到登录回复包回调
+ * @param arg 用户数据指针
+ * @param flags 标记位
+ * @param ret_code 0成功，其他错误
+ * @return 0成功
+ */
 static int handle_conn_ack(void *arg, char flags, char ret_code){
     mqtt_context *ctx = (mqtt_context *)arg;
     LOGT("flags:%d , ret_code:%d",(int)flags,(int)(ret_code));
-    CHECK_PTR(ctx->_callback.mqtt_handle_conn_ack);
+    CHECK_PTR(ctx->_callback.mqtt_handle_conn_ack,-1);
     ctx->_callback.mqtt_handle_conn_ack(ctx->_callback._user_data,flags,ret_code);
     return 0;
 }
 
+/**
+ * 服务器发布消息给客户端的第一次回调(如果qos是2，那么还将触发handle_pub_rel回调)
+ * @param arg 用户数据指针
+ * @param pkt_id 包id
+ * @param topic 主题
+ * @param payload 负载数据
+ * @param payloadsize 负载数据长度
+ * @param dup 是否为重复包
+ * @param qos qos等级，如果为2，那么还将触发一次handle_pub_rel回调
+ * @return 0成功
+ */
 static int handle_publish(void *arg,
                           uint16_t pkt_id,
                           const char *topic,
@@ -114,26 +154,36 @@ static int handle_publish(void *arg,
                           enum MqttQosLevel qos){
     mqtt_context *ctx = (mqtt_context *)arg;
     LOGT("pkt_id:%d , topic: %s , payload:%s , dup:%d , qos:%d",(int)pkt_id,topic,payload,dup,(int)qos);
-    CHECK_PTR(ctx->_callback.mqtt_handle_publish);
+    CHECK_PTR(ctx->_callback.mqtt_handle_publish,-1);
     ctx->_callback.mqtt_handle_publish(ctx->_callback._user_data,pkt_id,topic,payload,payloadsize,dup,qos);
     return 0;
 }
 
 /**
- * 服务器发布消息给我，然后移除消息，最终态
- * @param arg
- * @param pkt_id
- * @return
+ * 服务器发布qos=2的消息给客户端时，
+ * 客户端汇报Publish Received (5),
+ * 此时服务器再回复Publish Release (6)，
+ * 之后客户端再回复Publish Complete (7)
+ * 此处就是收到Publish Release回复的回调
+ * @param arg 用户数据指针
+ * @param pkt_id 包id
+ * @return 0成功
  */
 static int handle_pub_rel(void *arg, uint16_t pkt_id){
     mqtt_context *ctx = (mqtt_context *)arg;
     LOGT("pkt_id: %d",(int)pkt_id);
-    CHECK_PTR(ctx->_callback.mqtt_handle_publish_rel);
+    CHECK_PTR(ctx->_callback.mqtt_handle_publish_rel,-1);
     ctx->_callback.mqtt_handle_publish_rel(ctx->_callback._user_data,pkt_id);
     return 0;
 }
 
 //////////////////////////////////////////////////////////////////////
+/**
+ * 客户端发布消息后，服务器第一次回调
+ * @param arg 用户数据指针
+ * @param pkt_id 包id
+ * @return 0成功
+ */
 static int handle_pub_ack(void *arg, uint16_t pkt_id){
     mqtt_context *ctx = (mqtt_context *)arg;
     LOGT("pkt_id: %d",(int)pkt_id);
@@ -151,7 +201,12 @@ static int handle_pub_ack(void *arg, uint16_t pkt_id){
 }
 
 /**
- * 服务器收到我发布的消息，中间态
+ * 服务器收到客户端发布的消息，中间态
+ * 客户端发布qos=2的消息给服务器时，
+ * 服务器汇报Publish Received (5),
+ * 此时客户端再回复Publish Release (6)，
+ * 之后服务器再回复Publish Complete (7)
+ * 此处就是收到Publish Received回复的回调
  * @param arg
  * @param pkt_id
  * @return
@@ -168,16 +223,17 @@ static int handle_pub_rec(void *arg, uint16_t pkt_id){
     if(value->_callback._mqtt_handle_pub_ack){
         value->_callback._mqtt_handle_pub_ack(value->_user_data,0,pub_rec);
     }
-    //中间态不移除监听
+    //中间态不移除监听，后续还将触发handle_pub_comp回调
 //    hash_table_remove(ctx->_req_cb_map,(HashTableKey)pkt_id);
     return 0;
 }
 
 /**
- * 服务器完成收到我发送的消息，最终态
- * @param arg
- * @param pkt_id
- * @return
+ * 服务器完成收到客户端发送的消息，最终态
+ * @see handle_pub_rec
+ * @param arg 用户数据指针
+ * @param pkt_id 包序号
+ * @return 0成功
  */
 static int handle_pub_comp(void *arg, uint16_t pkt_id){
     mqtt_context *ctx = (mqtt_context *)arg;
@@ -195,6 +251,14 @@ static int handle_pub_comp(void *arg, uint16_t pkt_id){
     return 0;
 }
 
+/**
+ * 订阅消息后收到服务器的回复
+ * @param arg
+ * @param pkt_id
+ * @param codes
+ * @param count
+ * @return
+ */
 static int handle_sub_ack(void *arg, uint16_t pkt_id,const char *codes, uint32_t count){
     mqtt_context *ctx = (mqtt_context *)arg;
     LOGT("pkt_id: %d , codes:%s , count:%d ",(int)pkt_id,codes,(int)count);
@@ -228,14 +292,15 @@ static int handle_unsub_ack(void *arg, uint16_t pkt_id){
 }
 
 //////////////////////////////////////////////////////////////////////
-void *mqtt_alloc_contex(mqtt_callback callback){
+void *mqtt_alloc_contex(mqtt_callback *callback){
+    CHECK_PTR(callback,NULL);
     mqtt_context *ctx = (mqtt_context *)malloc(sizeof(mqtt_context));
     if(!ctx){
         LOGE("malloc mqtt_context failed!");
         return NULL;
     }
     memset(ctx,0, sizeof(mqtt_context));
-    memcpy(ctx,&callback, sizeof(callback));
+    memcpy(ctx,callback, sizeof(mqtt_callback));
 
     ctx->_ctx.user_data = ctx;
     ctx->_ctx.writev_func = mqtt_write_sock;
@@ -266,7 +331,7 @@ void for_each_map(HashTable *hash_table,int flush);
 
 int mqtt_free_contex(void *arg){
     mqtt_context *ctx = (mqtt_context *)arg;
-    CHECK_PTR(ctx);
+    CHECK_PTR(ctx,-1);
     MqttBuffer_Destroy(&ctx->_buffer);
     buffer_release(&ctx->_remain_data);
     for_each_map(ctx->_req_cb_map,1);
@@ -277,7 +342,7 @@ int mqtt_free_contex(void *arg){
 
 int mqtt_send_packet(void *arg){
     mqtt_context *ctx = (mqtt_context *)arg;
-    CHECK_PTR(ctx);
+    CHECK_PTR(ctx,-1);
     CHECK_RET(0,Mqtt_SendPkt(&ctx->_ctx,&ctx->_buffer,0));
     MqttBuffer_Reset(&ctx->_buffer);
     return 0;
@@ -286,7 +351,7 @@ int mqtt_send_packet(void *arg){
 
 int mqtt_input_data_l(void *arg,char *data,int len) {
     mqtt_context *ctx = (mqtt_context *)arg;
-    CHECK_PTR(ctx);
+    CHECK_PTR(ctx,-1);
     int customed = 0;
     int ret = Mqtt_RecvPkt(&ctx->_ctx,data,len,&customed);
     if(ret != MQTTERR_NOERROR){
@@ -315,7 +380,7 @@ int mqtt_input_data_l(void *arg,char *data,int len) {
 
 int mqtt_input_data(void *arg,char *data,int len){
     mqtt_context *ctx = (mqtt_context *)arg;
-    CHECK_PTR(ctx);
+    CHECK_PTR(ctx,-1);
     if(!ctx->_remain_data._len){
         return mqtt_input_data_l(ctx,data,len);
     }
@@ -338,7 +403,7 @@ int mqtt_send_connect_pkt(void *arg,
         will_payload_len = strlen(will_payload);
     }
     mqtt_context *ctx = (mqtt_context *)arg;
-    CHECK_PTR(ctx);
+    CHECK_PTR(ctx,-1);
     CHECK_RET(-1,Mqtt_PackConnectPkt(&ctx->_buffer,
                                      keep_alive,
                                      id,
@@ -373,7 +438,7 @@ int mqtt_send_publish_pkt(void *arg,
         payload_len = strlen(payload);
     }
     mqtt_context *ctx = (mqtt_context *)arg;
-    CHECK_PTR(ctx);
+    CHECK_PTR(ctx,-1);
     CHECK_RET(-1,Mqtt_PackPublishPkt(&ctx->_buffer,
                                      ++ctx->_pkt_id,
                                      topic,
@@ -409,7 +474,7 @@ int mqtt_send_subscribe_pkt(void *arg,
                             free_user_data free_cb,
                             int timeout_sec){
     mqtt_context *ctx = (mqtt_context *)arg;
-    CHECK_PTR(ctx);
+    CHECK_PTR(ctx,-1);
     CHECK_RET(-1,Mqtt_PackSubscribePkt(&ctx->_buffer,
                                        ++ctx->_pkt_id,
                                        qos,
@@ -437,7 +502,7 @@ int mqtt_send_unsubscribe_pkt(void *arg,
                               free_user_data free_cb,
                               int timeout_sec){
     mqtt_context *ctx = (mqtt_context *)arg;
-    CHECK_PTR(ctx);
+    CHECK_PTR(ctx,-1);
     CHECK_RET(-1,Mqtt_PackUnsubscribePkt(&ctx->_buffer,
                                          ++ctx->_pkt_id,
                                          topics,
@@ -464,7 +529,7 @@ int mqtt_send_unsubscribe_pkt(void *arg,
  */
 int mqtt_send_ping_pkt(void *arg){
     mqtt_context *ctx = (mqtt_context *)arg;
-    CHECK_PTR(ctx);
+    CHECK_PTR(ctx,-1);
     CHECK_RET(-1,Mqtt_PackPingReqPkt(&ctx->_buffer));
     CHECK_RET(-1,mqtt_send_packet(ctx));
     return 0;
@@ -472,7 +537,7 @@ int mqtt_send_ping_pkt(void *arg){
 
 int mqtt_send_disconnect_pkt(void *arg){
     mqtt_context *ctx = (mqtt_context *)arg;
-    CHECK_PTR(ctx);
+    CHECK_PTR(ctx,-1);
     CHECK_RET(-1,Mqtt_PackDisconnectPkt(&ctx->_buffer));
     CHECK_RET(-1,mqtt_send_packet(ctx));
     return 0;
@@ -513,7 +578,7 @@ void for_each_map(HashTable *hash_table,int flush){
 
 int mqtt_timer_schedule(void *arg){
     mqtt_context *ctx = (mqtt_context *)arg;
-    CHECK_PTR(ctx);
+    CHECK_PTR(ctx,-1);
     for_each_map(ctx->_req_cb_map,0);
 
     time_t now = time(NULL);

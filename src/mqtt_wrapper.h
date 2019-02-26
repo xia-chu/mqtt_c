@@ -13,11 +13,11 @@ extern "C" {
 #include <stdio.h>
 
 //////////////////////////////////////////////////////////////////////
-#define CHECK_PTR(ptr) \
+#define CHECK_PTR(ptr,err) \
 do{ \
     if(!ptr) { \
         LOGW("invalid ptr:%s",#ptr);\
-        return -1; \
+        return err; \
     } \
 }while(0)
 
@@ -96,9 +96,9 @@ typedef struct {
  */
 typedef enum {
   pub_invalid = -1,
-  pub_ack = 0,
-  pub_rec,
-  pub_comp,
+  pub_ack = 0, //服务器回复已经收到qos != 2的消息发布
+  pub_rec, //服务器回复已经收到qos = 2的消息发布
+  pub_comp,//服务器回复已经完成qos = 2的消息发布处理
 } pub_type;
 
 /**
@@ -134,7 +134,7 @@ typedef void (*mqtt_handle_unsub_ack)(void *arg,int time_out);
  * @param callback 回调监听函数列表
  * @return 对象指针
  */
-void *mqtt_alloc_contex(mqtt_callback callback);
+void *mqtt_alloc_contex(mqtt_callback *callback);
 
 /**
  * 释放mqtt客户端对象

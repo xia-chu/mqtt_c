@@ -55,22 +55,22 @@ void handle_conn_ack(void *arg, char flags, char ret_code){
         mqtt_send_subscribe_pkt(user_data->_ctx,
                                 MQTT_QOS_LEVEL2,
                                 topics,
-                                2,
+                                1,
                                 handle_sub_ack,
                                 malloc(4),
                                 free,
                                 10);
 
-        mqtt_send_publish_pkt(user_data->_ctx,
-                              "/Service/JIMIMAX/publish",
-                              "publishPayload",0,
-                              MQTT_QOS_LEVEL2,
-                              1,
-                              0,
-                              handle_pub_ack,
-                              malloc(4),
-                              free,
-                              10);
+//        mqtt_send_publish_pkt(user_data->_ctx,
+//                              "/Service/JIMIMAX/publish",
+//                              "publishPayload",0,
+//                              MQTT_QOS_LEVEL2,
+//                              1,
+//                              0,
+//                              handle_pub_ack,
+//                              malloc(4),
+//                              free,
+//                              10);
     }
 }
 void handle_ping_resp(void *arg){
@@ -119,7 +119,7 @@ int application_start(int argc, char *argv[]){
     }
 
     mqtt_callback callback = {data_output,handle_conn_ack,handle_ping_resp,handle_publish,handle_publish_rel,&user_data};
-    user_data._ctx = mqtt_alloc_contex(callback);
+    user_data._ctx = mqtt_alloc_contex(&callback);
     mqtt_send_connect_pkt(user_data._ctx,5,"JIMIMAX",1,"/Service/JIMIMAX/will","willPayload",0,MQTT_QOS_LEVEL1, 1,"admin","public");
 
     net_set_sock_timeout(user_data._fd ,1,1);
