@@ -16,7 +16,7 @@ typedef enum {
     iot_bool = 0x01,//占用一个字节
     iot_enum = 0x02,//本质同于string
     iot_string = 0x03,//可变长度
-    oit_double = 0x05,//8个字节
+    iot_double = 0x05,//8个字节
 } iot_data_type;
 
 
@@ -48,13 +48,15 @@ int pack_iot_double_packet(int req_flag,
                            unsigned char *data_out,
                            int out_len);
 
-int unpack_iot_packet(int *req_flag,
+int unpack_iot_packet(uint8_t *req_flag,
                       uint32_t *req_id,
                       uint32_t *tag_id,
                       iot_data_type *type,
                       const unsigned char *data_in,
                       int in_len,
                       const unsigned char **content);
+
+double to_double(const unsigned char *data_in);
 
 void test_iot_packet();
 
