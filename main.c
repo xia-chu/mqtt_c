@@ -20,9 +20,9 @@
 #endif
 
 
-#define CLIENT_ID "IEMI:16666222211111"
+#define CLIENT_ID "2019010411130001"
 #define USER_NAME "JIMIMAX"
-#define SECRET "2ea259c374a9432a9bd4269b5ab7f61b"
+#define SECRET "12345"
 #define TOPIC_LISTEN ("/terminal/" CLIENT_ID)
 #define TOPIC_PUBLISH ("/service/" USER_NAME "/" CLIENT_ID)
 
@@ -159,7 +159,7 @@ int application_start(int argc, char *argv[]){
     {
         buffer md5_str;
         buffer_init(&md5_str);
-        make_passwd(CLIENT_ID,SECRET,USER_NAME,&md5_str,1);
+        make_passwd(CLIENT_ID,SECRET,USER_NAME,&md5_str,0);
         mqtt_send_connect_pkt(user_data._ctx,5,CLIENT_ID,1,NULL,NULL,0,MQTT_QOS_LEVEL1, 0,USER_NAME,md5_str._data);
         buffer_release(&md5_str);
     }
