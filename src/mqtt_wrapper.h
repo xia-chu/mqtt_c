@@ -26,7 +26,7 @@ do{ \
 do{\
     int ret = __VA_ARGS__;\
     if(ret <= n){ \
-        LOGW("%s <= %d",#__VA_ARGS__,n);\
+        LOGW("%s == %d <= %d",#__VA_ARGS__, ret , n);\
         return ret;\
     } \
 }while(0)

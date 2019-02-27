@@ -5,7 +5,10 @@
 #include <string.h>
 #include <memory.h>
 #include <stdlib.h>
+#include <buffer.h>
 #include "iot_proto.h"
+#include "md5.h"
+#include "buffer.h"
 
 #ifdef __alios__
 #include <netmgr.h>
@@ -16,10 +19,37 @@
 #define application_start main
 #endif
 
+
+#define CLIENT_ID "IEMI:16666222211111"
+#define USER_NAME "JIMIMAX"
+#define SECRET "2ea259c374a9432a9bd4269b5ab7f61b"
+#define TOPIC_LISTEN ("/terminal/" CLIENT_ID)
+#define TOPIC_PUBLISH ("/service/" USER_NAME "/" CLIENT_ID)
+
 typedef struct {
     void *_ctx;
     int _fd;
 } mqtt_user_data;
+
+void make_passwd(const char *client_id,
+                 const char *secret,
+                 const char *user_name,
+                 buffer *md5_str_buf,
+                 int upCase){
+    char passwd[33];
+    uint8_t md5_digst[16];
+    buffer buf_plain ;
+    buffer_init(&buf_plain);
+    buffer_append(&buf_plain,client_id,strlen(client_id));
+    buffer_append(&buf_plain,secret,strlen(secret));
+    buffer_append(&buf_plain,user_name,strlen(user_name));
+    LOGT("plain passwd:%s",buf_plain._data);
+    md5((uint8_t*)buf_plain._data,buf_plain._len,md5_digst);
+    hexdump(md5_digst,MD5_HEX_LEN,passwd, sizeof(passwd),upCase);
+    LOGT("md5 str:%s",passwd);
+    buffer_assign(md5_str_buf,passwd, sizeof(passwd));
+}
+
 
 int data_output(void *arg, const struct iovec *iov, int iovcnt){
     mqtt_user_data *user_data = (mqtt_user_data *)arg;
@@ -55,19 +85,17 @@ void handle_conn_ack(void *arg, char flags, char ret_code){
     LOGI("");
     if(ret_code == 0){
         //success
-        const char *topics[] = {"/Service/JIMIMAX/publish","/Service/JIMIMAX/will"};
-
+        const char *topics[] = {TOPIC_LISTEN};
         mqtt_send_subscribe_pkt(user_data->_ctx,
                                 MQTT_QOS_LEVEL2,
                                 topics,
-                                2,
+                                1,
                                 handle_sub_ack,
                                 malloc(4),
                                 free,
                                 10);
-
         mqtt_send_publish_pkt(user_data->_ctx,
-                              "/Service/JIMIMAX/publish",
+                              TOPIC_PUBLISH,
                               "publishPayload",0,
                               MQTT_QOS_LEVEL2,
                               1,
@@ -120,14 +148,21 @@ int application_start(int argc, char *argv[]){
     test_iot_packet();
 
     mqtt_user_data user_data;
-    user_data._fd = net_connet_server("10.0.9.56",1883,3);
+    user_data._fd = net_connet_server("172.16.10.115",1883,3);
     if(user_data._fd  == -1){
         return -1;
     }
 
     mqtt_callback callback = {data_output,handle_conn_ack,handle_ping_resp,handle_publish,handle_publish_rel,&user_data};
     user_data._ctx = mqtt_alloc_contex(&callback);
-    mqtt_send_connect_pkt(user_data._ctx,5,"JIMIMAX",1,"/Service/JIMIMAX/will","willPayload",0,MQTT_QOS_LEVEL1, 1,"admin","public");
+
+    {
+        buffer md5_str;
+        buffer_init(&md5_str);
+        make_passwd(CLIENT_ID,SECRET,USER_NAME,&md5_str,1);
+        mqtt_send_connect_pkt(user_data._ctx,5,CLIENT_ID,1,NULL,NULL,0,MQTT_QOS_LEVEL1, 0,USER_NAME,md5_str._data);
+        buffer_release(&md5_str);
+    }
 
     net_set_sock_timeout(user_data._fd ,1,1);
     char buffer[1024];

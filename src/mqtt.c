@@ -637,7 +637,8 @@ int Mqtt_PackConnectPkt(struct MqttBuffer *buf, uint16_t keep_alive, const char 
                         const char *password, uint16_t pswd_len)
 {
     int ret;
-    uint16_t id_len, wt_len, user_len;
+    uint16_t wt_len, user_len;
+    int id_len;
     size_t total_len;
     char flags = 0;
     struct MqttExtent *fix_head, *variable_head, *payload;
