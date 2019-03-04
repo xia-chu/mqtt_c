@@ -5,7 +5,11 @@
 #include "iot_proto.h"
 #include "log.h"
 #include "mqtt_wrapper.h"
+#ifndef __alios__
 #include <arpa/inet.h>
+#else
+#include <aos/network.h>
+#endif
 #include <memory.h>
 
 #define CHECK_LEN(n,tail) \
@@ -27,6 +31,21 @@ do{ \
 extern int Mqtt_ReadLength(const char *stream, int size, uint32_t *len);
 extern int Mqtt_DumpLength(size_t len, char *buf);
 
+#ifdef __alios__
+unsigned long long ntohll(unsigned long long val){
+    if (1 != htons(1)){
+        return (((unsigned long long )htonl((int)((val << 32) >> 32))) << 32) | (unsigned int)htonl((int)(val >> 32));
+    }
+    return val;
+}
+
+unsigned long long htonll(unsigned long long val){
+    if (1 != htons(1)){
+        return (((unsigned long long )htonl((int)((val << 32) >> 32))) << 32) | (unsigned int)htonl((int)(val >> 32));
+    }
+    return val;
+}
+#endif
 
 int static_length_of_type(iot_data_type type){
     switch (type){

@@ -5,6 +5,7 @@
 #include <memory.h>
 #include <stdlib.h>
 #include "buffer.h"
+#include "log.h"
 
 int buffer_init(buffer *buf){
     memset(buf,0, sizeof(buffer));
@@ -19,21 +20,21 @@ void buffer_release(buffer *buf){
 
 int buffer_append(buffer *buf,const char *data,int len){
     if(buf->_len && buf->_data){
-        char *old = buf->_data;
-        buf->_data = malloc(len + buf->_len);
+        buf->_data = realloc(buf->_data,len + buf->_len);
         if(!buf->_data){
-            buf->_data = old;
+            //out of memory
+            LOGE("out of memory:%d",len + buf->_len);
+            buf->_len = 0;
             return -1;
         }
-        memcpy(buf->_data,old,buf->_len);
         memcpy(buf->_data + buf->_len ,data,len);
         buf->_len += len;
-        free(old);
         return 0;
     }
 
     buf->_data = malloc(len);
     if(!buf->_data){
+        LOGE("out of memory:%d",len);
         return -1;
     }
     memcpy(buf->_data,data,len);

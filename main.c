@@ -1,11 +1,12 @@
-#include "mqtt_wrapper.h"
-#include "net.h"
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
 #include <memory.h>
+#include "mqtt_wrapper.h"
+#include "net.h"
 #include <stdlib.h>
-#include <buffer.h>
+#include "buffer.h"
+#include "base64.h"
 #include "iot_proto.h"
 #include "md5.h"
 #include "buffer.h"
@@ -108,7 +109,12 @@ void handle_publish(void *arg,
                          int dup,
                          enum MqttQosLevel qos){
     mqtt_user_data *user_data = (mqtt_user_data *)arg;
-    dump_iot_pack((const uint8_t *)payload, payloadsize);
+
+    int buf_size = payloadsize * 3 / 4 +10;
+    uint8_t *out = malloc(buf_size);
+    int size = av_base64_decode(out,payload,buf_size);
+    dump_iot_pack(out, size);
+    free(out);
 }
 
 void handle_publish_rel(void *arg,
@@ -119,25 +125,37 @@ void handle_publish_rel(void *arg,
 
 //////////////////////////////////////////////////////////////////////
 void publish_tag_switch(mqtt_user_data *user_data,int tag,int flag){
-    unsigned char iot_buf[1024] = {0};
     static int req_id = 0;
+    unsigned char iot_buf[1024] = {0};
     int iot_len = pack_iot_bool_packet(1,++req_id,tag,flag,iot_buf, sizeof(iot_buf));
-    mqtt_send_publish_pkt(user_data->_ctx,
-                          TOPIC_PUBLISH,
-                          (const char *)iot_buf,
-                          iot_len,
-                          MQTT_QOS_LEVEL1,
-                          0,
-                          0,
-                          handle_pub_ack,
-                          malloc(4),
-                          free,
-                          10);
+    if(iot_len > 0){
+        int out_size = AV_BASE64_SIZE(iot_len) + 10;
+        char *out = malloc(out_size);
+        av_base64_encode(out,out_size,iot_buf,iot_len);
+        free(out);
+
+        mqtt_send_publish_pkt(user_data->_ctx,
+                              TOPIC_PUBLISH,
+                              (const char *)out,
+                              0,
+                              MQTT_QOS_LEVEL1,
+                              0,
+                              0,
+                              handle_pub_ack,
+                              malloc(4),
+                              free,
+                              10);
+    }
+
 }
 
 void on_timer_tick(mqtt_user_data *user_data){
     mqtt_timer_schedule(user_data->_ctx);
-    publish_tag_switch(user_data,509998,1);
+    static int flag = 1;
+    if(flag){
+//        flag = 0;
+        publish_tag_switch(user_data,509998,1);
+    }
 }
 
 int application_start(int argc, char *argv[]){
@@ -175,7 +193,7 @@ int application_start(int argc, char *argv[]){
         buffer_release(&md5_str);
     }
 
-    net_set_sock_timeout(user_data._fd ,1,1);
+    net_set_sock_timeout(user_data._fd ,1,3);
     char buffer[1024];
     int timeout = 1000;
     while (1){
