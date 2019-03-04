@@ -31,14 +31,16 @@ do{ \
 extern int Mqtt_ReadLength(const char *stream, int size, uint32_t *len);
 extern int Mqtt_DumpLength(size_t len, char *buf);
 
-#ifdef __alios__
+#ifndef ntohll
 unsigned long long ntohll(unsigned long long val){
     if (1 != htons(1)){
         return (((unsigned long long )htonl((int)((val << 32) >> 32))) << 32) | (unsigned int)htonl((int)(val >> 32));
     }
     return val;
 }
+#endif
 
+#ifndef htonll
 unsigned long long htonll(unsigned long long val){
     if (1 != htons(1)){
         return (((unsigned long long )htonl((int)((val << 32) >> 32))) << 32) | (unsigned int)htonl((int)(val >> 32));

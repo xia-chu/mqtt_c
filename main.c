@@ -49,6 +49,7 @@ void make_passwd(const char *client_id,
     hexdump(md5_digst,MD5_HEX_LEN,passwd, sizeof(passwd),upCase);
     LOGT("md5 str:%s",passwd);
     buffer_assign(md5_str_buf,passwd, sizeof(passwd));
+    buffer_release(&buf_plain);
 }
 
 
@@ -132,8 +133,6 @@ void publish_tag_switch(mqtt_user_data *user_data,int tag,int flag){
         int out_size = AV_BASE64_SIZE(iot_len) + 10;
         char *out = malloc(out_size);
         av_base64_encode(out,out_size,iot_buf,iot_len);
-        free(out);
-
         mqtt_send_publish_pkt(user_data->_ctx,
                               TOPIC_PUBLISH,
                               (const char *)out,
@@ -145,6 +144,7 @@ void publish_tag_switch(mqtt_user_data *user_data,int tag,int flag){
                               malloc(4),
                               free,
                               10);
+        free(out);
     }
 
 }
@@ -158,28 +158,14 @@ void on_timer_tick(mqtt_user_data *user_data){
     }
 }
 
-int application_start(int argc, char *argv[]){
-#ifdef __alios__
-    #if AOS_ATCMD
-    at.set_mode(ASYN);
-    at.init(AT_RECV_PREFIX, AT_RECV_SUCCESS_POSTFIX,
-            AT_RECV_FAIL_POSTFIX, AT_SEND_DELIMITER, 1000);
-#endif
-
-#ifdef WITH_SAL
-    sal_init();
-#endif
-
-    netmgr_init();
-    netmgr_start(false);
-#endif
+void run_main(){
     /*测试iot打包解包*/
     test_iot_packet();
 
     mqtt_user_data user_data;
     user_data._fd = net_connet_server("172.16.10.115",1883,3);
     if(user_data._fd  == -1){
-        return -1;
+        return ;
     }
 
     mqtt_callback callback = {data_output,handle_conn_ack,handle_ping_resp,handle_publish,handle_publish_rel,&user_data};
@@ -213,6 +199,29 @@ int application_start(int argc, char *argv[]){
     }
 
     mqtt_free_contex(user_data._ctx);
+}
+int application_start(int argc, char *argv[]){
+#ifdef __alios__
+    #if AOS_ATCMD
+    at.set_mode(ASYN);
+    at.init(AT_RECV_PREFIX, AT_RECV_SUCCESS_POSTFIX,
+            AT_RECV_FAIL_POSTFIX, AT_SEND_DELIMITER, 1000);
+#endif
+
+#ifdef WITH_SAL
+    sal_init();
+#endif
+
+    netmgr_init();
+    netmgr_start(false);
+#endif
+
+#ifdef __alios__
+    aos_post_delayed_action(10 * 1000,run_main,NULL);
+    aos_loop_run();
+#else
+    run_main();
+#endif
     return 0;
 }
 
