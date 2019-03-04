@@ -21,11 +21,17 @@
 #endif
 
 
-#define CLIENT_ID "IMEI173283796361"
+#define CLIENT_ID "IMEI173283796362"
 #define USER_NAME "JIMIMAX"
-#define SECRET "d71b4e01c2d1fb299213f8856e7cea07"
+#define SECRET "a40a97ebe8dd73868b0f13c17752c27b"
 #define TOPIC_LISTEN ("/terminal/" CLIENT_ID)
 #define TOPIC_PUBLISH ("/service/" USER_NAME "/" CLIENT_ID)
+
+//#define CLIENT_ID "IMEI173283796361"
+//#define USER_NAME "JIMIMAX"
+//#define SECRET "d71b4e01c2d1fb299213f8856e7cea07"
+//#define TOPIC_LISTEN ("/terminal/" CLIENT_ID)
+//#define TOPIC_PUBLISH ("/service/" USER_NAME "/" CLIENT_ID)
 
 typedef struct {
     void *_ctx;
@@ -116,6 +122,9 @@ void handle_publish(void *arg,
     int size = av_base64_decode(out,payload,buf_size);
     dump_iot_pack(out, size);
     free(out);
+
+
+
 }
 
 void handle_publish_rel(void *arg,
@@ -153,8 +162,8 @@ void on_timer_tick(mqtt_user_data *user_data){
     mqtt_timer_schedule(user_data->_ctx);
     static int flag = 1;
     if(flag){
-//        flag = 0;
-        publish_tag_switch(user_data,509998,1);
+        flag = 0;
+        publish_tag_switch(user_data,509998,0);
     }
 }
 

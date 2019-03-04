@@ -60,7 +60,7 @@ int static_length_of_type(iot_data_type type){
         case iot_bool:
             return 1;
         default:
-            LOGE("bad iot_data_type: %d",(int)type);
+            LOGE("unsupported iot_data_type: %d",(int)type);
             return 0;
     }
 }
