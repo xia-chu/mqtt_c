@@ -27,6 +27,23 @@ do{ \
 extern int Mqtt_ReadLength(const char *stream, int size, uint32_t *len);
 extern int Mqtt_DumpLength(size_t len, char *buf);
 
+
+int static_length_of_type(iot_data_type type){
+    switch (type){
+        case iot_double:
+            return 8;
+        case iot_enum:
+            return 0;
+        case iot_string:
+            return 0;
+        case iot_bool:
+            return 1;
+        default:
+            LOGE("bad iot_data_type: %d",(int)type);
+            return 0;
+    }
+}
+
 int pack_iot_packet(uint8_t req_flag,
                     uint32_t req_id,
                     uint32_t tag_id,
@@ -34,36 +51,38 @@ int pack_iot_packet(uint8_t req_flag,
                     const unsigned char *data_in,
                     int in_len,
                     unsigned char *data_out,
-                    int out_len){
+                    int out_len) {
     unsigned char *cur_ptr = data_out;
     unsigned char *data_out_tail = data_out + out_len;
 
     //控制位，表明是请求还是回复包
-    CHECK_LEN(1,data_out_tail);
+    CHECK_LEN(1, data_out_tail);
     cur_ptr[0] = 0x01 & req_flag;
     cur_ptr += 1;
 
     //request id，4个字节
-    CHECK_LEN(4,data_out_tail);
+    CHECK_LEN(4, data_out_tail);
     req_id = htonl(req_id);
-    memcpy(cur_ptr,&req_id, 4);
+    memcpy(cur_ptr, &req_id, 4);
     cur_ptr += 4;
 
     //tag
-    CHECK_LEN(4,data_out_tail);
-    cur_ptr += Mqtt_DumpLength(tag_id,(char *)cur_ptr);
+    CHECK_LEN(4, data_out_tail);
+    cur_ptr += Mqtt_DumpLength(tag_id, (char *) cur_ptr);
 
     //type
-    CHECK_LEN(4,data_out_tail);
-    cur_ptr += Mqtt_DumpLength((uint32_t)type,(char *)cur_ptr);
+    CHECK_LEN(4, data_out_tail);
+    cur_ptr += Mqtt_DumpLength((uint32_t) type, (char *) cur_ptr);
 
     //消息长度
-    CHECK_PTR(data_in,-1);
-    if(in_len <= 0){
-        in_len = strlen((char *)data_in);
+    if (!static_length_of_type(type)) {
+        CHECK_PTR(data_in, -1);
+        if (in_len <= 0) {
+            in_len = strlen((char *) data_in);
+        }
+        CHECK_LEN(4, data_out_tail);
+        cur_ptr += Mqtt_DumpLength((uint32_t) in_len, (char *) cur_ptr);
     }
-    CHECK_LEN(4,data_out_tail);
-    cur_ptr += Mqtt_DumpLength((uint32_t)in_len,(char *)cur_ptr);
 
     //消息体
     CHECK_LEN(in_len,data_out_tail);
@@ -161,16 +180,18 @@ int unpack_iot_packet(uint8_t *req_flag,
     }while (0);
 
     //消息长度
-    uint32_t content_len = 0;
-    do {
-        CHECK_LEN(1,data_in_tail);
-        int content_len_len = Mqtt_ReadLength((const char *) cur_ptr, 4, &content_len);
-        if (content_len_len <= 0) {
-            LOGW("invalid content_len field:%d %d", content_len_len, content_len);
-            return -1;
-        }
-        cur_ptr += content_len_len;
-    }while (0);
+    uint32_t content_len = static_length_of_type(*type);
+    if (!content_len) {
+        do {
+            CHECK_LEN(1,data_in_tail);
+            int content_len_len = Mqtt_ReadLength((const char *) cur_ptr, 4, &content_len);
+            if (content_len_len <= 0) {
+                LOGW("invalid content_len field:%d %d", content_len_len, content_len);
+                return -1;
+            }
+            cur_ptr += content_len_len;
+        }while (0);
+    }
     *content = cur_ptr;
     return content_len;
 }
@@ -192,7 +213,7 @@ double to_double(const unsigned char *data_in){
     memcpy(&db,&buf,8);
     return db;
 }
-void test_ios_unpack(const uint8_t *in,int size){
+void dump_iot_pack(const uint8_t *in,int size){
     uint8_t req_flag;
     uint32_t req_id;
     uint32_t tag_id;
@@ -222,14 +243,14 @@ void test_iot_packet(){
         unsigned char out_buffer[1024] = {0};
         int out_len = pack_iot_string_packet(1, 1234, 4567, "this is a iot packet", out_buffer, sizeof(out_buffer));
         LOGD("pack_iot_packet ret:%d", out_len);
-        test_ios_unpack(out_buffer, out_len);
+        dump_iot_pack(out_buffer, out_len);
     }while (0);
 
     do {
         unsigned char out_buffer[1024] = {0};
         int out_len = pack_iot_bool_packet(1, 1234, 4567, 1, out_buffer, sizeof(out_buffer));
         LOGD("pack_iot_packet ret:%d", out_len);
-        test_ios_unpack(out_buffer, out_len);
+        dump_iot_pack(out_buffer, out_len);
     }while (0);
 
 
@@ -237,7 +258,7 @@ void test_iot_packet(){
         unsigned char out_buffer[1024] = {0};
         int out_len = pack_iot_enum_packet(1, 1234, 4567, "enum 0", out_buffer, sizeof(out_buffer));
         LOGD("pack_iot_packet ret:%d", out_len);
-        test_ios_unpack(out_buffer, out_len);
+        dump_iot_pack(out_buffer, out_len);
     }while (0);
 
 
@@ -245,6 +266,6 @@ void test_iot_packet(){
         unsigned char out_buffer[1024] = {0};
         int out_len = pack_iot_double_packet(1, 1234, 4567, 3.1415, out_buffer, sizeof(out_buffer));
         LOGD("pack_iot_packet ret:%d", out_len);
-        test_ios_unpack(out_buffer, out_len);
+        dump_iot_pack(out_buffer, out_len);
     }while (0);
 }

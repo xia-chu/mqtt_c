@@ -58,8 +58,9 @@ int unpack_iot_packet(uint8_t *req_flag,
 
 double to_double(const unsigned char *data_in);
 
-void test_iot_packet();
+void dump_iot_pack(const uint8_t *in,int size);
 
+void test_iot_packet();
 
 #ifdef __cplusplus
 } // extern "C"

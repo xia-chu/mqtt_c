@@ -20,9 +20,9 @@
 #endif
 
 
-#define CLIENT_ID "2019010411130001"
+#define CLIENT_ID "IMEI173283796361"
 #define USER_NAME "JIMIMAX"
-#define SECRET "12345"
+#define SECRET "d71b4e01c2d1fb299213f8856e7cea07"
 #define TOPIC_LISTEN ("/terminal/" CLIENT_ID)
 #define TOPIC_PUBLISH ("/service/" USER_NAME "/" CLIENT_ID)
 
@@ -71,12 +71,12 @@ int data_output(void *arg, const struct iovec *iov, int iovcnt){
 }
 
 void handle_pub_ack(void *arg,int time_out,pub_type type){
-    LOGI("%d - %d",time_out,type);
+    LOGI("time_out:%d ,pub_type:%d",time_out,type);
     memset(arg,0,4);
 }
 
 void handle_sub_ack(void *arg,int time_out,const char *codes, uint32_t count){
-    LOGI("%d",time_out);
+    LOGI("time_out:%d",time_out);
     memset(arg,0,4);
 }
 
@@ -87,23 +87,13 @@ void handle_conn_ack(void *arg, char flags, char ret_code){
         //success
         const char *topics[] = {TOPIC_LISTEN};
         mqtt_send_subscribe_pkt(user_data->_ctx,
-                                MQTT_QOS_LEVEL2,
+                                MQTT_QOS_LEVEL1,
                                 topics,
                                 1,
                                 handle_sub_ack,
                                 malloc(4),
                                 free,
                                 10);
-        mqtt_send_publish_pkt(user_data->_ctx,
-                              TOPIC_PUBLISH,
-                              "publishPayload",0,
-                              MQTT_QOS_LEVEL2,
-                              1,
-                              0,
-                              handle_pub_ack,
-                              malloc(4),
-                              free,
-                              10);
     }
 }
 void handle_ping_resp(void *arg){
@@ -118,7 +108,7 @@ void handle_publish(void *arg,
                          int dup,
                          enum MqttQosLevel qos){
     mqtt_user_data *user_data = (mqtt_user_data *)arg;
-    LOGI("");
+    dump_iot_pack((const uint8_t *)payload, payloadsize);
 }
 
 void handle_publish_rel(void *arg,
@@ -128,6 +118,27 @@ void handle_publish_rel(void *arg,
 }
 
 //////////////////////////////////////////////////////////////////////
+void publish_tag_switch(mqtt_user_data *user_data,int tag,int flag){
+    unsigned char iot_buf[1024] = {0};
+    static int req_id = 0;
+    int iot_len = pack_iot_bool_packet(1,++req_id,tag,flag,iot_buf, sizeof(iot_buf));
+    mqtt_send_publish_pkt(user_data->_ctx,
+                          TOPIC_PUBLISH,
+                          (const char *)iot_buf,
+                          iot_len,
+                          MQTT_QOS_LEVEL1,
+                          0,
+                          0,
+                          handle_pub_ack,
+                          malloc(4),
+                          free,
+                          10);
+}
+
+void on_timer_tick(mqtt_user_data *user_data){
+    mqtt_timer_schedule(user_data->_ctx);
+    publish_tag_switch(user_data,509998,1);
+}
 
 int application_start(int argc, char *argv[]){
 #ifdef __alios__
@@ -144,7 +155,7 @@ int application_start(int argc, char *argv[]){
     netmgr_init();
     netmgr_start(false);
 #endif
-
+    /*测试iot打包解包*/
     test_iot_packet();
 
     mqtt_user_data user_data;
@@ -160,13 +171,13 @@ int application_start(int argc, char *argv[]){
         buffer md5_str;
         buffer_init(&md5_str);
         make_passwd(CLIENT_ID,SECRET,USER_NAME,&md5_str,0);
-        mqtt_send_connect_pkt(user_data._ctx,5,CLIENT_ID,1,NULL,NULL,0,MQTT_QOS_LEVEL1, 0,USER_NAME,md5_str._data);
+        mqtt_send_connect_pkt(user_data._ctx,60,CLIENT_ID,1,NULL,NULL,0,MQTT_QOS_LEVEL1, 0,USER_NAME,md5_str._data);
         buffer_release(&md5_str);
     }
 
     net_set_sock_timeout(user_data._fd ,1,1);
     char buffer[1024];
-    int timeout = 10;
+    int timeout = 1000;
     while (1){
         int recv = read(user_data._fd,buffer, sizeof(buffer));
         if(recv == 0){
@@ -174,7 +185,7 @@ int application_start(int argc, char *argv[]){
             break;
         }
         if(recv == -1){
-            mqtt_timer_schedule(user_data._ctx);
+            on_timer_tick(&user_data);
             if(--timeout == 0){
                 break;
             }
@@ -186,3 +197,4 @@ int application_start(int argc, char *argv[]){
     mqtt_free_contex(user_data._ctx);
     return 0;
 }
+
