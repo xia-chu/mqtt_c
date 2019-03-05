@@ -195,7 +195,7 @@ static int handle_pub_rel(void *arg, uint16_t pkt_id){
  */
 static int handle_pub_ack(void *arg, uint16_t pkt_id){
     mqtt_context *ctx = (mqtt_context *)arg;
-    LOGT("pkt_id: %d",(int)pkt_id);
+//    LOGT("pkt_id: %d",(int)pkt_id);
 
     mqtt_req_cb_value *value = lookup_req_cb_value(ctx,pkt_id);
     if(!value){
