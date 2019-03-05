@@ -6,6 +6,7 @@
 #include "log.h"
 #include "mqtt_wrapper.h"
 #include "buffer.h"
+#include "iot_buffer.h"
 
 #ifndef __alios__
 #include <arpa/inet.h>
@@ -294,7 +295,7 @@ void dump_iot_pack(const uint8_t *in,int size){
 }
 
 
-int iot_buffer_header(buffer *buffer,
+int iot_buffer_set_header(buffer *buffer,
                       int req_flag,
                       uint32_t req_id){
 
@@ -308,7 +309,7 @@ int iot_buffer_header(buffer *buffer,
 }
 
 
-int iot_buffer_bool(buffer *buffer, uint32_t tag_id , uint8_t bool_flag){
+int iot_buffer_append_bool(buffer *buffer, uint32_t tag_id , uint8_t bool_flag){
     unsigned char iot_buf[16] = {0};
     int iot_len ;
     CHECK_RET(-1,iot_len = pack_iot_bool_packet(0,0,0,tag_id,bool_flag,iot_buf, sizeof(iot_buf)));
@@ -316,14 +317,14 @@ int iot_buffer_bool(buffer *buffer, uint32_t tag_id , uint8_t bool_flag){
     return 0;
 }
 
-int iot_buffer_double(buffer *buffer, uint32_t tag_id , double double_num){
+int iot_buffer_append_double(buffer *buffer, uint32_t tag_id , double double_num){
     unsigned char iot_buf[32] = {0};
     int iot_len ;
     CHECK_RET(-1,iot_len = pack_iot_double_packet(0,0,0,tag_id,double_num,iot_buf, sizeof(iot_buf)));
     CHECK_RET(-1,buffer_append(buffer,(const char *)iot_buf,iot_len));
     return 0;
 }
-int iot_buffer_enum(buffer *buffer, uint32_t tag_id, const char *enum_str){
+int iot_buffer_apend_enum(buffer *buffer, uint32_t tag_id, const char *enum_str){
     int iot_buf_size = 16 + strlen(enum_str);
     unsigned char *iot_buf = malloc(iot_buf_size);
     if(!iot_buf){
@@ -338,7 +339,7 @@ int iot_buffer_enum(buffer *buffer, uint32_t tag_id, const char *enum_str){
     free(iot_buf);
     return 0;
 }
-int iot_buffer_string(buffer *buffer, uint32_t tag_id, const char *str){
+int iot_buffer_apend_string(buffer *buffer, uint32_t tag_id, const char *str){
     int iot_buf_size = 16 + strlen(str);
     unsigned char *iot_buf = malloc(iot_buf_size);
     if(!iot_buf){
@@ -371,12 +372,12 @@ void test_iot_packet(){
     do {
         buffer buffer;
         buffer_init(&buffer);
-        iot_buffer_header(&buffer,1,6789);
-        iot_buffer_bool(&buffer,1234,1);
-        iot_buffer_bool(&buffer,1234,0);
-        iot_buffer_double(&buffer,2345,3.1415);
-        iot_buffer_enum(&buffer,3456,"iot enum");
-        iot_buffer_string(&buffer,4567,"iot string");
+        iot_buffer_set_header(&buffer,1,6789);
+        iot_buffer_append_bool(&buffer,1234,1);
+        iot_buffer_append_bool(&buffer,1234,0);
+        iot_buffer_append_double(&buffer,2345,3.1415);
+        iot_buffer_apend_enum(&buffer,3456,"iot enum");
+        iot_buffer_apend_string(&buffer,4567,"iot string");
         LOGD("iot packet len:%d", buffer._len);
         dump_iot_pack((const uint8_t *)buffer._data, buffer._len);
         buffer_release(&buffer);

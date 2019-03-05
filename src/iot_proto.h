@@ -54,20 +54,6 @@ int unpack_iot_packet(uint8_t *req_flag,
                       int in_len,
                       const unsigned char **content);
 
-double to_double(const unsigned char *data_in);
-
-void dump_iot_pack(const uint8_t *in,int size);
-
-void test_iot_packet();
-
-
-int iot_buffer_header(buffer *buffer, int req_flag, uint32_t req_id);
-int iot_buffer_bool(buffer *buffer, uint32_t tag_id , uint8_t bool_flag);
-int iot_buffer_enum(buffer *buffer, uint32_t tag_id, const char *enum_str);
-int iot_buffer_string(buffer *buffer, uint32_t tag_id, const char *str);
-int iot_buffer_double(buffer *buffer, uint32_t tag_id , double double_num);
-
-
 
 #ifdef __cplusplus
 } // extern "C"

@@ -33,6 +33,11 @@
 //#define TOPIC_LISTEN ("/terminal/" CLIENT_ID)
 //#define TOPIC_PUBLISH ("/service/" USER_NAME "/" CLIENT_ID)
 
+
+extern double to_double(const unsigned char *data_in);
+extern void dump_iot_pack(const uint8_t *in,int size);
+extern void test_iot_packet();
+
 typedef struct {
     void *_ctx;
     int _fd;
@@ -122,9 +127,6 @@ void handle_publish(void *arg,
     int size = av_base64_decode(out,payload,buf_size);
     dump_iot_pack(out, size);
     free(out);
-
-
-
 }
 
 void handle_publish_rel(void *arg,

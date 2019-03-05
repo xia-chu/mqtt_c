@@ -14,6 +14,9 @@
 
 #define KEEP_ALIVE_SEC 60
 
+extern void dump_iot_pack(const uint8_t *in,int size);
+
+
 typedef struct {
     iot_callback _callback;
     void *_mqtt_context;
@@ -157,7 +160,7 @@ int iot_send_raw_bytes(iot_context *ctx,unsigned char *iot_buf,int iot_len){
 int iot_publish_bool_pkt(void *arg,int tag,int flag){
     iot_context *ctx = (iot_context *)arg;
     CHECK_PTR(ctx,-1);
-    unsigned char iot_buf[32] = {0};
+    unsigned char iot_buf[16] = {0};
     int iot_len = pack_iot_bool_packet(1,1,++ctx->_req_id,tag,flag,iot_buf, sizeof(iot_buf));
     if(iot_len <= 0) {
         LOGE("pack_iot_bool_packet failed:%d",iot_len);
@@ -181,8 +184,9 @@ int iot_publish_double_pkt(void *arg,int tag,double double_num){
 int iot_publish_enum_pkt(void *arg,int tag,const char *enum_str){
     iot_context *ctx = (iot_context *)arg;
     CHECK_PTR(ctx,-1);
-    unsigned char *iot_buf = malloc(32 + strlen(enum_str));
-    int iot_len = pack_iot_enum_packet(1,1,++ctx->_req_id,tag,enum_str,iot_buf, sizeof(iot_buf));
+    int iot_buf_size = 16 + strlen(enum_str);
+    unsigned char *iot_buf = malloc(16 + strlen(enum_str));
+    int iot_len = pack_iot_enum_packet(1,1,++ctx->_req_id,tag,enum_str,iot_buf, iot_buf_size);
     if(iot_len <= 0) {
         LOGE("pack_iot_enum_packet failed:%d",iot_len);
         free(iot_buf);
@@ -196,8 +200,9 @@ int iot_publish_enum_pkt(void *arg,int tag,const char *enum_str){
 int iot_publish_string_pkt(void *arg,int tag,const char *str){
     iot_context *ctx = (iot_context *)arg;
     CHECK_PTR(ctx,-1);
-    unsigned char *iot_buf = malloc(32 + strlen(str));
-    int iot_len = pack_iot_string_packet(1,1,++ctx->_req_id,tag,str,iot_buf, sizeof(iot_buf));
+    int iot_buf_size = 16 + strlen(str);
+    unsigned char *iot_buf = malloc(iot_buf_size);
+    int iot_len = pack_iot_string_packet(1,1,++ctx->_req_id,tag,str,iot_buf, iot_buf_size);
     if(iot_len <= 0) {
         LOGE("pack_iot_string_packet failed:%d",iot_len);
         free(iot_buf);
@@ -206,4 +211,12 @@ int iot_publish_string_pkt(void *arg,int tag,const char *str){
     int ret = iot_send_raw_bytes(ctx,iot_buf,iot_len);
     free(iot_buf);
     return ret;
+}
+
+int iot_publish_buffer(void *arg,buffer *buf){
+    iot_context *ctx = (iot_context *)arg;
+    CHECK_PTR(ctx,-1);
+    CHECK_PTR(buf,-1);
+    CHECK_PTR(buf->_data,-1);
+    return iot_send_raw_bytes(ctx,(unsigned char *)buf->_data,buf->_len);
 }
