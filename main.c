@@ -57,9 +57,22 @@ int data_output(void *arg, const struct iovec *iov, int iovcnt){
 void on_timer_tick(iot_user_data *user_data){
     iot_timer_schedule(user_data->_ctx);
     static int flag = 1;
+    flag = !flag;
     if(flag){
-        flag = 0;
         iot_send_bool_pkt(user_data->_ctx,509998,1);
+        iot_send_enum_pkt(user_data->_ctx,609995,"e1");
+        iot_send_string_pkt(user_data->_ctx,609996,"str1");
+        iot_send_double_pkt(user_data->_ctx,609997,3.14);
+    }else{
+        buffer buffer;
+        buffer_init(&buffer);
+        iot_buffer_start(&buffer,1,6789);
+        iot_buffer_append_bool(&buffer,509998,0);
+        iot_buffer_append_enum(&buffer,609995,"e0");
+        iot_buffer_append_string(&buffer,609996,"str0");
+        iot_buffer_append_double(&buffer,609997,1.23);
+        iot_send_buffer(user_data->_ctx,&buffer);
+        buffer_release(&buffer);
     }
 }
 
@@ -83,7 +96,7 @@ void run_main(){
     user_data._ctx = iot_context_alloc(&callback);
     iot_send_connect_pkt(user_data._ctx,CLIENT_ID,SECRET,USER_NAME);
 
-    net_set_sock_timeout(user_data._fd ,1,3);
+    net_set_sock_timeout(user_data._fd ,1,2);
     char buffer[1024];
     int timeout = 1000;
     while (1){

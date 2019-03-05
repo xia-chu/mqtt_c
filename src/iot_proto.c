@@ -295,7 +295,7 @@ void dump_iot_pack(const uint8_t *in,int size){
 }
 
 
-int iot_buffer_set_header(buffer *buffer,
+int iot_buffer_start(buffer *buffer,
                       int req_flag,
                       uint32_t req_id){
 
@@ -324,7 +324,7 @@ int iot_buffer_append_double(buffer *buffer, uint32_t tag_id , double double_num
     CHECK_RET(-1,buffer_append(buffer,(const char *)iot_buf,iot_len));
     return 0;
 }
-int iot_buffer_apend_enum(buffer *buffer, uint32_t tag_id, const char *enum_str){
+int iot_buffer_append_enum(buffer *buffer, uint32_t tag_id, const char *enum_str){
     int iot_buf_size = 16 + strlen(enum_str);
     unsigned char *iot_buf = malloc(iot_buf_size);
     if(!iot_buf){
@@ -339,7 +339,7 @@ int iot_buffer_apend_enum(buffer *buffer, uint32_t tag_id, const char *enum_str)
     free(iot_buf);
     return 0;
 }
-int iot_buffer_apend_string(buffer *buffer, uint32_t tag_id, const char *str){
+int iot_buffer_append_string(buffer *buffer, uint32_t tag_id, const char *str){
     int iot_buf_size = 16 + strlen(str);
     unsigned char *iot_buf = malloc(iot_buf_size);
     if(!iot_buf){
@@ -372,12 +372,12 @@ void test_iot_packet(){
     do {
         buffer buffer;
         buffer_init(&buffer);
-        iot_buffer_set_header(&buffer,1,6789);
+        iot_buffer_start(&buffer,1,6789);
         iot_buffer_append_bool(&buffer,1234,1);
         iot_buffer_append_bool(&buffer,1234,0);
         iot_buffer_append_double(&buffer,2345,3.1415);
-        iot_buffer_apend_enum(&buffer,3456,"iot enum");
-        iot_buffer_apend_string(&buffer,4567,"iot string");
+        iot_buffer_append_enum(&buffer,3456,"iot enum");
+        iot_buffer_append_string(&buffer,4567,"iot string");
         LOGD("iot packet len:%d", buffer._len);
         dump_iot_pack((const uint8_t *)buffer._data, buffer._len);
         buffer_release(&buffer);
