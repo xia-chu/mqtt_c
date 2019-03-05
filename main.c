@@ -19,11 +19,6 @@
 #define USER_NAME "JIMIMAX"
 #define SECRET "a40a97ebe8dd73868b0f13c17752c27b"
 
-//#define CLIENT_ID "IMEI173283796361"
-//#define USER_NAME "JIMIMAX"
-//#define SECRET "d71b4e01c2d1fb299213f8856e7cea07"
-
-
 extern void test_iot_packet();
 
 typedef struct {
