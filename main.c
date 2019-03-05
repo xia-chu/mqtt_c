@@ -52,24 +52,43 @@ int data_output(void *arg, const struct iovec *iov, int iovcnt){
 
 
 //////////////////////////////////////////////////////////////////////
+extern void get_now_time_str(char *buf,int buf_size);
 
 void on_timer_tick(iot_user_data *user_data){
     iot_timer_schedule(user_data->_ctx);
     static int flag = 1;
     flag = !flag;
+    static double db = 0;
+    db += 0.01 ;
+    if(db == 100){
+        db = 0;
+    }
+
+    char time_str[26];
+    get_now_time_str(time_str,sizeof(time_str));
     if(flag){
-        iot_send_bool_pkt(user_data->_ctx,509998,1);
-        iot_send_enum_pkt(user_data->_ctx,609995,"e1");
-        iot_send_string_pkt(user_data->_ctx,609996,"str1");
-        iot_send_double_pkt(user_data->_ctx,609997,3.14);
+        // iot_send_bool_pkt(user_data->_ctx,509998,1);
+        // iot_send_enum_pkt(user_data->_ctx,609995,"e1");
+        // iot_send_string_pkt(user_data->_ctx,609996,"str1");
+        // iot_send_double_pkt(user_data->_ctx,609997,3.14);
+
+        buffer buffer;
+        buffer_init(&buffer);
+        iot_buffer_start(&buffer,1,iot_get_request_id(user_data->_ctx));
+        // iot_buffer_append_bool(&buffer,509998,1);
+        iot_buffer_append_enum(&buffer,609995,"e1");
+        iot_buffer_append_string(&buffer,609996,time_str);
+        iot_buffer_append_double(&buffer,609997,db);
+        iot_send_buffer(user_data->_ctx,&buffer);
+        buffer_release(&buffer);
     }else{
         buffer buffer;
         buffer_init(&buffer);
         iot_buffer_start(&buffer,1,iot_get_request_id(user_data->_ctx));
-        iot_buffer_append_bool(&buffer,509998,0);
+        // iot_buffer_append_bool(&buffer,509998,0);
         iot_buffer_append_enum(&buffer,609995,"e0");
-        iot_buffer_append_string(&buffer,609996,"str0");
-        iot_buffer_append_double(&buffer,609997,1.23);
+        iot_buffer_append_string(&buffer,609996,time_str);
+        iot_buffer_append_double(&buffer,609997,db);
         iot_send_buffer(user_data->_ctx,&buffer);
         buffer_release(&buffer);
     }
@@ -111,7 +130,7 @@ void run_main(){
 
     net_set_sock_timeout(user_data._fd ,1,2);
     char buffer[1024];
-    int timeout = 30;
+    int timeout = 0x7FFFFFFF;
     while (1){
         int recv = read(user_data._fd,buffer, sizeof(buffer));
         if(recv == 0){
