@@ -79,7 +79,7 @@ void iot_on_message(void *arg,iot_data *data_aar, int data_count){
 
 void run_main(){
     /*测试iot打包解包*/
-    test_iot_packet();
+//    test_iot_packet();
 
     iot_user_data user_data;
     user_data._fd = net_connet_server("172.16.10.115",1883,3);
