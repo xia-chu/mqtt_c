@@ -261,7 +261,7 @@ static int handle_pub_comp(void *arg, uint16_t pkt_id){
  */
 static int handle_sub_ack(void *arg, uint16_t pkt_id,const char *codes, uint32_t count){
     mqtt_context *ctx = (mqtt_context *)arg;
-    LOGT("pkt_id: %d , codes:%s , count:%d ",(int)pkt_id,codes,(int)count);
+    LOGT("pkt_id: %d , codes:%d , count:%d ",(int)pkt_id,codes[0],(int)count);
 
     mqtt_req_cb_value *value = lookup_req_cb_value(ctx,pkt_id);
     if(!value){

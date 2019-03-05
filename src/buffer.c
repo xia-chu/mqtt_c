@@ -19,6 +19,9 @@ void buffer_release(buffer *buf){
 }
 
 int buffer_append(buffer *buf,const char *data,int len){
+    if(len <= 0){
+        len = strlen(data);
+    }
     if(buf->_len && buf->_data){
         buf->_data = realloc(buf->_data,len + buf->_len);
         if(!buf->_data){
@@ -42,6 +45,9 @@ int buffer_append(buffer *buf,const char *data,int len){
     return 0;
 }
 int buffer_assign(buffer *buf,const char *data,int len){
+    if(len <= 0){
+        len = strlen(data);
+    }
     buffer_release(buf);
     return buffer_append(buf,data,len);
 }

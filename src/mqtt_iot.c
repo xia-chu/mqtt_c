@@ -33,16 +33,56 @@ static int iot_data_output(void *arg, const struct iovec *iov, int iovcnt){
     return -1;
 }
 
+static void iot_on_subscribe(void *arg,int time_out,const char *codes, uint32_t count){
+    iot_context *ctx = (iot_context *)arg;
+    int code = -2;
+    do {
+        if (time_out) {
+            LOGE("wait subscribe response timeout!");
+            break;
+        }
+        if (count != 1) {
+            LOGE("bad subscribe response ,codes count=:%d",count);
+            break;
+        }
+        code = codes[0];
+    }while(0);
+
+    //订阅成功了才认为登录成功
+    if(ctx->_callback.iot_on_connect){
+        ctx->_callback.iot_on_connect(ctx->_callback._user_data,code);
+    }
+}
 static void iot_on_connect_cb(void *arg, char flags, char ret_code){
     iot_context *ctx = (iot_context *)arg;
+    while (ret_code == 0){
+        LOGI("connect mqtt server success!");
+        const char *topics[] = {ctx->_topic_listen._data};
+        if(-1 != mqtt_send_subscribe_pkt(ctx->_mqtt_context,
+                                         MQTT_QOS_LEVEL1,
+                                         topics,
+                                         1,
+                                         iot_on_subscribe,
+                                         ctx,
+                                         NULL,
+                                         10)){
+            //开始订阅成功！
+            return;
+        }
+        LOGE("mqtt_send_subscribe_pkt failed!");
+        //开始订阅失败，回调错误
+        ret_code = -1;
+        break;
+    }
+
     if(ctx->_callback.iot_on_connect){
         ctx->_callback.iot_on_connect(ctx->_callback._user_data,ret_code);
     }
 }
 
-static void iot_on_ping_resp(void *arg){
-    iot_context *ctx = (iot_context *)arg;
-}
+static void iot_on_ping_resp(void *arg){}
+static void iot_on_publish_rel(void *arg, uint16_t pkt_id){}
+
 static void iot_on_publish(void *arg,
                            uint16_t pkt_id,
                            const char *topic,
@@ -60,9 +100,6 @@ static void iot_on_publish(void *arg,
     }
 }
 
-static void iot_on_publish_rel(void *arg, uint16_t pkt_id){
-
-}
 
 void *iot_context_alloc(iot_callback *cb){
     iot_context *ctx = (iot_context *)malloc(sizeof(iot_context));
@@ -110,7 +147,7 @@ void make_passwd(const char *client_id,
     buffer_release(&buf_plain);
 }
 
-int iot_connect_pkt(void *arg,const char *client_id,const char *secret,const char *user_name){
+int iot_send_connect_pkt(void *arg,const char *client_id,const char *secret,const char *user_name){
     iot_context *ctx = (iot_context *)arg;
     CHECK_PTR(ctx,-1);
     CHECK_PTR(client_id,-1);
@@ -122,12 +159,20 @@ int iot_connect_pkt(void *arg,const char *client_id,const char *secret,const cha
     make_passwd(client_id,secret,user_name,&md5_str,0);
     int ret = mqtt_send_connect_pkt(ctx->_mqtt_context,KEEP_ALIVE_SEC,client_id,1,NULL,NULL,0,MQTT_QOS_LEVEL1, 0,user_name,md5_str._data);
     buffer_release(&md5_str);
+
+    CHECK_RET(-1,buffer_assign(&ctx->_topic_listen,"/terminal/",0));
+    CHECK_RET(-1,buffer_append(&ctx->_topic_listen,client_id,0));
+
+    CHECK_RET(-1,buffer_assign(&ctx->_topic_publish,"/service/",0));
+    CHECK_RET(-1,buffer_append(&ctx->_topic_publish,user_name,0));
+    CHECK_RET(-1,buffer_append(&ctx->_topic_publish,"/",0));
+    CHECK_RET(-1,buffer_append(&ctx->_topic_publish,client_id,0));
     return ret;
 }
 
 static void mqtt_pub_ack(void *arg,int time_out,pub_type type){
     iot_context *ctx = (iot_context *)arg;
-    LOGT("");
+    LOGT("time_out=%d,type=%d",time_out,type);
 }
 
 int iot_send_raw_bytes(iot_context *ctx,unsigned char *iot_buf,int iot_len){
@@ -157,7 +202,7 @@ int iot_send_raw_bytes(iot_context *ctx,unsigned char *iot_buf,int iot_len){
     return ret;
 }
 
-int iot_publish_bool_pkt(void *arg,int tag,int flag){
+int iot_send_bool_pkt(void *arg,int tag,int flag){
     iot_context *ctx = (iot_context *)arg;
     CHECK_PTR(ctx,-1);
     unsigned char iot_buf[16] = {0};
@@ -169,7 +214,7 @@ int iot_publish_bool_pkt(void *arg,int tag,int flag){
     return iot_send_raw_bytes(ctx,iot_buf,iot_len);
 }
 
-int iot_publish_double_pkt(void *arg,int tag,double double_num){
+int iot_send_double_pkt(void *arg,int tag,double double_num){
     iot_context *ctx = (iot_context *)arg;
     CHECK_PTR(ctx,-1);
     unsigned char iot_buf[32] = {0};
@@ -181,7 +226,7 @@ int iot_publish_double_pkt(void *arg,int tag,double double_num){
     return iot_send_raw_bytes(ctx,iot_buf,iot_len);
 }
 
-int iot_publish_enum_pkt(void *arg,int tag,const char *enum_str){
+int iot_send_enum_pkt(void *arg,int tag,const char *enum_str){
     iot_context *ctx = (iot_context *)arg;
     CHECK_PTR(ctx,-1);
     int iot_buf_size = 16 + strlen(enum_str);
@@ -197,7 +242,7 @@ int iot_publish_enum_pkt(void *arg,int tag,const char *enum_str){
     return ret;
 }
 
-int iot_publish_string_pkt(void *arg,int tag,const char *str){
+int iot_send_string_pkt(void *arg,int tag,const char *str){
     iot_context *ctx = (iot_context *)arg;
     CHECK_PTR(ctx,-1);
     int iot_buf_size = 16 + strlen(str);
@@ -213,10 +258,23 @@ int iot_publish_string_pkt(void *arg,int tag,const char *str){
     return ret;
 }
 
-int iot_publish_buffer(void *arg,buffer *buf){
+int iot_send_buffer(void *arg,buffer *buf){
     iot_context *ctx = (iot_context *)arg;
     CHECK_PTR(ctx,-1);
     CHECK_PTR(buf,-1);
     CHECK_PTR(buf->_data,-1);
     return iot_send_raw_bytes(ctx,(unsigned char *)buf->_data,buf->_len);
+}
+
+
+int iot_input_data(void *arg,char *data,int len){
+    iot_context *ctx = (iot_context *)arg;
+    CHECK_PTR(ctx,-1);
+    return mqtt_input_data(ctx->_mqtt_context,data,len);
+}
+
+int iot_timer_schedule(void *arg){
+    iot_context *ctx = (iot_context *)arg;
+    CHECK_PTR(ctx,-1);
+    return mqtt_timer_schedule(ctx->_mqtt_context);
 }

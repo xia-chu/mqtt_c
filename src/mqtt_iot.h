@@ -34,21 +34,7 @@ typedef struct {
      */
     int (*iot_on_output)(void *arg, const struct iovec *iov, int iovcnt);
 
-    /**
-     * 登录服务器结果回调
-     * @param arg 用户数据指针
-     * @param flags @see MqttConnectFlag
-     * @param ret_code 0代表成功，@see MqttRetCode
-     */
     void (*iot_on_connect)(void *arg, char ret_code);
-
-
-    /**
-     * 收到服务器主题发布的消息
-     * @param arg
-     * @param data_aar
-     * @param data_count
-     */
     void (*iot_on_message)(void *arg,iot_data *data_aar, int data_count);
 
     /**
@@ -61,13 +47,15 @@ typedef struct {
 void *iot_context_alloc(iot_callback *cb);
 int iot_context_free(void *arg);
 
-int iot_connect_pkt(void *iot_ctx,const char *client_id,const char *secret,const char *user_name);
-int iot_publish_bool_pkt(void *iot_ctx,int tag,int flag);
-int iot_publish_double_pkt(void *iot_ctx,int tag,double double_num);
-int iot_publish_enum_pkt(void *iot_ctx,int tag,const char *enum_str);
-int iot_publish_string_pkt(void *iot_ctx,int tag,const char *str);
-int iot_publish_buffer(void *iot_ctx,buffer *buffer);
+int iot_send_connect_pkt(void *iot_ctx,const char *client_id,const char *secret,const char *user_name);
+int iot_send_bool_pkt(void *iot_ctx,int tag,int flag);
+int iot_send_double_pkt(void *iot_ctx,int tag,double double_num);
+int iot_send_enum_pkt(void *iot_ctx,int tag,const char *enum_str);
+int iot_send_string_pkt(void *iot_ctx,int tag,const char *str);
+int iot_send_buffer(void *iot_ctx,buffer *buffer);
 
+int iot_input_data(void *arg,char *data,int len);
+int iot_timer_schedule(void *arg);
 
 #ifdef __cplusplus
 } // extern "C"
