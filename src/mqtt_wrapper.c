@@ -152,10 +152,19 @@ static int handle_publish(void *arg,
                           uint32_t payloadsize,
                           int dup,
                           enum MqttQosLevel qos){
+    uint8_t tail = 0 ;
+    if(payload && payloadsize){
+        tail = payload[payloadsize];
+        ((uint8_t*)payload)[payloadsize] = '\0';
+    }
     mqtt_context *ctx = (mqtt_context *)arg;
     LOGT("pkt_id:%d , topic: %s , payload:%s , dup:%d , qos:%d",(int)pkt_id,topic,payload,dup,(int)qos);
     CHECK_PTR(ctx->_callback.mqtt_handle_publish,-1);
     ctx->_callback.mqtt_handle_publish(ctx->_callback._user_data,pkt_id,topic,payload,payloadsize,dup,qos);
+
+    if(tail != 0){
+        ((uint8_t*)payload)[payloadsize] = tail;
+    }
     return 0;
 }
 
