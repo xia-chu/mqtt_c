@@ -9,6 +9,7 @@
 #include "mqtt_iot.h"
 #ifdef __alios__
 #include <netmgr.h>
+#include <aos/network.h>
 #ifdef AOS_ATCMD
 #include <atparser.h>
 #endif
@@ -36,7 +37,7 @@ int data_output(void *arg, const struct iovec *iov, int iovcnt){
     int sent;
     while(iovcnt--){
         const struct iovec *ptr = iov++;
-        sent = write(user_data->_fd,ptr->iov_base , ptr->iov_len);
+        sent = send(user_data->_fd,ptr->iov_base , ptr->iov_len,0);
         if(-1 == sent){
             return -1;
         }
