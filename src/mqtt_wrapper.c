@@ -112,7 +112,7 @@ static int mqtt_write_sock(void *arg, const struct iovec *iov, int iovcnt){
  */
 static int handle_ping_resp(void *arg){/**< 处理ping响应的回调函数，成功则返回非负数 */
     mqtt_context *ctx = (mqtt_context *)arg;
-    LOGT("");
+//    LOGT("");
     CHECK_PTR(ctx->_callback.mqtt_handle_ping_resp,-1);
     ctx->_callback.mqtt_handle_ping_resp(ctx->_callback._user_data);
     ctx->_last_ping = time(NULL);
@@ -128,7 +128,7 @@ static int handle_ping_resp(void *arg){/**< 处理ping响应的回调函数，�
  */
 static int handle_conn_ack(void *arg, char flags, char ret_code){
     mqtt_context *ctx = (mqtt_context *)arg;
-    LOGT("flags:%d , ret_code:%d",(int)flags,(int)(ret_code));
+//    LOGT("flags:%d , ret_code:%d",(int)flags,(int)(ret_code));
     CHECK_PTR(ctx->_callback.mqtt_handle_conn_ack,-1);
     ctx->_callback.mqtt_handle_conn_ack(ctx->_callback._user_data,flags,ret_code);
     return 0;
@@ -180,7 +180,7 @@ static int handle_publish(void *arg,
  */
 static int handle_pub_rel(void *arg, uint16_t pkt_id){
     mqtt_context *ctx = (mqtt_context *)arg;
-    LOGT("pkt_id: %d",(int)pkt_id);
+//    LOGT("pkt_id: %d",(int)pkt_id);
     CHECK_PTR(ctx->_callback.mqtt_handle_publish_rel,-1);
     ctx->_callback.mqtt_handle_publish_rel(ctx->_callback._user_data,pkt_id);
     return 0;
