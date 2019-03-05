@@ -43,13 +43,13 @@ static const uint8_t map2[] =
     0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33
 };
 
-int av_base64_decode(uint8_t *out, const char *in, int out_size)
+int av_base64_decode(uint8_t *out,  int out_size,const char *in,int in_size)
 {
     int i, v;
     uint8_t *dst = out;
 
     v = 0;
-    for (i = 0; in[i] && in[i] != '='; i++) {
+    for (i = 0; in[i] && in[i] != '=' && i < in_size; i++) {
         unsigned int index= in[i]-43;
         if (index>=FF_ARRAY_ELEMS(map2) || map2[index] == 0xff)
             return -1;

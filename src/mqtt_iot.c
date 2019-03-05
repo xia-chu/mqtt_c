@@ -94,7 +94,7 @@ static void iot_on_publish(void *arg,
     if(ctx->_callback.iot_on_message){
         int buf_size = payloadsize * 3 / 4 +10;
         uint8_t *out = malloc(buf_size);
-        int size = av_base64_decode(out,payload,buf_size);
+        int size = av_base64_decode(out,buf_size,payload,payloadsize);
         dump_iot_pack(out, size);
         free(out);
     }

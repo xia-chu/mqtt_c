@@ -260,7 +260,7 @@ void dump_iot_pack(const uint8_t *in,int size){
     const unsigned char *content;
     int content_len;
 
-    const uint8_t *ptr = in;
+    uint8_t *ptr = (uint8_t*)in;
     while (ptr < in + size){
         int remain = in + size - ptr;
         if(ptr == in){
@@ -272,8 +272,9 @@ void dump_iot_pack(const uint8_t *in,int size){
             LOGE("unpack_iot_packet failed!");
             break;
         }
-        ptr = content + content_len;
-
+        ptr = (uint8_t *)content + content_len;
+        uint8_t tailf = *ptr;
+        *ptr = '\0';
         switch (type){
             case iot_bool:
                 CHECK_TYPE_LEN(content_len , 1);
@@ -290,6 +291,7 @@ void dump_iot_pack(const uint8_t *in,int size){
                 LOGD("req_flag:%d , req_id:%d , tag_id:%d , type:%d , double:%f",req_flag,req_id,tag_id,type,to_double(content));
                 break;
         }
+        *ptr = tailf;
     }
 
 }
