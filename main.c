@@ -39,6 +39,7 @@ int data_output(void *arg, const struct iovec *iov, int iovcnt){
         const struct iovec *ptr = iov++;
         sent = send(user_data->_fd,ptr->iov_base , ptr->iov_len,0);
         if(-1 == sent){
+            LOGE("failed:%s",strerror(errno));
             return -1;
         }
         ret += sent;
