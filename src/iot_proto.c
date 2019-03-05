@@ -110,7 +110,7 @@ int pack_iot_packet(int with_head,
     if (!static_length_of_type(type)) {
         CHECK_PTR(data_in, -1);
         if (in_len <= 0) {
-            in_len = strlen((char *) data_in) + 1;
+            in_len = strlen((char *) data_in);
         }
         CHECK_LEN(4, data_out_tail);
         cur_ptr += Mqtt_DumpLength((uint32_t) in_len, (char *) cur_ptr);
@@ -141,7 +141,7 @@ int pack_iot_enum_packet(int with_head,
                          const char *enum_str,
                          unsigned char *data_out,
                          int out_len){
-    return pack_iot_packet(with_head,req_flag,req_id,tag_id,iot_enum,(unsigned char *)enum_str, strlen(enum_str) + 1,data_out,out_len);
+    return pack_iot_packet(with_head,req_flag,req_id,tag_id,iot_enum,(unsigned char *)enum_str, strlen(enum_str),data_out,out_len);
 }
 
 int pack_iot_string_packet(int with_head,
@@ -151,7 +151,7 @@ int pack_iot_string_packet(int with_head,
                            const char *str,
                            unsigned char *data_out,
                            int out_len){
-    return pack_iot_packet(with_head,req_flag,req_id,tag_id,iot_string,(unsigned char *)str, strlen(str) + 1,data_out,out_len);
+    return pack_iot_packet(with_head,req_flag,req_id,tag_id,iot_string,(unsigned char *)str, strlen(str),data_out,out_len);
 }
 
 int pack_iot_double_packet(int with_head,
