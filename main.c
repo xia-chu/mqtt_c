@@ -137,7 +137,7 @@ void handle_publish_rel(void *arg,
 void publish_tag_switch(mqtt_user_data *user_data,int tag,int flag){
     static int req_id = 0;
     unsigned char iot_buf[1024] = {0};
-    int iot_len = pack_iot_bool_packet(1,++req_id,tag,flag,iot_buf, sizeof(iot_buf));
+    int iot_len = pack_iot_bool_packet(1,1,++req_id,tag,flag,iot_buf, sizeof(iot_buf));
     if(iot_len > 0){
         int out_size = AV_BASE64_SIZE(iot_len) + 10;
         char *out = malloc(out_size);

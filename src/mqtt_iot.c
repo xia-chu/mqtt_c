@@ -15,19 +15,63 @@
 #define KEEP_ALIVE_SEC 60
 
 typedef struct {
+    iot_callback _callback;
     void *_mqtt_context;
     buffer _topic_publish;
     buffer _topic_listen;
     int _req_id;
 } iot_context;
 
-void *iot_context_alloc(){
+static int iot_data_output(void *arg, const struct iovec *iov, int iovcnt){
+    iot_context *ctx = (iot_context *)arg;
+    if(ctx->_callback.iot_on_output){
+        return ctx->_callback.iot_on_output(ctx->_callback._user_data,iov,iovcnt);
+    }
+    return -1;
+}
+
+static void iot_on_connect_cb(void *arg, char flags, char ret_code){
+    iot_context *ctx = (iot_context *)arg;
+    if(ctx->_callback.iot_on_connect){
+        ctx->_callback.iot_on_connect(ctx->_callback._user_data,ret_code);
+    }
+}
+
+static void iot_on_ping_resp(void *arg){
+    iot_context *ctx = (iot_context *)arg;
+}
+static void iot_on_publish(void *arg,
+                           uint16_t pkt_id,
+                           const char *topic,
+                           const char *payload,
+                           uint32_t payloadsize,
+                           int dup,
+                           enum MqttQosLevel qos){
+    iot_context *ctx = (iot_context *)arg;
+    if(ctx->_callback.iot_on_message){
+        int buf_size = payloadsize * 3 / 4 +10;
+        uint8_t *out = malloc(buf_size);
+        int size = av_base64_decode(out,payload,buf_size);
+        dump_iot_pack(out, size);
+        free(out);
+    }
+}
+
+static void iot_on_publish_rel(void *arg, uint16_t pkt_id){
+
+}
+
+void *iot_context_alloc(iot_callback *cb){
     iot_context *ctx = (iot_context *)malloc(sizeof(iot_context));
     if(!ctx){
         LOGE("malloc iot_context failed!");
         return NULL;
     }
     memset(ctx,0, sizeof(iot_context));
+    memcpy(ctx,cb, sizeof(mqtt_callback));
+
+    mqtt_callback callback = {iot_data_output,iot_on_connect_cb,iot_on_ping_resp,iot_on_publish,iot_on_publish_rel,ctx};
+    ctx->_mqtt_context = mqtt_alloc_contex(&callback);
     return ctx;
 }
 
@@ -78,6 +122,10 @@ int iot_connect_pkt(void *arg,const char *client_id,const char *secret,const cha
     return ret;
 }
 
+static void mqtt_pub_ack(void *arg,int time_out,pub_type type){
+    iot_context *ctx = (iot_context *)arg;
+    LOGT("");
+}
 
 int iot_send_raw_bytes(iot_context *ctx,unsigned char *iot_buf,int iot_len){
     int base64_size = AV_BASE64_SIZE(iot_len) + 10;
@@ -98,8 +146,8 @@ int iot_send_raw_bytes(iot_context *ctx,unsigned char *iot_buf,int iot_len){
                                     MQTT_QOS_LEVEL1,//qos
                                     0,//retain
                                     0,//dup
-                                    NULL,//mqtt_handle_pub_ack
-                                    NULL,//user_data
+                                    mqtt_pub_ack,//mqtt_handle_pub_ack
+                                    ctx,//user_data
                                     NULL,//free_user_data
                                     10);//timeout_sec
     free(base64);
@@ -110,7 +158,7 @@ int iot_publish_bool_pkt(void *arg,int tag,int flag){
     iot_context *ctx = (iot_context *)arg;
     CHECK_PTR(ctx,-1);
     unsigned char iot_buf[32] = {0};
-    int iot_len = pack_iot_bool_packet(1,++ctx->_req_id,tag,flag,iot_buf, sizeof(iot_buf));
+    int iot_len = pack_iot_bool_packet(1,1,++ctx->_req_id,tag,flag,iot_buf, sizeof(iot_buf));
     if(iot_len <= 0) {
         LOGE("pack_iot_bool_packet failed:%d",iot_len);
         return -1;
@@ -122,7 +170,7 @@ int iot_publish_double_pkt(void *arg,int tag,double double_num){
     iot_context *ctx = (iot_context *)arg;
     CHECK_PTR(ctx,-1);
     unsigned char iot_buf[32] = {0};
-    int iot_len = pack_iot_double_packet(1,++ctx->_req_id,tag,double_num,iot_buf, sizeof(iot_buf));
+    int iot_len = pack_iot_double_packet(1,1,++ctx->_req_id,tag,double_num,iot_buf, sizeof(iot_buf));
     if(iot_len <= 0) {
         LOGE("pack_iot_double_packet failed:%d",iot_len);
         return -1;
@@ -134,7 +182,7 @@ int iot_publish_enum_pkt(void *arg,int tag,const char *enum_str){
     iot_context *ctx = (iot_context *)arg;
     CHECK_PTR(ctx,-1);
     unsigned char *iot_buf = malloc(32 + strlen(enum_str));
-    int iot_len = pack_iot_enum_packet(1,++ctx->_req_id,tag,enum_str,iot_buf, sizeof(iot_buf));
+    int iot_len = pack_iot_enum_packet(1,1,++ctx->_req_id,tag,enum_str,iot_buf, sizeof(iot_buf));
     if(iot_len <= 0) {
         LOGE("pack_iot_enum_packet failed:%d",iot_len);
         free(iot_buf);
@@ -149,7 +197,7 @@ int iot_publish_string_pkt(void *arg,int tag,const char *str){
     iot_context *ctx = (iot_context *)arg;
     CHECK_PTR(ctx,-1);
     unsigned char *iot_buf = malloc(32 + strlen(str));
-    int iot_len = pack_iot_string_packet(1,++ctx->_req_id,tag,str,iot_buf, sizeof(iot_buf));
+    int iot_len = pack_iot_string_packet(1,1,++ctx->_req_id,tag,str,iot_buf, sizeof(iot_buf));
     if(iot_len <= 0) {
         LOGE("pack_iot_string_packet failed:%d",iot_len);
         free(iot_buf);
