@@ -134,13 +134,13 @@ void make_passwd(const char *client_id,
                  const char *user_name,
                  buffer *md5_str_buf,
                  int upCase){
-    char passwd[33];
+    char passwd[33] = {0};
     uint8_t md5_digst[16];
     buffer buf_plain ;
     buffer_init(&buf_plain);
-    buffer_append(&buf_plain,client_id,strlen(client_id));
-    buffer_append(&buf_plain,secret,strlen(secret));
-    buffer_append(&buf_plain,user_name,strlen(user_name));
+    buffer_append(&buf_plain,client_id,0);
+    buffer_append(&buf_plain,secret,0);
+    buffer_append(&buf_plain,user_name,0);
     md5((uint8_t*)buf_plain._data,buf_plain._len,md5_digst);
     hexdump(md5_digst,MD5_HEX_LEN,passwd, sizeof(passwd),upCase);
     buffer_assign(md5_str_buf,passwd, sizeof(passwd));
