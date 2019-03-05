@@ -158,7 +158,7 @@ static int handle_publish(void *arg,
         ((uint8_t*)payload)[payloadsize] = '\0';
     }
     mqtt_context *ctx = (mqtt_context *)arg;
-    LOGT("pkt_id:%d , topic: %s , payload:%s , dup:%d , qos:%d",(int)pkt_id,topic,payload,dup,(int)qos);
+//    LOGT("pkt_id:%d , topic: %s , payload:%s , dup:%d , qos:%d",(int)pkt_id,topic,payload,dup,(int)qos);
     CHECK_PTR(ctx->_callback.mqtt_handle_publish,-1);
     ctx->_callback.mqtt_handle_publish(ctx->_callback._user_data,pkt_id,topic,payload,payloadsize,dup,qos);
 

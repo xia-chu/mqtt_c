@@ -252,7 +252,16 @@ double to_double(const unsigned char *data_in){
     memcpy(&db,&buf,8);
     return db;
 }
-void dump_iot_pack(const uint8_t *in,int size){
+
+typedef void(*dump_callback)(void *user_data,
+                             uint8_t req_flag,
+                             uint32_t req_id,
+                             uint32_t tag_id,
+                             iot_data_type type,
+                             const unsigned char *content,
+                             int content_len);
+
+void dump_iot_pack_callback(const uint8_t *in,int size,dump_callback callback,void *user_data){
     uint8_t req_flag;
     uint32_t req_id;
     uint32_t tag_id;
@@ -275,27 +284,36 @@ void dump_iot_pack(const uint8_t *in,int size){
         ptr = (uint8_t *)content + content_len;
         uint8_t tailf = *ptr;
         *ptr = '\0';
-        switch (type){
-            case iot_bool:
-                CHECK_TYPE_LEN(content_len , 1);
-                LOGD("req_flag:%d , req_id:%d , tag_id:%d , type:%d , bool:%d",req_flag,req_id,tag_id,type,*((uint8_t*)content));
-                break;
-            case iot_string:
-                LOGD("req_flag:%d , req_id:%d , tag_id:%d , type:%d , string:%s",req_flag,req_id,tag_id,type,(const char *)content);
-                break;
-            case iot_enum:
-                LOGD("req_flag:%d , req_id:%d , tag_id:%d , type:%d , enum:%s",req_flag,req_id,tag_id,type,(const char *)content);
-                break;
-            case iot_double:
-                CHECK_TYPE_LEN(content_len , 8);
-                LOGD("req_flag:%d , req_id:%d , tag_id:%d , type:%d , double:%f",req_flag,req_id,tag_id,type,to_double(content));
-                break;
-        }
+        callback(user_data,req_flag,req_id,tag_id,type,content,content_len);
         *ptr = tailf;
     }
-
 }
 
+static void dump_callback_print(void *user_data,
+                           uint8_t req_flag,
+                           uint32_t req_id,
+                           uint32_t tag_id,
+                           iot_data_type type,
+                           const unsigned char *content,
+                           int content_len){
+    switch (type){
+        case iot_bool:
+            LOGD("req_flag:%d , req_id:%d , tag_id:%d , type:%d , bool:%d",req_flag,req_id,tag_id,type,*((uint8_t*)content));
+            break;
+        case iot_string:
+            LOGD("req_flag:%d , req_id:%d , tag_id:%d , type:%d , string:%s",req_flag,req_id,tag_id,type,(const char *)content);
+            break;
+        case iot_enum:
+            LOGD("req_flag:%d , req_id:%d , tag_id:%d , type:%d , enum:%s",req_flag,req_id,tag_id,type,(const char *)content);
+            break;
+        case iot_double:
+            LOGD("req_flag:%d , req_id:%d , tag_id:%d , type:%d , double:%f",req_flag,req_id,tag_id,type,to_double(content));
+            break;
+    }
+}
+void dump_iot_pack(const uint8_t *in,int size){
+    dump_iot_pack_callback(in,size,dump_callback_print,NULL);
+}
 
 int iot_buffer_start(buffer *buffer,
                       int req_flag,

@@ -4,6 +4,8 @@
 #include <memory.h>
 #include "net.h"
 #include <stdlib.h>
+#include <mqtt_iot.h>
+#include <buffer.h>
 #include "mqtt_iot.h"
 #ifdef __alios__
 #include <netmgr.h>
@@ -74,7 +76,21 @@ void on_timer_tick(iot_user_data *user_data){
 void iot_on_connect(void *arg, char ret_code){
     LOGD("ret_code :%d",ret_code);
 }
-void iot_on_message(void *arg,iot_data *data_aar, int data_count){
+void iot_on_message(void *arg,int req_flag, uint32_t req_id, iot_data *data){
+    switch (data->_type){
+        case iot_bool:
+            LOGD("req_flag:%d , req_id:%d , tag_id:%d , type:%d , bool:%d",req_flag,req_id,data->_tag_id,data->_type,data->_data._bool);
+            break;
+        case iot_string:
+            LOGD("req_flag:%d , req_id:%d , tag_id:%d , type:%d , string:%s",req_flag,req_id,data->_tag_id,data->_type,data->_data._string._data);
+            break;
+        case iot_enum:
+            LOGD("req_flag:%d , req_id:%d , tag_id:%d , type:%d , enum:%s",req_flag,req_id,data->_tag_id,data->_type,data->_data._enum._data);
+            break;
+        case iot_double:
+            LOGD("req_flag:%d , req_id:%d , tag_id:%d , type:%d , double:%f",req_flag,req_id,data->_tag_id,data->_type,data->_data._double);
+            break;
+    }
 }
 
 void run_main(){

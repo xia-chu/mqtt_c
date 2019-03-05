@@ -14,8 +14,16 @@
 
 #define KEEP_ALIVE_SEC 60
 
-extern void dump_iot_pack(const uint8_t *in,int size);
+typedef void(*dump_callback)(void *user_data,
+                             uint8_t req_flag,
+                             uint32_t req_id,
+                             uint32_t tag_id,
+                             iot_data_type type,
+                             const unsigned char *content,
+                             int content_len);
 
+extern void dump_iot_pack_callback(const uint8_t *in,int size,dump_callback callback,void *user_data);
+extern double to_double(const unsigned char *data_in);
 
 typedef struct {
     iot_callback _callback;
@@ -83,6 +91,42 @@ static void iot_on_connect_cb(void *arg, char flags, char ret_code){
 static void iot_on_ping_resp(void *arg){}
 static void iot_on_publish_rel(void *arg, uint16_t pkt_id){}
 
+
+static void iot_message_for_each(void *user_data,
+                                 uint8_t req_flag,
+                                 uint32_t req_id,
+                                 uint32_t tag_id,
+                                 iot_data_type type,
+                                 const unsigned char *content,
+                                 int content_len){
+    iot_context *ctx = (iot_context *)user_data;
+    iot_data data = {0};
+    data._tag_id = tag_id;
+    data._type = type;
+
+    switch (type){
+        case iot_bool:
+            data._data._bool = *((uint8_t*)content);
+            break;
+        case iot_string:
+            data._data._string._data = (char *)content;
+            data._data._string._len = content_len;
+            break;
+        case iot_enum:
+            data._data._enum._data = (char *)content;
+            data._data._enum._len = content_len;
+            break;
+        case iot_double:
+            data._data._double = to_double(content);
+            break;
+    }
+    ctx->_callback.iot_on_message(ctx->_callback._user_data,req_flag,req_id,&data);
+}
+
+
+static void iot_message_dump(iot_context *cxt,uint8_t *data,int data_len){
+    dump_iot_pack_callback(data,data_len,iot_message_for_each,cxt);
+}
 static void iot_on_publish(void *arg,
                            uint16_t pkt_id,
                            const char *topic,
@@ -91,13 +135,14 @@ static void iot_on_publish(void *arg,
                            int dup,
                            enum MqttQosLevel qos){
     iot_context *ctx = (iot_context *)arg;
-    if(ctx->_callback.iot_on_message){
-        int buf_size = payloadsize * 3 / 4 +10;
-        uint8_t *out = malloc(buf_size);
-        int size = av_base64_decode(out,buf_size,payload,payloadsize);
-        dump_iot_pack(out, size);
-        free(out);
+    if(!ctx->_callback.iot_on_message){
+        return;
     }
+    int buf_size = payloadsize * 3 / 4 +10;
+    uint8_t *out = malloc(buf_size);
+    int size = av_base64_decode(out,buf_size,payload,payloadsize);
+    iot_message_dump(ctx,out,size);
+    free(out);
 }
 
 
