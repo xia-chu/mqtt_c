@@ -57,6 +57,8 @@ int iot_send_buffer(void *iot_ctx,buffer *buffer);
 int iot_input_data(void *arg,char *data,int len);
 int iot_timer_schedule(void *arg);
 
+int iot_get_request_id(void *arg);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif // __cplusplus

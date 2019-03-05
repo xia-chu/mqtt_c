@@ -278,3 +278,9 @@ int iot_timer_schedule(void *arg){
     CHECK_PTR(ctx,-1);
     return mqtt_timer_schedule(ctx->_mqtt_context);
 }
+
+int iot_get_request_id(void *arg){
+    iot_context *ctx = (iot_context *)arg;
+    CHECK_PTR(ctx,-1);
+    return ++ctx->_req_id;
+}

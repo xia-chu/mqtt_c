@@ -66,7 +66,7 @@ void on_timer_tick(iot_user_data *user_data){
     }else{
         buffer buffer;
         buffer_init(&buffer);
-        iot_buffer_start(&buffer,1,6789);
+        iot_buffer_start(&buffer,1,iot_get_request_id(user_data->_ctx));
         iot_buffer_append_bool(&buffer,509998,0);
         iot_buffer_append_enum(&buffer,609995,"e0");
         iot_buffer_append_string(&buffer,609996,"str0");
