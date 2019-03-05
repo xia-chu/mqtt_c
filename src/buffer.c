@@ -23,7 +23,7 @@ int buffer_append(buffer *buf,const char *data,int len){
         len = strlen(data);
     }
     if(buf->_len && buf->_data){
-        buf->_data = realloc(buf->_data,len + buf->_len);
+        buf->_data = realloc(buf->_data,len + buf->_len + 1);
         if(!buf->_data){
             //out of memory
             LOGE("out of memory:%d",len + buf->_len);
@@ -32,16 +32,18 @@ int buffer_append(buffer *buf,const char *data,int len){
         }
         memcpy(buf->_data + buf->_len ,data,len);
         buf->_len += len;
+        buf->_data[buf->_len] = '\0';
         return 0;
     }
 
-    buf->_data = malloc(len);
+    buf->_data = malloc(len + 1);
     if(!buf->_data){
         LOGE("out of memory:%d",len);
         return -1;
     }
     memcpy(buf->_data,data,len);
     buf->_len = len;
+    buf->_data[buf->_len] = '\0';
     return 0;
 }
 int buffer_assign(buffer *buf,const char *data,int len){

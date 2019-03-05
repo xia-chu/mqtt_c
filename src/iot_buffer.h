@@ -9,6 +9,7 @@ extern "C" {
 #endif // __cplusplus
 
 #include "buffer.h"
+#include <stdint.h>
 
 int iot_buffer_start(buffer *buffer, int req_flag, uint32_t req_id);
 int iot_buffer_append_bool(buffer *buffer, uint32_t tag_id , uint8_t bool_flag);

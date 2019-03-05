@@ -98,7 +98,7 @@ void run_main(){
 
     net_set_sock_timeout(user_data._fd ,1,2);
     char buffer[1024];
-    int timeout = 1000;
+    int timeout = 30;
     while (1){
         int recv = read(user_data._fd,buffer, sizeof(buffer));
         if(recv == 0){
