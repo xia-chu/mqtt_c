@@ -4,6 +4,7 @@
 #include <assert.h>
 #include "mqtt.h"
 
+#define MQTT_DEFAULT_ALIGNMENT sizeof(int)
 static const uint32_t MQTT_MIN_EXTENT_SIZE = 256;
 
 void MqttBuffer_Init(struct MqttBuffer *buf)

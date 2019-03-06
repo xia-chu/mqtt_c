@@ -247,7 +247,7 @@ int iot_send_raw_bytes(iot_context *ctx,unsigned char *iot_buf,int iot_len){
     return ret;
 }
 
-int iot_send_bool_pkt(void *arg,int tag,int flag){
+int iot_send_bool_pkt(void *arg,uint32_t tag,int flag){
     iot_context *ctx = (iot_context *)arg;
     CHECK_PTR(ctx,-1);
     unsigned char iot_buf[16] = {0};
@@ -259,7 +259,7 @@ int iot_send_bool_pkt(void *arg,int tag,int flag){
     return iot_send_raw_bytes(ctx,iot_buf,iot_len);
 }
 
-int iot_send_double_pkt(void *arg,int tag,double double_num){
+int iot_send_double_pkt(void *arg,uint32_t tag,double double_num){
     iot_context *ctx = (iot_context *)arg;
     CHECK_PTR(ctx,-1);
     unsigned char iot_buf[32] = {0};
@@ -271,7 +271,7 @@ int iot_send_double_pkt(void *arg,int tag,double double_num){
     return iot_send_raw_bytes(ctx,iot_buf,iot_len);
 }
 
-int iot_send_enum_pkt(void *arg,int tag,const char *enum_str){
+int iot_send_enum_pkt(void *arg,uint32_t tag,const char *enum_str){
     iot_context *ctx = (iot_context *)arg;
     CHECK_PTR(ctx,-1);
     int iot_buf_size = 16 + strlen(enum_str);
@@ -287,7 +287,7 @@ int iot_send_enum_pkt(void *arg,int tag,const char *enum_str){
     return ret;
 }
 
-int iot_send_string_pkt(void *arg,int tag,const char *str){
+int iot_send_string_pkt(void *arg,uint32_t tag,const char *str){
     iot_context *ctx = (iot_context *)arg;
     CHECK_PTR(ctx,-1);
     int iot_buf_size = 16 + strlen(str);

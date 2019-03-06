@@ -12,6 +12,5 @@ struct iovec {
 #include <sys/uio.h>
 #endif // _WIN32
 
-#define MQTT_DEFAULT_ALIGNMENT sizeof(int)
 
 #endif // ONENET_CONFIG_H

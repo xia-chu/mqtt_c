@@ -10,10 +10,10 @@ extern "C" {
 #endif // __cplusplus
 
 typedef enum {
-    iot_bool = 0x01,//占用一个字节
+    iot_bool = 0x01,//布尔型，占用一个字节
     iot_enum = 0x02,//本质同于string
-    iot_string = 0x03,//可变长度
-    iot_double = 0x05,//8个字节
+    iot_string = 0x03,//字符串类型，可变长度
+    iot_double = 0x05,//双精度浮点型，8个字节
 } iot_data_type;
 
 #ifdef __cplusplus

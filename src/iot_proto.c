@@ -6,7 +6,6 @@
 #include "log.h"
 #include "mqtt_wrapper.h"
 #include "buffer.h"
-#include "iot_buffer.h"
 
 #ifndef __alios__
 #include <arpa/inet.h>
