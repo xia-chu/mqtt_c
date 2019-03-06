@@ -68,6 +68,7 @@ static void iot_on_subscribe(void *arg,int time_out,const char *codes, uint32_t 
             break;
         case 0x80://Failure 失败
             code = -1;
+            LOGE("subscribe topic failed!");
             break;
         default:
             break;
