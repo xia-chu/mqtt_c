@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <memory.h>
+#include <jimi_buffer.h>
 #include "jimi_iot.h"
 #include "jimi_buffer.h"
 #include "md5.h"
@@ -207,6 +208,8 @@ void make_passwd(const char *client_id,
     md5((uint8_t*)buf_plain._data,buf_plain._len,md5_digst);
     hexdump(md5_digst,MD5_HEX_LEN,passwd, sizeof(passwd),upCase);
     buffer_assign(md5_str_buf,passwd, sizeof(passwd));
+
+    LOGT("plain text:%s , md5 str:%s",buf_plain._data,md5_str_buf->_data);
     buffer_release(&buf_plain);
 }
 
