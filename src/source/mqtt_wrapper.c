@@ -112,7 +112,7 @@ static int mqtt_write_sock(void *arg, const struct iovec *iov, int iovcnt){
  */
 static int handle_ping_resp(void *arg){/**< 处理ping响应的回调函数，成功则返回非负数 */
     mqtt_context *ctx = (mqtt_context *)arg;
-//    LOGT("");
+    LOGT("");
     CHECK_PTR(ctx->_callback.mqtt_handle_ping_resp,-1);
     ctx->_callback.mqtt_handle_ping_resp(ctx->_callback._user_data);
     ctx->_last_ping = time(NULL);
@@ -128,7 +128,7 @@ static int handle_ping_resp(void *arg){/**< 处理ping响应的回调函数，�
  */
 static int handle_conn_ack(void *arg, char flags, char ret_code){
     mqtt_context *ctx = (mqtt_context *)arg;
-//    LOGT("flags:%d , ret_code:%d",(int)flags,(int)(ret_code));
+    LOGT("flags:%d , ret_code:%d",(int)flags,(int)(ret_code));
     CHECK_PTR(ctx->_callback.mqtt_handle_conn_ack,-1);
     ctx->_callback.mqtt_handle_conn_ack(ctx->_callback._user_data,flags,ret_code);
     return 0;
@@ -158,7 +158,7 @@ static int handle_publish(void *arg,
         ((uint8_t*)payload)[payloadsize] = '\0';
     }
     mqtt_context *ctx = (mqtt_context *)arg;
-//    LOGT("pkt_id:%d , topic: %s , payload:%s , dup:%d , qos:%d",(int)pkt_id,topic,payload,dup,(int)qos);
+    LOGT("pkt_id:%d , topic: %s , payload:%s , dup:%d , qos:%d",(int)pkt_id,topic,payload,dup,(int)qos);
     CHECK_PTR(ctx->_callback.mqtt_handle_publish,-1);
     ctx->_callback.mqtt_handle_publish(ctx->_callback._user_data,pkt_id,topic,payload,payloadsize,dup,qos);
 
@@ -180,7 +180,7 @@ static int handle_publish(void *arg,
  */
 static int handle_pub_rel(void *arg, uint16_t pkt_id){
     mqtt_context *ctx = (mqtt_context *)arg;
-//    LOGT("pkt_id: %d",(int)pkt_id);
+    LOGT("pkt_id: %d",(int)pkt_id);
     CHECK_PTR(ctx->_callback.mqtt_handle_publish_rel,-1);
     ctx->_callback.mqtt_handle_publish_rel(ctx->_callback._user_data,pkt_id);
     return 0;
@@ -195,7 +195,7 @@ static int handle_pub_rel(void *arg, uint16_t pkt_id){
  */
 static int handle_pub_ack(void *arg, uint16_t pkt_id){
     mqtt_context *ctx = (mqtt_context *)arg;
-//    LOGT("pkt_id: %d",(int)pkt_id);
+    LOGT("pkt_id: %d",(int)pkt_id);
 
     mqtt_req_cb_value *value = lookup_req_cb_value(ctx,pkt_id);
     if(!value){
@@ -222,7 +222,7 @@ static int handle_pub_ack(void *arg, uint16_t pkt_id){
  */
 static int handle_pub_rec(void *arg, uint16_t pkt_id){
     mqtt_context *ctx = (mqtt_context *)arg;
-    //LOGT("pkt_id: %d",(int)pkt_id);
+    LOGT("pkt_id: %d",(int)pkt_id);
 
     mqtt_req_cb_value *value = lookup_req_cb_value(ctx,pkt_id);
     if(!value){
@@ -246,7 +246,7 @@ static int handle_pub_rec(void *arg, uint16_t pkt_id){
  */
 static int handle_pub_comp(void *arg, uint16_t pkt_id){
     mqtt_context *ctx = (mqtt_context *)arg;
-    //LOGT("pkt_id: %d",(int)pkt_id);
+    LOGT("pkt_id: %d",(int)pkt_id);
 
     mqtt_req_cb_value *value = lookup_req_cb_value(ctx,pkt_id);
     if(!value){
@@ -270,7 +270,7 @@ static int handle_pub_comp(void *arg, uint16_t pkt_id){
  */
 static int handle_sub_ack(void *arg, uint16_t pkt_id,const char *codes, uint32_t count){
     mqtt_context *ctx = (mqtt_context *)arg;
-    //LOGT("pkt_id: %d , codes:%d , count:%d ",(int)pkt_id,codes[0],(int)count);
+    LOGT("pkt_id: %d , codes:%d , count:%d ",(int)pkt_id,codes[0],(int)count);
 
     mqtt_req_cb_value *value = lookup_req_cb_value(ctx,pkt_id);
     if(!value){
@@ -286,7 +286,7 @@ static int handle_sub_ack(void *arg, uint16_t pkt_id,const char *codes, uint32_t
 
 static int handle_unsub_ack(void *arg, uint16_t pkt_id){
     mqtt_context *ctx = (mqtt_context *)arg;
-    //LOGT("pkt_id: %d",(int)pkt_id);
+    LOGT("pkt_id: %d",(int)pkt_id);
 
     mqtt_req_cb_value *value = lookup_req_cb_value(ctx,pkt_id);
     if(!value){

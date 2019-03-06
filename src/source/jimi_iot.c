@@ -235,7 +235,7 @@ int iot_send_connect_pkt(void *arg,const char *client_id,const char *secret,cons
 
 static void mqtt_pub_ack(void *arg,int time_out,pub_type type){
     iot_context *ctx = (iot_context *)arg;
-//    LOGT("time_out=%d,type=%d",time_out,type);
+    LOGT("time_out=%d,type=%d",time_out,type);
 }
 
 int iot_send_raw_bytes(iot_context *ctx,unsigned char *iot_buf,int iot_len){
