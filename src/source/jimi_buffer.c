@@ -6,8 +6,10 @@
 #include <stdlib.h>
 #include "jimi_buffer.h"
 #include "jimi_log.h"
+#include "mqtt_wrapper.h"
 
 int buffer_init(buffer *buf){
+    CHECK_PTR(buf,-1);
     memset(buf,0, sizeof(buffer));
     return 0;
 }
