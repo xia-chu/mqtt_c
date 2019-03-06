@@ -2,7 +2,7 @@
 // Created by xzl on 2019/2/22.
 //
 
-#include "log.h"
+#include "jimi_log.h"
 #include <unistd.h>
 #include <sys/time.h>
 #include <time.h>

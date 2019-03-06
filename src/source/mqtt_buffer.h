@@ -6,7 +6,6 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include "config.h"
 
 struct MqttExtent {
     uint32_t len;

@@ -5,8 +5,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <memory.h>
-#include "mqtt_iot.h"
-#include "buffer.h"
+#include "jimi_iot.h"
+#include "jimi_buffer.h"
 #include "md5.h"
 #include "mqtt_wrapper.h"
 #include "iot_proto.h"

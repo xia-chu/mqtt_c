@@ -8,7 +8,7 @@ extern "C" {
 
 #include <stdint.h>
 #include <time.h>
-#include "config.h"
+#include "jimi_type.h"
 #include "mqtt_buffer.h"
 
 /** MQTT错误码 */

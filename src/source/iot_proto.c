@@ -3,9 +3,9 @@
 //
 
 #include "iot_proto.h"
-#include "log.h"
+#include "jimi_log.h"
 #include "mqtt_wrapper.h"
-#include "buffer.h"
+#include "jimi_buffer.h"
 
 #ifndef __alios__
 #include <arpa/inet.h>

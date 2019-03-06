@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include "log.h"
+#include "jimi_log.h"
  
 // Constants are the integer part of the sines of integers (in radians) * 2^32.
 const uint32_t k[64] = {

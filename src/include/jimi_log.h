@@ -2,8 +2,8 @@
 // Created by xzl on 2019/2/22.
 //
 
-#ifndef MQTT_LOG_H
-#define MQTT_LOG_H
+#ifndef JIMI_LOG_H
+#define JIMI_LOG_H
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
@@ -62,4 +62,4 @@ do{ \
 #ifdef __cplusplus
 } // extern "C"
 #endif // __cplusplus
-#endif //MQTT_LOG_H
+#endif //JIMI_LOG_H

@@ -4,7 +4,7 @@
 
 #include "mqtt_wrapper.h"
 #include "mqtt_buffer.h"
-#include "buffer.h"
+#include "jimi_buffer.h"
 #include "hash-table.h"
 #include <memory.h>
 #include <stdlib.h>

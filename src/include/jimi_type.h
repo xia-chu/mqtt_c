@@ -1,13 +1,16 @@
-//
-// Created by xzl on 2019/3/5.
-//
+#ifndef JIMI_TYPE_H
+#define JIMI_TYPE_H
 
-#ifndef MQTT_IOT_TYPE_H
-#define MQTT_IOT_TYPE_H
+#include <stddef.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
+#if  defined(WIN32) || defined(__alios__)
+struct iovec {
+    void *iov_base;
+    size_t iov_len;
+};
+#else
+#include <sys/uio.h>
+#endif // _WIN32
 
 typedef enum {
     iot_bool = 0x01,//布尔型，占用一个字节
@@ -16,7 +19,4 @@ typedef enum {
     iot_double = 0x05,//双精度浮点型，8个字节
 } iot_data_type;
 
-#ifdef __cplusplus
-} // extern "C"
-#endif // __cplusplus
-#endif //MQTT_IOT_TYPE_H
+#endif // JIMI_TYPE_H

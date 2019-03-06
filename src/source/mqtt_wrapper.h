@@ -9,7 +9,7 @@ extern "C" {
 #endif // __cplusplus
 
 #include "mqtt.h"
-#include "log.h"
+#include "jimi_log.h"
 #include <stdio.h>
 
 //////////////////////////////////////////////////////////////////////

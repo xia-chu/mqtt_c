@@ -6,8 +6,8 @@
 #define MQTT_IOT_PROTO_H
 
 #include <stdint.h>
-#include "iot_type.h"
-#include "buffer.h"
+#include "jimi_buffer.h"
+#include "jimi_type.h"
 
 #ifdef __cplusplus
 extern "C" {

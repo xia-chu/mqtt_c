@@ -2,12 +2,12 @@
 // Created by xzl on 2019/3/4.
 //
 
-#ifndef MQTT_MQTT_IOT_H
-#define MQTT_MQTT_IOT_H
+#ifndef JIMI_IOT_H
+#define JIMI_IOT_H
 
-#include "config.h"
-#include "iot_type.h"
-#include "buffer.h"
+#include "jimi_type.h"
+#include "jimi_buffer.h"
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -212,4 +212,4 @@ int iot_get_request_id(void *iot_ctx);
 } // extern "C"
 #endif // __cplusplus
 
-#endif //MQTT_MQTT_IOT_H
+#endif //JIMI_IOT_H

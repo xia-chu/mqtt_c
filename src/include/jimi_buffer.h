@@ -2,8 +2,8 @@
 // Created by xzl on 2019/2/22.
 //
 
-#ifndef MQTT_BUFFER_H
-#define MQTT_BUFFER_H
+#ifndef JIMI_BUFFER_H
+#define JIMI_BUFFER_H
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
@@ -23,4 +23,4 @@ int buffer_move(buffer *dst,buffer *src);
 #ifdef __cplusplus
 } // extern "C"
 #endif // __cplusplus
-#endif //MQTT_BUFFER_H
+#endif //JIMI_BUFFER_H

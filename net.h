@@ -8,7 +8,7 @@
 extern "C" {
 #endif // __cplusplus
 
-#include "log.h"
+#include "jimi_log.h"
 
 int net_connet_server(const char *host, unsigned short port,float second);
 int net_set_sock_timeout(int fd, int recv, float second);

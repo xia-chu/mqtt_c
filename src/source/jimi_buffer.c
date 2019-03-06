@@ -4,8 +4,8 @@
 
 #include <memory.h>
 #include <stdlib.h>
-#include "buffer.h"
-#include "log.h"
+#include "jimi_buffer.h"
+#include "jimi_log.h"
 
 int buffer_init(buffer *buf){
     memset(buf,0, sizeof(buffer));

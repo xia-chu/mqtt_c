@@ -2,11 +2,9 @@
 #include <errno.h>
 #include <string.h>
 #include <memory.h>
-#include "net.h"
 #include <stdlib.h>
-#include <mqtt_iot.h>
-#include <buffer.h>
-#include "mqtt_iot.h"
+#include "net.h"
+#include "jimi_iot.h"
 #ifdef __alios__
 #include <netmgr.h>
 #include <aos/network.h>
