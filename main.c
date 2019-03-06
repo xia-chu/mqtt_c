@@ -16,10 +16,10 @@
 #define application_start main
 #endif
 
-#define CLIENT_ID "IMEI173283796362"
+#define CLIENT_ID "IMEI17328379636"
 #define USER_NAME "JIMIMAX"
-#define SECRET "a40a97ebe8dd73868b0f13c17752c27b"
-#define SERVER_IP "172.16.10.115"
+#define SECRET "aa8458754b8a2266a8c1e629c611bb0d"
+#define SERVER_IP "120.24.159.146"
 #define SERVER_PORT 1883
 
 typedef struct {
@@ -76,28 +76,28 @@ void on_timer_tick(iot_user_data *user_data){
     get_now_time_str(time_str,sizeof(time_str));
 
     if(flag){
-         iot_send_bool_pkt(user_data->_ctx,509998,1);
-         iot_send_enum_pkt(user_data->_ctx,609995,"e1");
-         iot_send_string_pkt(user_data->_ctx,609996,time_str);
-         iot_send_double_pkt(user_data->_ctx,609997,db);
+         iot_send_bool_pkt(user_data->_ctx,410497,1);
+         iot_send_enum_pkt(user_data->_ctx,410498,"1");
+         iot_send_string_pkt(user_data->_ctx,410499,time_str);
+         iot_send_double_pkt(user_data->_ctx,410500,db);
 
 //        buffer buffer;
 //        buffer_init(&buffer);
 //        iot_buffer_start(&buffer,1,iot_get_request_id(user_data->_ctx));
-//         iot_buffer_append_bool(&buffer,509998,1);
-//        iot_buffer_append_enum(&buffer,609995,"e1");
-//        iot_buffer_append_string(&buffer,609996,time_str);
-//        iot_buffer_append_double(&buffer,609997,db);
+//         iot_buffer_append_bool(&buffer,410497,1);
+//        iot_buffer_append_enum(&buffer,410498,"e1");
+//        iot_buffer_append_string(&buffer,410499,time_str);
+//        iot_buffer_append_double(&buffer,410500,db);
 //        iot_send_buffer(user_data->_ctx,&buffer);
 //        buffer_release(&buffer);
     }else{
         buffer buffer;
         buffer_init(&buffer);
         iot_buffer_start(&buffer,1,iot_get_request_id(user_data->_ctx));
-        iot_buffer_append_bool(&buffer,509998,0);
-        iot_buffer_append_enum(&buffer,609995,"e0");
-        iot_buffer_append_string(&buffer,609996,time_str);
-        iot_buffer_append_double(&buffer,609997,db);
+        iot_buffer_append_bool(&buffer,410497,0);
+        iot_buffer_append_enum(&buffer,410498,"2");
+        iot_buffer_append_string(&buffer,410499,time_str);
+        iot_buffer_append_double(&buffer,410500,db);
         iot_send_buffer(user_data->_ctx,&buffer);
         buffer_release(&buffer);
     }
