@@ -4,13 +4,22 @@
 
 #ifndef MQTT_MQTT_WRAPPER_H
 #define MQTT_MQTT_WRAPPER_H
+
+#include <stdio.h>
+#include "mqtt.h"
+#include "jimi_log.h"
+
+//debug模式下才答应内部调试信息
+#ifdef NDEBUG
+#ifdef LOGT
+#undef LOGT
+#define LOGT(...)
+#endif
+#endif //NDEBUG
+
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
-
-#include "mqtt.h"
-#include "jimi_log.h"
-#include <stdio.h>
 
 //////////////////////////////////////////////////////////////////////
 #define CHECK_PTR(ptr,err) \
