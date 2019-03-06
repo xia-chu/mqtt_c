@@ -7,6 +7,14 @@
 #include <sys/time.h>
 #include <time.h>
 
+e_log_lev g_log_leg = log_trace;
+
+void set_log_level(e_log_lev lev){
+    g_log_leg = lev;
+}
+e_log_lev get_log_level(){
+    return g_log_leg;
+}
 const char *LOG_CONST_TABLE[][3] = {
         {"\033[44;37m", "\033[34m" , "T"},
         {"\033[42;37m", "\033[32m" , "D"},

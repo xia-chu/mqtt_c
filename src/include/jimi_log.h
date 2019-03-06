@@ -12,9 +12,6 @@
 extern "C" {
 #endif // __cplusplus
 
-extern const char *LOG_CONST_TABLE[][3];
-void get_now_time_str(char *buf,int buf_size);
-
 typedef enum {
     log_trace = 0,
     log_debug ,
@@ -23,9 +20,17 @@ typedef enum {
     log_error ,
 } e_log_lev;
 
+extern const char *LOG_CONST_TABLE[][3];
+extern void get_now_time_str(char *buf,int buf_size);
+extern void set_log_level(e_log_lev lev);
+extern e_log_lev get_log_level();
+
 
 #define _PRINT_(encble_color,func,lev,fmt,...) \
 do{ \
+    if(lev < get_log_level()){ \
+        break; \
+    } \
     func("%s %d\r\n",__FILE__,__LINE__);\
     char time_str[26];\
     get_now_time_str(time_str,sizeof(time_str)); \
