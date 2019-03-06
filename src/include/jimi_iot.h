@@ -8,7 +8,6 @@
 #include "jimi_type.h"
 #include "jimi_buffer.h"
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus

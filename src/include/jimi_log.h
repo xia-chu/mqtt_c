@@ -4,15 +4,16 @@
 
 #ifndef JIMI_LOG_H
 #define JIMI_LOG_H
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
 
 #include <stdio.h>
 #define CLEAR_COLOR "\033[0m"
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
 extern const char *LOG_CONST_TABLE[][3];
-extern void get_now_time_str(char *buf,int buf_size);
+void get_now_time_str(char *buf,int buf_size);
 
 typedef enum {
     log_trace = 0,
