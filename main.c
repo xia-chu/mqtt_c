@@ -16,9 +16,9 @@
 #define application_start main
 #endif
 
-#define CLIENT_ID "123"
+#define CLIENT_ID "IMEI17328379636"
 #define USER_NAME "JIMIMAX"
-#define SECRET "123123"
+#define SECRET "aa8458754b8a2266a8c1e629c611bb0d"
 #define SERVER_IP "120.24.159.146"
 #define SERVER_PORT 1883
 

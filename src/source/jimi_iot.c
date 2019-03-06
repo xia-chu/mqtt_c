@@ -223,7 +223,7 @@ int iot_send_connect_pkt(void *arg,const char *client_id,const char *secret,cons
     buffer md5_str;
     buffer_init(&md5_str);
     make_passwd(client_id,secret,user_name,&md5_str,0);
-    int ret = mqtt_send_connect_pkt(ctx->_mqtt_context,KEEP_ALIVE_SEC,client_id,1,NULL,NULL,0,MQTT_QOS_LEVEL1, 0,user_name,md5_str._data);
+    int ret = mqtt_send_connect_pkt(ctx->_mqtt_context,KEEP_ALIVE_SEC,client_id,1,NULL,NULL,0,MQTT_QOS_LEVEL0, 0,user_name,md5_str._data);
     buffer_release(&md5_str);
 
     CHECK_RET(-1,buffer_assign(&ctx->_topic_listen,"/terminal/",0));

@@ -408,9 +408,22 @@ int mqtt_send_connect_pkt(void *arg,
                           int will_retain,
                           const char *user,
                           const char *password){
-    if(will_payload && will_payload_len <= 0){
+    if(will_topic && will_topic[0] == '\0'){
+        will_topic = NULL;
+    }
+    if(will_payload && will_payload[0] == '\0'){
+        will_payload = NULL;
+    }
+
+    if(!will_topic || !will_payload){
+        will_topic = NULL;
+        will_payload = NULL;
+        will_payload_len = 0;
+        qos = MQTT_QOS_LEVEL0;
+    } else{
         will_payload_len = strlen(will_payload);
     }
+
     mqtt_context *ctx = (mqtt_context *)arg;
     CHECK_PTR(ctx,-1);
     CHECK_RET(-1,Mqtt_PackConnectPkt(&ctx->_buffer,
