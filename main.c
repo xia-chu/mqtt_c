@@ -140,7 +140,8 @@ void iot_on_message(void *arg,int req_flag, uint32_t req_id, iot_data *data){
  * 运行主函数
  */
 void run_main(){
-    set_log_level(log_debug);
+    //设置日志等级
+    set_log_level(log_trace);
     //数据结构体
     iot_user_data user_data;
 

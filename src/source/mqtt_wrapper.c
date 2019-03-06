@@ -8,6 +8,15 @@
 #include "hash-table.h"
 #include <memory.h>
 #include <stdlib.h>
+#include <assert.h>
+
+//debug模式下才答应内部调试信息
+#ifdef NDEBUG
+#ifdef LOGT
+#undef LOGT
+#define LOGT(...)
+#endif
+#endif //NDEBUG
 
 //////////////////////////////////////////////////////////////////////
 typedef struct{
