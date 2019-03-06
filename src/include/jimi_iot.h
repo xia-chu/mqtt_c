@@ -5,6 +5,7 @@
 #ifndef JIMI_IOT_H
 #define JIMI_IOT_H
 
+#include <stdint.h>
 #include "jimi_type.h"
 #include "jimi_buffer.h"
 
