@@ -14,6 +14,7 @@
 #include <memory.h>
 #include <unistd.h>
 #include <string.h>
+#include "jimi_log.h"
 
 #ifndef INADDR_NONE
 #define INADDR_NONE ((uint32_t)0xffffffffUL)

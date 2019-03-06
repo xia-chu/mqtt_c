@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include "net.h"
 #include "jimi_iot.h"
+#include "jimi_log.h"
 #ifdef __alios__
 #include <netmgr.h>
 #include <aos/network.h>
