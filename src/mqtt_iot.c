@@ -56,6 +56,23 @@ static void iot_on_subscribe(void *arg,int time_out,const char *codes, uint32_t 
         code = codes[0];
     }while(0);
 
+    switch (code){
+        case 0x00://最大QoS 0
+            code = 0;
+            break;
+        case 0x01://最大QoS 1
+            code = 0;
+            break;
+        case 0x02://最大QoS 2
+            code = 0;
+            break;
+        case 0x80://Failure 失败
+            code = -1;
+            break;
+        default:
+            break;
+    }
+
     //订阅成功了才认为登录成功
     if(ctx->_callback.iot_on_connect){
         ctx->_callback.iot_on_connect(ctx->_callback._user_data,code);
