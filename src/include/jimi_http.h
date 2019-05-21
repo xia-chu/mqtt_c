@@ -11,34 +11,34 @@
 extern "C" {
 #endif // __cplusplus
 
-typedef struct http_context http_context;
+typedef struct http_request http_request;
 
 /**
- * 创建http_context
+ * 创建http_request
  * @return 对象指针
  */
-http_context *http_context_alloc();
+http_request *http_request_alloc();
 
 /**
- * 释放http_context对象
+ * 释放http_request对象
  * @param ctx 对象指针
  * @return 0成功，-1失败
  */
-int http_context_free(http_context *ctx);
+int http_request_free(http_request *ctx);
 
 /**
  * 设置HTTP方法名，譬如GET，POST等
  * @param ctx 对象指针
  * @return 0成功，-1失败
  */
-int http_context_set_method(http_context *ctx,const char *method);
+int http_request_set_method(http_request *ctx,const char *method);
 
 /**
  * 设置url，譬如 /index.html
  * @param ctx 对象指针
  * @return 0成功，-1失败
  */
-int http_context_set_url(http_context *ctx,const char *url);
+int http_request_set_path(http_request *ctx,const char *url);
 
 /**
  * 设置body
@@ -48,7 +48,7 @@ int http_context_set_url(http_context *ctx,const char *url);
  * @param content_len body长度，如果<=0 ,那么通过strlen(content_data)获取
  * @return 0成功，-1失败
  */
-int http_context_set_body(http_context *ctx,const char *content_type,const char *content_data,int content_len);
+int http_request_set_body(http_request *ctx,const char *content_type,const char *content_data,int content_len);
 
 /**
  * 设置http头，可以覆盖http头，不区分大小写
@@ -57,20 +57,85 @@ int http_context_set_body(http_context *ctx,const char *content_type,const char 
  * @param value http头字段内容
  * @return 0成功，-1失败
  */
-int http_context_add_header(http_context *ctx,const char *key,const char *value);
+int http_request_add_header(http_request *ctx,const char *key,const char *value);
 
 /**
- * 把http_context输出到buffer对象(连续的内存指针)
+ * 把http_request输出到buffer对象(连续的内存指针)
  * @param ctx 对象指针
  * @param out buffer对象指针
  * @return 0成功，-1失败
  */
-int http_context_dump_to_buffer(http_context *ctx,buffer *out);
+int http_request_dump_to_buffer(http_request *ctx,buffer *out);
 
 /**
  * 功能测试
  */
-void test_http_context();
+void test_http_request();
+
+
+/////////////////////////////////////////////////////////////////////////////////
+/**
+ * http_response对象定义
+ */
+typedef struct http_response http_response;
+
+/**
+ * split出http回复包回调，该包对象后续会自动释放
+ */
+typedef void (*on_split_response)(void *user_data,http_response *res);
+
+
+/**
+ * 创建http_response解析对象
+ * @param cb split回调函数指针
+ * @param user_data 回调用户数据指针
+ * @return 对象指针
+ */
+http_response *http_response_alloc(on_split_response cb,void *user_data);
+
+/**
+ * 释放http_response解析对象
+ * @param ctx 对象指针
+ * @return 0成功，-1失败
+ */
+int http_response_free(http_response *ctx);
+
+/**
+ * 输入数据到对象中解析http回复，该对象支持处理粘包和包分片
+ * @param ctx 对象指针
+ * @param data 数据指针
+ * @param len 数据长度
+ * @return -1失败，否则返回输入的数据长度
+ */
+int http_response_input(http_response *ctx,const char *data,int len);
+
+/**
+ * 查找http头值，无拷贝的(请勿free)
+ * @param ctx on_split_response回调出的http回复包对象指针
+ * @param key 键名
+ * @return 键值，未找到则返回NULL
+ */
+const char *http_response_get_header(http_response *ctx,const char *key);
+
+/**
+ * 获取body指针，无拷贝的(请勿free)
+ * @param ctx on_split_response回调出的http回复包对象指针
+ * @return body指针
+ */
+const char *http_response_get_body(http_response *ctx);
+
+/**
+ * 获取body大小
+ * @param ctx on_split_response回调出的http回复包对象指针
+ * @return body大小
+ */
+int http_response_get_bodylen(http_response *ctx);
+
+
+/**
+ * 测试http回复包解析
+ */
+void test_http_response();
 
 #ifdef __cplusplus
 } // extern "C"
