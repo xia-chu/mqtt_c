@@ -35,6 +35,15 @@ void buffer_release(buffer *buf);
  */
 int buffer_append(buffer *buf,const char *data,int len);
 
+
+/**
+ * 追加数据至buffer对象末尾
+ * @param buf 对象指针
+ * @param from 子buffer
+ * @return 0为成功
+ */
+int buffer_append_buffer(buffer *buf,buffer *from);
+
 /**
  * 复制数据至buffer对象
  * @param buf 对象指针

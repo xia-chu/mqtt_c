@@ -4,7 +4,7 @@ project(mqtt)
 #使能c++11
 #add_compile_options(-std=c++11)
 set(CMAKE_CXX_STANDARD 11)
-add_definitions(-Wno-int-to-void-pointer-cast)
+add_definitions(-Wno-int-to-void-pointer-cast -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast)
 
 
 #加载自定义模块

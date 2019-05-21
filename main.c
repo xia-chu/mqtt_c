@@ -6,6 +6,8 @@
 #include "net.h"
 #include "jimi_iot.h"
 #include "jimi_log.h"
+#include "jimi_http.h"
+#include <signal.h>
 #ifdef __alios__
 #include <netmgr.h>
 #include <aos/network.h>
@@ -16,10 +18,16 @@
 #define application_start main
 #endif
 
-#define CLIENT_ID "IMEI17328379636"
+//#define CLIENT_ID "IMEI17328379636"
+//#define USER_NAME "JIMIMAX"
+//#define SECRET "efbf5c0a07cc413bce2013d60e2e3435"
+//#define SERVER_IP "39.108.84.233"
+//#define SERVER_PORT 1883
+
+#define CLIENT_ID "IMEI866855039412986"
 #define USER_NAME "JIMIMAX"
-#define SECRET "aa8458754b8a2266a8c1e629c611bb0d"
-#define SERVER_IP "120.24.159.146"
+#define SECRET "2d8c4c567a5df8de559d025bc338d05c"
+#define SERVER_IP "39.108.84.233"
 #define SERVER_PORT 1883
 
 typedef struct {
@@ -76,10 +84,10 @@ void on_timer_tick(iot_user_data *user_data){
     get_now_time_str(time_str,sizeof(time_str));
 
     if(flag){
-         iot_send_bool_pkt(user_data->_ctx,410497,1);
-         iot_send_enum_pkt(user_data->_ctx,410498,"1");
-         iot_send_string_pkt(user_data->_ctx,410499,time_str);
-         iot_send_double_pkt(user_data->_ctx,410500,db);
+         iot_send_bool_pkt(user_data->_ctx,210038,1);
+//         iot_send_enum_pkt(user_data->_ctx,410498,"1");
+//         iot_send_string_pkt(user_data->_ctx,410499,time_str);
+//         iot_send_double_pkt(user_data->_ctx,410500,db);
 
 //        buffer buffer;
 //        buffer_init(&buffer);
@@ -94,10 +102,10 @@ void on_timer_tick(iot_user_data *user_data){
         buffer buffer;
         buffer_init(&buffer);
         iot_buffer_start(&buffer,1,iot_get_request_id(user_data->_ctx));
-        iot_buffer_append_bool(&buffer,410497,0);
-        iot_buffer_append_enum(&buffer,410498,"2");
-        iot_buffer_append_string(&buffer,410499,time_str);
-        iot_buffer_append_double(&buffer,410500,db);
+        iot_buffer_append_bool(&buffer,210038,0);
+//        iot_buffer_append_enum(&buffer,410498,"2");
+//        iot_buffer_append_string(&buffer,410499,time_str);
+//        iot_buffer_append_double(&buffer,410500,db);
         iot_send_buffer(user_data->_ctx,&buffer);
         buffer_release(&buffer);
     }
@@ -136,12 +144,19 @@ void iot_on_message(void *arg,int req_flag, uint32_t req_id, iot_data *data){
     }
 }
 
+int exit_flag  = 0;
+void on_stop(int sig){
+    exit_flag = 1;
+}
 /**
  * 运行主函数
  */
 void run_main(){
     //设置日志等级
     set_log_level(log_trace);
+
+    test_http_context();
+
     //数据结构体
     iot_user_data user_data;
 
@@ -165,7 +180,8 @@ void run_main(){
     //socket接收buffer
     char buffer[1024];
     int timeout = 0x7FFFFFFF;
-    while (1){
+    signal(SIGINT,on_stop);
+    while (!exit_flag){
         //接收数据
         int recv = read(user_data._fd,buffer, sizeof(buffer));
         if(recv == 0){
@@ -173,7 +189,7 @@ void run_main(){
             LOGE("read eof\r\n");
             break;
         }
-        if(recv == -1){
+        if(recv == -1 ){
             //接收超时，触发定时器
             on_timer_tick(&user_data);
             if(--timeout == 0){
@@ -212,4 +228,6 @@ int application_start(int argc, char *argv[]){
 #endif
     return 0;
 }
+
+
 

@@ -20,7 +20,13 @@ void buffer_release(buffer *buf){
     buffer_init(buf);
 }
 
+int buffer_append_buffer(buffer *buf,buffer *from){
+    return buffer_append(buf,from->_data,from->_len);
+}
 int buffer_append(buffer *buf,const char *data,int len){
+    if(!data){
+        return 0;
+    }
     if(len <= 0){
         len = strlen(data);
     }
