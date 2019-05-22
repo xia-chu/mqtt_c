@@ -155,10 +155,6 @@ void run_main(){
     //设置日志等级
     set_log_level(log_trace);
 
-    test_http_request();
-    test_http_response();
-    test_http_url();
-
     //数据结构体
     iot_user_data user_data;
 
