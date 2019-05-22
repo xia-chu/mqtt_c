@@ -191,7 +191,7 @@ int http_url_free(http_url *ctx);
  * @param ctx http_url对象
  * @return 端口号，0代表失败
  */
-uint16_t http_url_get_port(http_url *ctx);
+unsigned short http_url_get_port(http_url *ctx);
 
 /**
  * 判断是否为https协议

@@ -354,7 +354,7 @@ void test_http_response(){
 typedef struct http_url{
     char *_path;
     char *_host;
-    uint16_t _port;
+    unsigned short _port;
     int _is_https;
 }http_url;
 
@@ -362,7 +362,7 @@ http_url *http_url_parse(const char *url) {
     CHECK_PTR(url, NULL);
     char *http = malloc(16), *host = malloc(128);
     char *path = malloc(sizeof(url));
-    uint16_t port = 0;
+    unsigned short port = 0;
     int is_https = 0;
 
     if (4 == sscanf(url, "%15[^://]://%127[^:]:%hd%s", http, host, &port, path)) {
@@ -409,7 +409,7 @@ int http_url_free(http_url *ctx){
     return 0;
 }
 
-uint16_t http_url_get_port(http_url *ctx){
+unsigned short http_url_get_port(http_url *ctx){
     CHECK_PTR(ctx,0);
     return ctx->_port;
 }
