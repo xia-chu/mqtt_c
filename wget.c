@@ -137,6 +137,7 @@ int main(int argc, char *argv[]){
 
     http_response_free(response);
     fclose(fp);
+    close(fd);
     return 0;
 }
 
