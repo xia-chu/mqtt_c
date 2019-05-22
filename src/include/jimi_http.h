@@ -129,6 +129,25 @@ int http_response_input(http_response *ctx,const char *data,int len);
 const char *http_response_get_header(http_response *ctx,const char *key);
 
 /**
+ * 获取http头总个数，用于遍历用
+ * @see http_response_get_header_pair
+ * @param ctx on_split_response回调出的http回复包对象指针
+ * @return http头总个数
+ */
+int http_response_get_header_count(http_response *ctx);
+
+/**
+ * 根据索引获取http头键值对
+ * @see http_response_get_header_count
+ * @param ctx on_split_response回调出的http回复包对象指针
+ * @param index 索引
+ * @param key 键指针
+ * @param value 值指针
+ * @return 0成功，-1失败
+ */
+int http_response_get_header_pair(http_response *ctx,int index ,const char **key,const char **value);
+
+/**
  * 获取body指针，无拷贝的(请勿free)
  * @param ctx on_split_response回调出的http回复包对象指针
  * @return body指针

@@ -217,6 +217,12 @@ void print_tree(AVLTree *tree){
         LOGD("%s = %s",key,value);
     }
     free(nodes);
+
+
+    for(i = 0 ; i < avl_tree_num_entries(tree) ; ++i){
+        AVLTreeNode *node = avl_tree_get_node_by_index(tree,i);
+        LOGW("%s = %s",avl_tree_node_key(node),avl_tree_node_value(node));
+    }
 }
 
 
@@ -296,6 +302,16 @@ int http_response_get_header_count(http_response *ctx){
     return avl_tree_num_entries(ctx->_header);
 }
 
+int http_response_get_header_pair(http_response *ctx,int index ,const char **key,const char **value){
+    CHECK_PTR(ctx,-1);
+    AVLTreeNode *node = avl_tree_get_node_by_index(ctx->_header,index);
+    if(!node){
+        return -1;
+    }
+    *key = avl_tree_node_key(node);
+    *value = avl_tree_node_value(node);
+    return 0;
+}
 
 const char *http_response_get_body(http_response *ctx){
     CHECK_PTR(ctx,NULL);

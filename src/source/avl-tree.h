@@ -304,6 +304,15 @@ AVLTreeNode **avl_tree_to_array_node(AVLTree *tree);
 
 unsigned int avl_tree_num_entries(AVLTree *tree);
 
+
+
+/**
+ * 根据索引获取节点
+ * @param tree
+ * @param index 索引号
+ * @return
+ */
+AVLTreeNode *avl_tree_get_node_by_index(AVLTree *tree , int index);
 #ifdef __cplusplus
 }
 #endif

@@ -688,6 +688,7 @@ static void avl_tree_to_array_add_subtree_node(AVLTreeNode *subtree,
     avl_tree_to_array_add_subtree_node(subtree->children[AVL_TREE_NODE_RIGHT],array, index);
 }
 
+
 AVLTreeNode **avl_tree_to_array_node(AVLTree *tree){
     AVLTreeNode **array;
     int index;
@@ -709,3 +710,29 @@ AVLTreeNode **avl_tree_to_array_node(AVLTree *tree){
     return array;
 }
 
+
+static AVLTreeNode *avl_tree_get_node_by_index_l(AVLTreeNode *node,
+                                                 int *pos,
+                                                 int index){
+    if (node == NULL) {
+        return NULL;
+    }
+
+    AVLTreeNode *ret;
+    ret = avl_tree_get_node_by_index_l(node->children[AVL_TREE_NODE_LEFT],pos,index);
+    if(ret){
+        return ret;
+    }
+
+    if((*pos)++ == index){
+        return node;
+    }
+
+    return avl_tree_get_node_by_index_l(node->children[AVL_TREE_NODE_RIGHT],pos,index);
+
+}
+
+AVLTreeNode *avl_tree_get_node_by_index(AVLTree *tree , int index){
+    int pos = 0;
+    return avl_tree_get_node_by_index_l(tree->root_node, &pos, index);
+}
