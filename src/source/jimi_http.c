@@ -287,11 +287,18 @@ parse_response:
 }
 
 const char *http_response_get_header(http_response *ctx,const char *key){
+    CHECK_PTR(ctx,NULL);
     return (const char *)avl_tree_lookup(ctx->_header,(AVLTreeKey)key);
+}
+
+int http_response_get_header_count(http_response *ctx){
+    CHECK_PTR(ctx,-1);
+    return avl_tree_num_entries(ctx->_header);
 }
 
 
 const char *http_response_get_body(http_response *ctx){
+    CHECK_PTR(ctx,NULL);
     if(ctx->_body_len){
         return NULL;
     }
@@ -299,18 +306,22 @@ const char *http_response_get_body(http_response *ctx){
 }
 
 int http_response_get_bodylen(http_response *ctx){
+    CHECK_PTR(ctx,-1);
     return ctx->_body_len;
 }
 
 int http_response_get_status_code(http_response *ctx){
+    CHECK_PTR(ctx,-1);
     return ctx->_status_code;
 }
 
 const char *http_response_get_status_str(http_response *ctx){
+    CHECK_PTR(ctx,NULL);
     return ctx->_status_str;
 }
 
 const char *http_response_get_http_version(http_response *ctx){
+    CHECK_PTR(ctx,NULL);
     return ctx->_http_version;
 }
 
