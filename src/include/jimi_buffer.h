@@ -11,6 +11,7 @@ extern "C" {
 typedef struct {
     char *_data;
     int _len;
+    int _capacity;
 } buffer;
 
 /**
@@ -24,7 +25,7 @@ int buffer_init(buffer *buf);
  * 释放buffer对象
  * @param buf buffer对象指针
  */
-void buffer_release(buffer *buf);
+int buffer_release(buffer *buf);
 
 /**
  * 追加数据至buffer对象末尾

@@ -121,7 +121,9 @@ int http_request_dump_to_buffer(http_request *ctx,buffer *out){
         free(nodes);
     }
     buffer_append(out,"\r\n",0);
-    buffer_append_buffer(out,&ctx->_body);
+    if(ctx->_body._len){
+        buffer_append_buffer(out,&ctx->_body);
+    }
     return 0;
 }
 
