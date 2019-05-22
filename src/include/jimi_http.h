@@ -91,9 +91,20 @@ void test_http_request();
 typedef struct http_response http_response;
 
 /**
- * split出http回复包回调，该包对象后续会自动释放
+ * 解析出http回复包回调
+ * @param user_data 用户数据指针
+ * @param http_response 对象本身指针
+ * @param content_slice body分片数据
+ * @param content_slice_len body分片数据大小
+ * @param content_received_len 已接收到body数据长度
+ * @param content_total_len body数据总长度,如果content_received_len + content_slice_len == content_total_len说明本次http回复接收完毕
  */
-typedef void (*on_split_response)(void *user_data,http_response *res);
+typedef void (*on_split_response)(void *user_data,
+                                  http_response *ctx,
+                                  const char *content_slice,
+                                  int content_slice_len,
+                                  int content_received_len,
+                                  int content_total_len);
 
 
 /**
@@ -122,7 +133,7 @@ int http_response_input(http_response *ctx,const char *data,int len);
 
 /**
  * 查找http头值，无拷贝的(请勿free)
- * @param ctx on_split_response回调出的http回复包对象指针
+ * @param ctx 对象本身指针
  * @param key 键名
  * @return 键值，未找到则返回NULL
  */
@@ -131,7 +142,7 @@ const char *http_response_get_header(http_response *ctx,const char *key);
 /**
  * 获取http头总个数，用于遍历用
  * @see http_response_get_header_pair
- * @param ctx on_split_response回调出的http回复包对象指针
+ * @param ctx 对象本身指针
  * @return http头总个数
  */
 int http_response_get_header_count(http_response *ctx);
@@ -139,7 +150,7 @@ int http_response_get_header_count(http_response *ctx);
 /**
  * 根据索引获取http头键值对
  * @see http_response_get_header_count
- * @param ctx on_split_response回调出的http回复包对象指针
+ * @param ctx 对象本身指针
  * @param index 索引
  * @param key 键指针
  * @param value 值指针
@@ -147,37 +158,31 @@ int http_response_get_header_count(http_response *ctx);
  */
 int http_response_get_header_pair(http_response *ctx,int index ,const char **key,const char **value);
 
-/**
- * 获取body指针，无拷贝的(请勿free)
- * @param ctx on_split_response回调出的http回复包对象指针
- * @return body指针
- */
-const char *http_response_get_body(http_response *ctx);
 
 /**
  * 获取body大小
- * @param ctx on_split_response回调出的http回复包对象指针
+ * @param ctx 对象本身指针
  * @return body大小
  */
 int http_response_get_bodylen(http_response *ctx);
 
 /**
  * 获取http回复状态码
- * @param ctx on_split_response回调出的http回复包对象指针
+ * @param ctx 对象本身指针
  * @return 状态码，例如200，404
  */
 int http_response_get_status_code(http_response *ctx);
 
 /**
  * 获取http回复状态码对应的状态字符串
- * @param ctx on_split_response回调出的http回复包对象指针
+ * @param ctx 对象本身指针
  * @return 状态字符串，例如OK ，Not Found
  */
 const char *http_response_get_status_str(http_response *ctx);
 
 /**
  * 获取http回复HTTP版本号
- * @param ctx on_split_response回调出的http回复包对象指针
+ * @param ctx 对象本身指针
  * @return 例如HTTP/1.1
  */
 const char *http_response_get_http_version(http_response *ctx);

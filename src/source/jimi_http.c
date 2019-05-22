@@ -151,11 +151,13 @@ void test_http_request(){
 
 typedef struct http_response{
     buffer _data;
-    int _body_offset;
-    int _body_len;
     AVLTree *_header;
     on_split_response _split_cb;
     void *_user_data;
+
+    int _header_len;
+    int _body_len;
+    int _content_received;
     char _http_version[16];
     char _status_str[16];
     int _status_code;
@@ -172,33 +174,6 @@ http_response *http_response_alloc(on_split_response cb,void *user_data){
     return ctx;
 }
 
-http_response *http_response_split(http_response *src){
-    http_response *ctx = (http_response *)malloc(sizeof(http_response));
-    CHECK_PTR(ctx,NULL);
-    memset(ctx,0, sizeof(http_response));
-    buffer_move(&ctx->_data,&src->_data);
-    ctx->_body_offset = src->_body_offset;
-    ctx->_body_len = src->_body_len;
-    ctx->_header = src->_header;
-    ctx->_user_data = src->_user_data;
-    ctx->_split_cb = src->_split_cb;
-    strcpy(ctx->_status_str , src->_status_str);
-    strcpy(ctx->_http_version , src->_http_version);
-    ctx->_status_code = src->_status_code;
-
-    int remain_size = ctx->_data._len - ctx->_body_offset - ctx->_body_len;
-    if(remain_size > 0){
-        //阶段多余的数据
-        buffer_assign(&src->_data,ctx->_data._data + ctx->_body_offset + ctx->_body_len,remain_size);
-        *(ctx->_data._data + ctx->_body_offset + ctx->_body_len) = '\0';
-    }
-
-    src->_body_offset = 0;
-    src->_body_len = 0;
-    src->_header = avl_tree_new(AVLTreeCompare);
-    return ctx;
-}
-
 
 int http_response_free(http_response *ctx){
     CHECK_PTR(ctx,-1);
@@ -209,21 +184,18 @@ int http_response_free(http_response *ctx){
 }
 
 void print_tree(AVLTree *tree){
-    AVLTreeNode **nodes = avl_tree_to_array_node(tree);
-    unsigned int i;
-    for (i = 0 ; i < avl_tree_num_entries(tree) ; ++i){
-        AVLTreeKey key = avl_tree_node_key(nodes[i]);
-        AVLTreeValue value = avl_tree_node_value(nodes[i]);
-        LOGD("%s = %s",key,value);
-    }
-    free(nodes);
-
-
+    int i;
+    printf("####### header #########\r\n");
     for(i = 0 ; i < avl_tree_num_entries(tree) ; ++i){
         AVLTreeNode *node = avl_tree_get_node_by_index(tree,i);
-        LOGW("%s = %s",avl_tree_node_key(node),avl_tree_node_value(node));
+        printf("%s = %s\r\n",avl_tree_node_key(node),avl_tree_node_value(node));
     }
+    printf("\r\n");
 }
+
+#define OFFSET(type,item) (int)(&(((type *)(NULL))->item))
+#define CLEAR_OFFSET(ctx,type,item)   memset((void*)ctx + OFFSET(type,item),0, sizeof(type) - OFFSET(type,item));
+
 
 
 int http_response_input(http_response *ctx,const char *data,int len){
@@ -232,64 +204,94 @@ int http_response_input(http_response *ctx,const char *data,int len){
     if (len <= 0){
         len = strlen(data);
     }
-    buffer_append(&ctx->_data,data,len);
 
-parse_response:
+    while(1) {
+        if (ctx->_header_len) {
+            //接收所有http头完毕,现在接收body部分
+            int slice_len = len;
+            if (ctx->_content_received + slice_len > ctx->_body_len) {
+                slice_len = ctx->_body_len - ctx->_content_received;
+            }
 
-    if(ctx->_body_offset != 0){
-        //已经接收http头完毕
-        if(ctx->_body_len > 0){
-            if(ctx->_data._len <  ctx->_body_offset + ctx->_body_len){
-                //http body尚未接收完毕
-                return len;
+            if(ctx->_split_cb){
+                ctx->_split_cb(ctx->_user_data, ctx, data, slice_len, ctx->_content_received, ctx->_body_len);
+            }
+
+            ctx->_content_received += slice_len;
+            data += slice_len;
+            len -= slice_len;
+            if(ctx->_content_received != ctx->_body_len){
+                //body尚未接收完毕
+                return 0;
             }
         }
 
-        //收到一个完整的http回复包
-        http_response *ret = http_response_split(ctx);
-        if(ctx->_split_cb){
-            ctx->_split_cb(ctx->_user_data,ret);
-        }
-        http_response_free(ret);
-        //看看剩余数据是否还能split出http回复包
-    }
-
-    if(!ctx->_data._len){
-        //没有剩余数据了
-        return len;
-    }
-    char *pos = strstr(ctx->_data._data,"\r\n\r\n");
-    if(!pos){
-        return len;
-    }
-
-    ctx->_body_offset = pos + 4 - ctx->_data._data;
-    char *line_start ,*line_end ;
-    for(line_end = ctx->_data._data ; line_end < ctx->_data._data + ctx->_body_offset - 2; ){
-        line_start = line_end;
-        line_end = strstr(line_start,"\r\n");
-        if(line_start == ctx->_data._data){
-            sscanf(line_start,"%15s %d %15[^\r]",ctx->_http_version,&ctx->_status_code,ctx->_status_str);
-            continue;
+        if(ctx->_content_received == ctx->_body_len && ctx->_header_len){
+            //上个包处理完毕，重置
+            if(len) {
+                //有剩余数据
+                //新建一个临时buffer，用于保存ctx->_data，目的是为了保存data指针有效
+                buffer buffer_tmp;
+                buffer_init(&buffer_tmp);
+                buffer_move(&buffer_tmp, &ctx->_data);
+                //把data指针拷贝至ctx->_data，用于处理下一个包
+                buffer_assign(&ctx->_data, data, len);
+                //data指针已经使用完毕，可以释放了
+                buffer_release(&buffer_tmp);
+                len = 0;
+            }else{
+                buffer_release(&ctx->_data);
+            }
+            //重置对象
+            avl_tree_free(ctx->_header);
+            ctx->_header = avl_tree_new(AVLTreeCompare);
+            CLEAR_OFFSET(ctx, http_response, _header_len);
+            if(!ctx->_data._len){
+                return 0;
+            }
         }
 
-        *line_end = '\0';
-        line_end += 2;
-        pos = strstr(line_start,": ");
-        if(!pos){
-            continue;
+        if(len){
+            buffer_append(&ctx->_data, data, len);
         }
-        *pos = '\0';
-        avl_tree_insert(ctx->_header,strdup(line_start),strdup(pos + 2),free,free);
-    }
 
-    const char *content_len = http_response_get_header(ctx,"Content-Length");
-    if(content_len){
-        ctx->_body_len = atoi(content_len);
-    } else {
-        ctx->_body_len = 0;
+        //处理http回复头
+        char *pos = strstr(ctx->_data._data, "\r\n\r\n");
+        if (!pos) {
+            //还未接收完毕http头
+            return 0;
+        }
+
+        ctx->_header_len = pos + 4 - ctx->_data._data;
+        char *line_start, *line_end;
+        for (line_end = ctx->_data._data; line_end < ctx->_data._data + ctx->_header_len - 2;) {
+            line_start = line_end;
+            line_end = strstr(line_start, "\r\n");
+            if (line_start == ctx->_data._data) {
+                sscanf(line_start, "%15s %d %15[^\r]", ctx->_http_version, &ctx->_status_code, ctx->_status_str);
+                continue;
+            }
+
+            *line_end = '\0';
+            line_end += 2;
+            pos = strstr(line_start, ": ");
+            if (!pos) {
+                continue;
+            }
+            *pos = '\0';
+            avl_tree_insert(ctx->_header, strdup(line_start), strdup(pos + 2), free, free);
+        }
+
+        const char *content_len = http_response_get_header(ctx, "Content-Length");
+        if (content_len) {
+            ctx->_body_len = atoi(content_len);
+        } else {
+            ctx->_body_len = 0;
+        }
+
+        len = ctx->_data._len - ctx->_header_len;
+        data = ctx->_data._data + ctx->_header_len;
     }
-    goto parse_response;
 }
 
 const char *http_response_get_header(http_response *ctx,const char *key){
@@ -313,14 +315,6 @@ int http_response_get_header_pair(http_response *ctx,int index ,const char **key
     return 0;
 }
 
-const char *http_response_get_body(http_response *ctx){
-    CHECK_PTR(ctx,NULL);
-    if(ctx->_body_len){
-        return NULL;
-    }
-    return ctx->_data._data + ctx->_body_offset;
-}
-
 int http_response_get_bodylen(http_response *ctx){
     CHECK_PTR(ctx,-1);
     return ctx->_body_len;
@@ -341,13 +335,31 @@ const char *http_response_get_http_version(http_response *ctx){
     return ctx->_http_version;
 }
 
-void on_split_http_response(void *user_data,http_response *res){
-    print_tree(res->_header);
-    LOGD("%s %d %s",res->_http_version,res->_status_code,res->_status_str);
-    LOGD("body :%d %s",res->_body_len,res->_data._data + res->_body_offset);
+void on_split_http_response(void *user_data,
+                            http_response *ctx,
+                            const char *content_slice,
+                            int content_slice_len,
+                            int content_received_len,
+                            int content_total_len){
+    if(content_received_len == 0){
+        //开始接收到http头
+        print_tree(ctx->_header);
+        printf("######## body ##########\r\n");
+    }
+    if(content_slice_len){
+        //这个是body
+        buffer buffer;
+        buffer_init(&buffer);
+        buffer_assign(&buffer,content_slice,content_slice_len);
+        printf("%s",buffer._data);
+        buffer_release(&buffer);
+    }
+    if(content_total_len == content_slice_len + content_received_len){
+        printf("\r\n\r\n");
+    }
 }
 
-void test_http_response(){
+void test_http_response() {
     static const char http_str[] =
             "HTTP/1.1 206 Partial Content\r\n"
             "Connection: keep-alive\r\n"
@@ -362,18 +374,28 @@ void test_http_response(){
             "Content-Type: text/html; charset=utf-8\r\n"
             "Date: Tue, May 21 2019 07:16:17 GMT\r\n"
             "Keep-Alive: timeout=10, max=100\r\n"
-            "Server: ZLMediaKit-4.0\r\n\r\nasdadaad";
+            "Server: ZLMediaKit-4.0\r\n\r\n";
 
-    http_response *res = http_response_alloc(on_split_http_response,NULL);
-    int totalSize = sizeof(http_str) - 1;
-    int slice = totalSize  / 13;
-    const char *ptr = http_str;
-    while(ptr + slice < http_str + totalSize){
-        http_response_input(res,ptr,slice);
-        ptr += slice;
+    http_response *res = http_response_alloc(on_split_http_response, NULL);
+    http_response_input(res, http_str, sizeof(http_str) - 1);
+    http_response_input(res, http_str, sizeof(http_str) - 1);
+    http_response_input(res, http_str, sizeof(http_str) - 1);
+
+    int totalTestCount = 10;
+    while (--totalTestCount) {
+        int totalSize = sizeof(http_str) - 1;
+        int slice = totalSize / totalTestCount;
+        const char *ptr = http_str;
+        while (ptr + slice < http_str + totalSize) {
+            buffer slice_buf;
+            buffer_init(&slice_buf);
+            buffer_assign(&slice_buf, ptr, slice);
+            http_response_input(res, slice_buf._data, slice_buf._len);
+            buffer_release(&slice_buf);
+            ptr += slice;
+        }
+        http_response_input(res, ptr, http_str + totalSize - ptr + 1);
     }
-    http_response_input(res,ptr,http_str + totalSize - ptr + 1);
-//    http_response_input(res,http_str, sizeof(http_str) - 1);
     http_response_free(res);
 }
 
