@@ -347,7 +347,7 @@ void test_http_response(){
     }
     http_response_input(res,ptr,http_str + totalSize - ptr + 1);
 //    http_response_input(res,http_str, sizeof(http_str) - 1);
-//    http_response_free(res);
+    http_response_free(res);
 }
 
 //////////////////////////////////////HTTP url解析工具///////////////////////////////////////////
@@ -361,7 +361,7 @@ typedef struct http_url{
 http_url *http_url_parse(const char *url) {
     CHECK_PTR(url, NULL);
     char *http = malloc(16), *host = malloc(128);
-    char *path = malloc(sizeof(url));
+    char *path = malloc(strlen(url));
     unsigned short port = 0;
     int is_https = 0;
 
@@ -374,6 +374,9 @@ http_url *http_url_parse(const char *url) {
         free(path);
         path = NULL;
     } else{
+        free(path);
+        free(http);
+        free(host);
         return NULL;
     }
 
@@ -389,8 +392,12 @@ http_url *http_url_parse(const char *url) {
         }
     }else{
         LOGW("%s is not a http url!",url);
+        free(path);
+        free(http);
+        free(host);
         return NULL;
     }
+    free(http);
 
     http_url *ctx = (http_url *) malloc(sizeof(http_url));
     CHECK_PTR(ctx,NULL);
