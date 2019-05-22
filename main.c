@@ -157,6 +157,7 @@ void run_main(){
 
     test_http_request();
     test_http_response();
+    test_http_url();
 
     //数据结构体
     iot_user_data user_data;

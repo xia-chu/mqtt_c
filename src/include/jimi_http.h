@@ -11,6 +11,8 @@
 extern "C" {
 #endif // __cplusplus
 
+///////////////////////////////////////HTTP请求包生成对象//////////////////////////////////////////
+
 typedef struct http_request http_request;
 
 /**
@@ -82,7 +84,7 @@ int http_request_dump_to_buffer(http_request *ctx,buffer *out);
 void test_http_request();
 
 
-/////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////HTTP回复split以及解析对象///////////////////////////////////////////
 /**
  * http_response对象定义
  */
@@ -166,6 +168,56 @@ const char *http_response_get_http_version(http_response *ctx);
  */
 void test_http_response();
 
+
+//////////////////////////////////////HTTP url解析工具///////////////////////////////////////////
+typedef struct http_url http_url;
+
+/**
+ * 解析http url
+ * @param url url字符串
+ * @return http_url对象，失败返回null
+ */
+http_url *http_url_parse(const char *url) ;
+
+/**
+ * 释放http_url对象
+ * @param ctx http_url对象
+ * @return 0成功,-1失败
+ */
+int http_url_free(http_url *ctx);
+
+/**
+ * 获取端口号
+ * @param ctx http_url对象
+ * @return 端口号，0代表失败
+ */
+uint16_t http_url_get_port(http_url *ctx);
+
+/**
+ * 判断是否为https协议
+ * @param ctx http_url对象
+ * @return 是否为https协议
+ */
+int http_url_is_https(http_url *ctx);
+
+/**
+ * 获取主机地址
+ * @param ctx http_url对象
+ * @return 主机地址
+ */
+const char *http_url_get_host(http_url *ctx);
+
+/**
+ * 获取http访问路径,例如 /index.html
+ * @param ctx http_url对象
+ * @return 访问路径
+ */
+const char *http_url_get_path(http_url *ctx);
+
+/**
+ * 功能测试
+ */
+void test_http_url();
 #ifdef __cplusplus
 } // extern "C"
 #endif // __cplusplus

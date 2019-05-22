@@ -23,6 +23,7 @@ static int AVLTreeCompare(AVLTreeKey key1, AVLTreeKey key2){
 
 http_request *http_request_alloc(){
     http_request *ctx = (http_request*)malloc(sizeof(http_request));
+    CHECK_PTR(ctx,NULL);
     memset(ctx,0, sizeof(http_request));
     ctx->_header = avl_tree_new(AVLTreeCompare);
     return ctx;
@@ -62,6 +63,7 @@ int http_request_set_body(http_request *ctx,const char *content_type,const char 
     buffer_assign(&ctx->_body,content_data,content_len);
     avl_tree_insert(ctx->_header,"Content-Type",strdup(content_type),NULL,free);
     char *len_str = malloc(8);
+    CHECK_PTR(len_str,-1);
     sprintf(len_str,"%d",content_len);
     avl_tree_insert(ctx->_header,"Content-Length",len_str,NULL,free);
     return 0;
@@ -162,6 +164,7 @@ typedef struct http_response{
 
 http_response *http_response_alloc(on_split_response cb,void *user_data){
     http_response *ctx = (http_response *)malloc(sizeof(http_response));
+    CHECK_PTR(ctx,NULL);
     memset(ctx,0, sizeof(http_response));
     ctx->_header = avl_tree_new(AVLTreeCompare);
     ctx->_split_cb = cb;
@@ -171,6 +174,7 @@ http_response *http_response_alloc(on_split_response cb,void *user_data){
 
 http_response *http_response_split(http_response *src){
     http_response *ctx = (http_response *)malloc(sizeof(http_response));
+    CHECK_PTR(ctx,NULL);
     memset(ctx,0, sizeof(http_response));
     buffer_move(&ctx->_data,&src->_data);
     ctx->_body_offset = src->_body_offset;
@@ -334,14 +338,115 @@ void test_http_response(){
             "Server: ZLMediaKit-4.0\r\n\r\nasdadaad";
 
     http_response *res = http_response_alloc(on_split_http_response,NULL);
-//    int totalSize = sizeof(http_str) - 1;
-//    int slice = totalSize  / 13;
-//    const char *ptr = http_str;
-//    while(ptr + slice < http_str + totalSize){
-//        http_response_input(res,ptr,slice);
-//        ptr += slice;
-//    }
-//    http_response_input(res,ptr,http_str + totalSize - ptr + 1);
-    http_response_input(res,http_str, sizeof(http_str) - 1);
-    http_response_free(res);
+    int totalSize = sizeof(http_str) - 1;
+    int slice = totalSize  / 13;
+    const char *ptr = http_str;
+    while(ptr + slice < http_str + totalSize){
+        http_response_input(res,ptr,slice);
+        ptr += slice;
+    }
+    http_response_input(res,ptr,http_str + totalSize - ptr + 1);
+//    http_response_input(res,http_str, sizeof(http_str) - 1);
+//    http_response_free(res);
+}
+
+//////////////////////////////////////HTTP url解析工具///////////////////////////////////////////
+typedef struct http_url{
+    char *_path;
+    char *_host;
+    uint16_t _port;
+    int _is_https;
+}http_url;
+
+http_url *http_url_parse(const char *url) {
+    CHECK_PTR(url, NULL);
+    char *http = malloc(16), *host = malloc(128);
+    char *path = malloc(sizeof(url));
+    uint16_t port = 0;
+    int is_https = 0;
+
+    if (4 == sscanf(url, "%15[^://]://%127[^:]:%hd%s", http, host, &port, path)) {
+    } else if(3 == sscanf(url, "%15[^://]://%127[^/]%s", http, host, path)) {
+    } else if(3 == sscanf(url,"%15[^://]://%127[^:]:%hd",http,host,&port)){
+        free(path);
+        path = NULL;
+    } else if(2 == sscanf(url,"%15[^://]://%127[^/]",http,host)){
+        free(path);
+        path = NULL;
+    } else{
+        return NULL;
+    }
+
+    if(strcasecmp(http,"https") == 0){
+        is_https = 1;
+        if(port == 0){
+            port = 443;
+        }
+    }else if(strcasecmp(http,"http") == 0){
+        is_https = 0;
+        if(port == 0){
+            port = 80;
+        }
+    }else{
+        LOGW("%s is not a http url!",url);
+        return NULL;
+    }
+
+    http_url *ctx = (http_url *) malloc(sizeof(http_url));
+    CHECK_PTR(ctx,NULL);
+    ctx->_port = port;
+    ctx->_is_https = is_https;
+    ctx->_path = path ? path : strdup("/");
+    ctx->_host = host;
+    return ctx;
+}
+
+int http_url_free(http_url *ctx){
+    CHECK_PTR(ctx,-1);
+    free(ctx->_path);
+    free(ctx->_host);
+    free(ctx);
+    return 0;
+}
+
+uint16_t http_url_get_port(http_url *ctx){
+    CHECK_PTR(ctx,0);
+    return ctx->_port;
+}
+
+int http_url_is_https(http_url *ctx){
+    CHECK_PTR(ctx,-1);
+    return ctx->_is_https;
+}
+
+const char *http_url_get_host(http_url *ctx){
+    CHECK_PTR(ctx,NULL);
+    return ctx->_host;
+}
+
+const char *http_url_get_path(http_url *ctx){
+    CHECK_PTR(ctx,NULL);
+    return ctx->_path;
+}
+
+void http_url_parse_and_print(const char *url){
+    http_url *ctx = http_url_parse(url);
+    if(ctx){
+        LOGD("%s://%s:%d%s",ctx->_is_https ? "https" : "http",ctx->_host,ctx->_port,ctx->_path);
+        http_url_free(ctx);
+    }
+}
+void test_http_url(){
+    http_url_parse_and_print("HTTP://127.0.0.1:80/");
+    http_url_parse_and_print("http://127.0.0.1:80");
+    http_url_parse_and_print("http://127.0.0.1/");
+    http_url_parse_and_print("http://127.0.0.1");
+    http_url_parse_and_print("https://127.0.0.1/");
+    http_url_parse_and_print("https://127.0.0.1");
+    http_url_parse_and_print("http://127.0.0.1/live/0");
+    http_url_parse_and_print("httpsss://127.0.0.1:80/live/0");
+    http_url_parse_and_print("https://127.0.0.1/live/0");
+    http_url_parse_and_print("https://127.0.0.1:80/live/0");
+    http_url_parse_and_print("httpsxx://127.0.0.1:80/live/0");
+    http_url_parse_and_print("httpsxx://127.0.0.1/live/0");
 }
