@@ -11,12 +11,13 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 
-int exit_flag  = 0;
-uint64_t lastStamp = 0;
-int last_received_len = 0;
-int speed = 0;
+static int s_exit_flag  = 0;
+static int s_last_received_len = 0;
+static int s_speed = 0;
+static uint64_t s_lastStamp = 0;
+static uint64_t s_startTime = 0;
 
-uint64_t getCurrentStamp(){
+static inline uint64_t getCurrentStamp(){
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return tv.tv_sec * 1000 + tv.tv_usec / 1000;
@@ -31,7 +32,7 @@ void on_response(void *user_data,
     FILE *fp = (FILE *)user_data;
     fwrite(content_slice,1,content_slice_len,fp);
     if(content_received_len == 0){
-        LOGI("http回复:%s %d %s",http_response_get_http_version(ctx),http_response_get_status_code(ctx),http_response_get_status_str(ctx));
+        printf("http回复:\r\n%s %d %s\r\n",http_response_get_http_version(ctx),http_response_get_status_code(ctx),http_response_get_status_str(ctx));
         int i;
         for (i = 0; i < http_response_get_header_count(ctx); ++i) {
             const char *key,*value;
@@ -46,19 +47,19 @@ void on_response(void *user_data,
         printf("\033[K"); //清除该行
     }
 
-    if(getCurrentStamp() - lastStamp > 500) {
-        speed = (content_received_len - last_received_len) / (getCurrentStamp() - lastStamp);
-        lastStamp = getCurrentStamp();
-        last_received_len = content_received_len;
+    if(getCurrentStamp() - s_lastStamp > 500) {
+        s_speed = (content_received_len - s_last_received_len) / (getCurrentStamp() - s_lastStamp);
+        s_lastStamp = getCurrentStamp();
+        s_last_received_len = content_received_len;
     }
 
     printf("已下载 : %.2f%% , 下载速度:%d KB/s \r\n ",
             100.0 * (content_slice_len + content_received_len) / content_total_len
-            ,speed);
+            ,s_speed);
 
     if(content_slice_len + content_received_len == content_total_len){
-        LOGI("\r\n文件接收完毕！");
-        exit_flag = 1;
+        printf("\r\n文件接收完毕,总耗时:%llu秒,平均速度:%llu KB/s\r\n",(getCurrentStamp() - s_startTime) / 1000,content_total_len / (getCurrentStamp() - s_startTime) );
+        s_exit_flag = 1;
     }
 }
 
@@ -110,16 +111,16 @@ int main(int argc, char *argv[]){
         fclose(fp);
         return -1;
     }
-    LOGI("发送请求:%s\r\n",req_dump._data);
+    printf("发送请求:\r\n%s\r\n",req_dump._data);
     send(fd,req_dump._data,req_dump._len,0);
-    lastStamp = getCurrentStamp();
+    s_startTime = s_lastStamp = getCurrentStamp();
     buffer_release(&req_dump);
 
     net_set_sock_timeout(fd,1,30);
     //socket接收buffer
     char buffer[1024 * 32];
     http_response *response = http_response_alloc(on_response,fp);
-    while (!exit_flag){
+    while (!s_exit_flag){
         //接收数据
         int recv = read(fd,buffer, sizeof(buffer));
         if(recv == 0){

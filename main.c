@@ -144,9 +144,9 @@ void iot_on_message(void *arg,int req_flag, uint32_t req_id, iot_data *data){
     }
 }
 
-int exit_flag  = 0;
+int s_exit_flag  = 0;
 void on_stop(int sig){
-    exit_flag = 1;
+    s_exit_flag = 1;
 }
 /**
  * 运行主函数
@@ -179,7 +179,7 @@ void run_main(){
     char buffer[1024];
     int timeout = 0x7FFFFFFF;
     signal(SIGINT,on_stop);
-    while (!exit_flag){
+    while (!s_exit_flag){
         //接收数据
         int recv = read(user_data._fd,buffer, sizeof(buffer));
         if(recv == 0){
