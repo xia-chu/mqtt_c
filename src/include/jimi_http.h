@@ -60,6 +60,15 @@ int http_request_set_body(http_request *ctx,const char *content_type,const char 
 int http_request_add_header(http_request *ctx,const char *key,const char *value);
 
 /**
+ * 批量添加http头，譬如 http_request_add_header_array(ctx,"Host","127.0.0.1","Connection","close",NULL)
+ * 以NULL结尾标记参数结束
+ * @param ctx 对象指针
+ * @param ... 参数列表
+ * @return
+ */
+int http_request_add_header_array(http_request *ctx,...);
+
+/**
  * 把http_request输出到buffer对象(连续的内存指针)
  * @param ctx 对象指针
  * @param out buffer对象指针
@@ -131,6 +140,26 @@ const char *http_response_get_body(http_response *ctx);
  */
 int http_response_get_bodylen(http_response *ctx);
 
+/**
+ * 获取http回复状态码
+ * @param ctx on_split_response回调出的http回复包对象指针
+ * @return 状态码，例如200，404
+ */
+int http_response_get_status_code(http_response *ctx);
+
+/**
+ * 获取http回复状态码对应的状态字符串
+ * @param ctx on_split_response回调出的http回复包对象指针
+ * @return 状态字符串，例如OK ，Not Found
+ */
+const char *http_response_get_status_str(http_response *ctx);
+
+/**
+ * 获取http回复HTTP版本号
+ * @param ctx on_split_response回调出的http回复包对象指针
+ * @return 例如HTTP/1.1
+ */
+const char *http_response_get_http_version(http_response *ctx);
 
 /**
  * 测试http回复包解析

@@ -3,6 +3,7 @@
 //
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include "jimi_http.h"
 #include "jimi_buffer.h"
 #include "avl-tree.h"
@@ -74,6 +75,26 @@ int http_request_add_header(http_request *ctx,const char *key,const char *value)
     return 0;
 }
 
+int http_request_add_header_array(http_request *ctx,...){
+    CHECK_PTR(ctx,-1);
+    va_list list;
+    va_start(list,ctx);
+    const char *key ,*value;
+    do{
+        key = va_arg(list, const char *);
+        if(!key || key[0] == '\0') {
+            break;
+        }
+        value = va_arg(list, const char *);
+        if(!value || value[0] == '\0'){
+            break;
+        }
+        http_request_add_header(ctx,key,value);
+    }while (1);
+    va_end(list);
+    return 0;
+}
+
 int http_request_dump_to_buffer(http_request *ctx,buffer *out){
     CHECK_PTR(ctx,-1);
     CHECK_PTR(out,-1);
@@ -117,6 +138,7 @@ void test_http_request(){
     http_request_add_header(ctx,"Accept-Language","zh-CN,zh;q=0.8");
     http_request_add_header(ctx,"User-Agent","Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36");
 
+    http_request_add_header_array(ctx,"key1","value1","key2","value2",NULL);
     buffer out;
     buffer_init(&out);
     http_request_dump_to_buffer(ctx,&out);
@@ -276,6 +298,17 @@ int http_response_get_bodylen(http_response *ctx){
     return ctx->_body_len;
 }
 
+int http_response_get_status_code(http_response *ctx){
+    return ctx->_status_code;
+}
+
+const char *http_response_get_status_str(http_response *ctx){
+    return ctx->_status_str;
+}
+
+const char *http_response_get_http_version(http_response *ctx){
+    return ctx->_http_version;
+}
 
 void on_split_http_response(void *user_data,http_response *res){
     print_tree(res->_header);
