@@ -9,8 +9,18 @@
 #include "jimi_http.h"
 #include <signal.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 
 int exit_flag  = 0;
+uint64_t lastStamp = 0;
+int last_received_len = 0;
+int speed = 0;
+
+uint64_t getCurrentStamp(){
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec * 1000 + tv.tv_usec / 1000;
+}
 
 void on_response(void *user_data,
                  http_response *ctx,
@@ -35,7 +45,16 @@ void on_response(void *user_data,
         printf("\033[1A"); //先回到上一行
         printf("\033[K"); //清除该行
     }
-    printf("已下载 : %.2f%%\r\n",100.0 * (content_slice_len + content_received_len) / content_total_len);
+
+    if(getCurrentStamp() - lastStamp > 500) {
+        speed = (content_received_len - last_received_len) / (getCurrentStamp() - lastStamp);
+        lastStamp = getCurrentStamp();
+        last_received_len = content_received_len;
+    }
+
+    printf("已下载 : %.2f%% , 下载速度:%d KB/s \r\n ",
+            100.0 * (content_slice_len + content_received_len) / content_total_len
+            ,speed);
 
     if(content_slice_len + content_received_len == content_total_len){
         LOGI("\r\n文件接收完毕！");
@@ -93,11 +112,12 @@ int main(int argc, char *argv[]){
     }
     LOGI("发送请求:%s\r\n",req_dump._data);
     send(fd,req_dump._data,req_dump._len,0);
+    lastStamp = getCurrentStamp();
     buffer_release(&req_dump);
 
     net_set_sock_timeout(fd,1,30);
     //socket接收buffer
-    char buffer[1024];
+    char buffer[1024 * 32];
     http_response *response = http_response_alloc(on_response,fp);
     while (!exit_flag){
         //接收数据
