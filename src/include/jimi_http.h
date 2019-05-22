@@ -196,7 +196,7 @@ unsigned short http_url_get_port(http_url *ctx);
 /**
  * 判断是否为https协议
  * @param ctx http_url对象
- * @return 是否为https协议
+ * @return 是否为https协议，1代表是，0代表不是
  */
 int http_url_is_https(http_url *ctx);
 
