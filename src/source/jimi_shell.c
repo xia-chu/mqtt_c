@@ -127,7 +127,7 @@ static void argv_test(void *user_data,int argc,char *argv[]){
 }
 
 void test_shell_context(){
-    const char http_str[] = "setmqtt --id  iemi1234567890 --secret abcdefghijk  --server iot.\\ \\ jimax.com:1900\r\n"
+    const char http_str[] = "setmqtt --id  \t iemi1234567890 \t\t  --secret abcdefghijk  \t \t --server iot.\\ \\ jimax.com:1900\r\n"
                             "setmqtt -u \tiemi1234567890 -p   \tabcdefghijk -s \t\t  iot.\\ jimax.com:1900\r\n"
                             "getmqtt\r\n"
                             "setio --piont 1 --flag  0\r\n"
