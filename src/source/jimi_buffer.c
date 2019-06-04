@@ -10,6 +10,21 @@
 
 #define RESERVED_SIZE 256
 
+
+buffer *buffer_alloc(){
+    buffer *ret = (buffer *) malloc(sizeof(buffer));
+    CHECK_PTR(ret,NULL);
+    buffer_init(ret);
+    return ret;
+}
+
+int buffer_free(buffer *buf){
+    CHECK_PTR(buf,-1);
+    buffer_release(buf);
+    free(buf);
+    return 0;
+}
+
 int buffer_init(buffer *buf){
     CHECK_PTR(buf,-1);
     memset(buf,0, sizeof(buffer));

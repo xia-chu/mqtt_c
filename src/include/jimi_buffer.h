@@ -14,6 +14,23 @@ typedef struct {
     int _capacity;
 } buffer;
 
+
+/**
+ * 在堆上申请开辟buffer对象并且初始化
+ * 内部会调用buffer_init函数
+ * @return buffer对象
+ */
+buffer *buffer_alloc();
+
+/**
+ * 释放堆上的buffer对象，并释放其关联_data字段的内存
+ * 内部会调用buffer_release函数
+ * @param buf buffer对象指针
+ * @return 0:成功
+ */
+int buffer_free(buffer *buf);
+
+
 /**
  * 初始化一个buffer对象
  * @param buf buffer对象指针

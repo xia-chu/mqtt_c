@@ -28,11 +28,14 @@ add_library(mqtt STATIC ${Mqtt_src_Root})
 add_executable(client main.c net.c)
 add_executable(bench main_bench.c net.c)
 add_executable(wget wget.c net.c)
+add_executable(shell shell.c net.c)
 
 
 target_link_libraries(client mqtt pthread)
 target_link_libraries(bench mqtt pthread)
 target_link_libraries(wget mqtt pthread)
+target_link_libraries(shell mqtt pthread)
+
 
 
 
