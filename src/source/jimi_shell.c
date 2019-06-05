@@ -406,7 +406,6 @@ int cmd_context_add_option_bool(cmd_context *ctx,
 
 
 #define LONG_OPT_OFFSET 0xFF
-#define OPT_INDEX_NOT_FOUND -1
 
 static int short_opt_comp(AVLTreeKey key1, AVLTreeKey key2){
     return key1 - key2;
