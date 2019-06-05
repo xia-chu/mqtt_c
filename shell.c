@@ -66,6 +66,9 @@ int main(int argc,char *argv[]){
     while(1){
         int i = read(STDIN_FILENO,buf, sizeof(buf));
         if(i > 0){
+            if(strncmp(buf,"exit",4) == 0){
+                break;
+            }
             shell_input(NULL,s_printf,buf,i);
         } else {
             break;

@@ -472,7 +472,7 @@ int cmd_context_execute(cmd_context *ctx,void *user_data,printf_func func,int ar
     optind = 0;
     opterr = 0;
 
-    while ((index = getopt_long(argc, argv, short_opt_str->_data,long_opt_array ,NULL)) != -1) {
+    while (option_size && (index = getopt_long(argc, argv, short_opt_str->_data,long_opt_array ,NULL)) != -1) {
         if(index < LONG_OPT_OFFSET){
             //短参数,我们转换成长参数
            AVLTreeNode *node = avl_tree_lookup_node(opt_short_to_long,(AVLTreeKey)index);
