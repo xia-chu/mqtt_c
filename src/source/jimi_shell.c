@@ -14,15 +14,15 @@
 //最大支持32个参数
 #define MAX_ARGV 32
 
-typedef struct shell_context{
+typedef struct cmd_splitter{
     buffer *_buf;
     on_shell_argv _callback;
     void *_user_data;
-} shell_context;
+} cmd_splitter;
 
 
-shell_context* shell_context_alloc(on_shell_argv callback,void *user_data){
-    shell_context *ret = (shell_context *)malloc(sizeof(shell_context));
+cmd_splitter* cmd_splitter_alloc(on_shell_argv callback,void *user_data){
+    cmd_splitter *ret = (cmd_splitter *)malloc(sizeof(cmd_splitter));
     CHECK_PTR(ret,NULL);
     ret->_buf = buffer_alloc();
     if(!ret->_buf){
@@ -35,7 +35,7 @@ shell_context* shell_context_alloc(on_shell_argv callback,void *user_data){
     return ret;
 }
 
-int shell_context_free(shell_context *ctx){
+int cmd_splitter_free(cmd_splitter *ctx){
     CHECK_PTR(ctx,-1);
     buffer_free(ctx->_buf);
     free(ctx);
@@ -52,7 +52,7 @@ static inline int is_blank(char ch){
             return 0;
     }
 }
-static inline void shell_context_cmd_line(shell_context *ctx,char *start,int len){
+static inline void cmd_splitter_cmd_line(cmd_splitter *ctx,char *start,int len){
     start[len] = '\0';
     char *argv[MAX_ARGV];
     memset(argv,0,sizeof(argv));
@@ -97,7 +97,7 @@ static inline void shell_context_cmd_line(shell_context *ctx,char *start,int len
     }
 }
 
-int shell_context_input(shell_context *ctx,const char *data,int len){
+int cmd_splitter_input(cmd_splitter *ctx,const char *data,int len){
     CHECK_PTR(ctx,-1);
     CHECK_PTR(data,-1);
     if(len <= 0){
@@ -112,7 +112,7 @@ int shell_context_input(shell_context *ctx,const char *data,int len){
             //等待更多数据
             break;
         }
-        shell_context_cmd_line(ctx,start,pos - start);
+        cmd_splitter_cmd_line(ctx,start,pos - start);
         start = pos + 1;
     }
 
@@ -131,7 +131,7 @@ static void argv_test(void *user_data,int argc,char *argv[]){
     }
 }
 
-void test_shell_context(){
+void test_cmd_splitter(){
     const char http_str[] = "setmqtt --id  \t iemi1234567890 \t\t  --secret abcdefghijk  \t \t --server iot.\\ \\ jimax.com:1900\r\n"
                             "setmqtt -u \tiemi1234567890 -p   \tabcdefghijk -s \t\t  iot.\\ jimax.com:1900\r\n"
                             "getmqtt\r\n"
@@ -144,11 +144,11 @@ void test_shell_context(){
                             "setpwm -z 3000 -r 0.40\r\n"
                             "getpwm\r\n";
 
-    shell_context *ctx = shell_context_alloc(argv_test,NULL);
-    shell_context_input(ctx, "\r\n",2);
-    shell_context_input(ctx, "\r\n\r\n",4);
-    shell_context_input(ctx, "\r",1);
-    shell_context_input(ctx, "\n\r\n",3);
+    cmd_splitter *ctx = cmd_splitter_alloc(argv_test,NULL);
+    cmd_splitter_input(ctx, "\r\n",2);
+    cmd_splitter_input(ctx, "\r\n\r\n",4);
+    cmd_splitter_input(ctx, "\r",1);
+    cmd_splitter_input(ctx, "\n\r\n",3);
 
 
     int totalTestCount = 10;
@@ -160,14 +160,14 @@ void test_shell_context(){
             buffer slice_buf;
             buffer_init(&slice_buf);
             buffer_assign(&slice_buf, ptr, slice);
-            shell_context_input(ctx, slice_buf._data, slice_buf._len);
+            cmd_splitter_input(ctx, slice_buf._data, slice_buf._len);
             buffer_release(&slice_buf);
             ptr += slice;
         }
-        shell_context_input(ctx, ptr, http_str + totalSize - ptr + 1);
+        cmd_splitter_input(ctx, ptr, http_str + totalSize - ptr + 1);
     }
 
-    shell_context_free(ctx);
+    cmd_splitter_free(ctx);
 }
 ////////////////////////////////////////////////////////////////////////
 //参数值对象

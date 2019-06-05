@@ -18,13 +18,13 @@ typedef void(* on_shell_argv)(void *user_data,int argc,char *argv[]);
 /**
  * 命令行处理对象
  */
-typedef struct shell_context shell_context;
+typedef struct cmd_splitter cmd_splitter;
 
 /**
  * 创建shell命令行处理对象
  * @return 对象指针
  */
-shell_context* shell_context_alloc(on_shell_argv callback,void *user_data);
+cmd_splitter* cmd_splitter_alloc(on_shell_argv callback,void *user_data);
 
 
 /**
@@ -32,7 +32,7 @@ shell_context* shell_context_alloc(on_shell_argv callback,void *user_data);
  * @param ctx 对象指针
  * @return 0：成功
  */
-int shell_context_free(shell_context *ctx);
+int cmd_splitter_free(cmd_splitter *ctx);
 
 /**
  * 输入字符串到对象里面来split命令行，支持输入"\ "代表空格
@@ -41,12 +41,12 @@ int shell_context_free(shell_context *ctx);
  * @param len 字符串长度
  * @return 0：成功
  */
-int shell_context_input(shell_context *ctx,const char *data,int len);
+int cmd_splitter_input(cmd_splitter *ctx,const char *data,int len);
 
 /**
  * 测试命令行工具是否正常
  */
-void test_shell_context();
+void test_cmd_splitter();
 
 ////////////////////////////////////////////////////////////////////
 //参数后面是否跟值，比如说help参数后面就不跟值

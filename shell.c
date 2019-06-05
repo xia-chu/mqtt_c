@@ -49,7 +49,7 @@ int main(int argc,char *argv[]){
     cmd_context_add_option(cmd,on_get_option,0,"no_short","测试无短参数名",0,opt_required,val_int,0);
 
 
-    shell_context *ctx = shell_context_alloc(on_argv,cmd);
+    cmd_splitter *ctx = cmd_splitter_alloc(on_argv,cmd);
     printf("$ 欢迎进入命令模式，你可以输入\"help\"命令获取帮助\r\n");
     char buf[256];
     while(1){
@@ -57,12 +57,12 @@ int main(int argc,char *argv[]){
         rewind(stdout);
         int i = read(STDIN_FILENO,buf, sizeof(buf));
         if(i > 0){
-            shell_context_input(ctx,buf,i);
+            cmd_splitter_input(ctx,buf,i);
         } else {
             break;
         }
     }
-    shell_context_free(ctx);
+    cmd_splitter_free(ctx);
     cmd_context_free(cmd);
     return 0;
 }
