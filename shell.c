@@ -25,7 +25,7 @@ static void s_on_complete(void *user_data, printf_func func,cmd_context *cmd,opt
         func(user_data,"%s = %s\r\n",key ,value);
     }
 
-    func(user_data,"port = %s\r\n",opt_map_get_value(all_opt,"port"));
+    func(user_data,"user = %s\r\n",opt_map_get_value(all_opt,"user"));
 }
 
 static option_value_ret on_get_option(void *user_data,
@@ -43,11 +43,17 @@ static option_value_ret on_get_option(void *user_data,
 
 int main(int argc,char *argv[]){
     cmd_context *cmd = cmd_context_alloc("test","测试命令",s_on_complete);
-    cmd_context_add_option_default(cmd,on_get_option,'p',"port","设置端口号","80");
-    cmd_context_add_option_default(cmd,on_get_option,'s',"server","设置服务器地址","127.0.0.1:80");
-    cmd_context_add_option_bool(cmd,on_get_option,'a',"abort","测试中断参数");
-    cmd_context_add_option_must(cmd,on_get_option,'m',"must","测试必须提供参数");
+    cmd_context_add_option(cmd,on_get_option,'b',"bbbb","测试bbb");
+    cmd_context_add_option(cmd,on_get_option,'c',"cccc","测试bbb");
     cmd_context_add_option(cmd,on_get_option,0,"no_short","测试无短参数名");
+
+    cmd_context_add_option_default(cmd,on_get_option,'s',"server","设置服务器地址","127.0.0.1:80");
+
+    cmd_context_add_option_bool(cmd,on_get_option,'a',"abort","测试中断参数");
+    cmd_context_add_option_bool(cmd,on_get_option,'d',"ddddd","测试ddddd");
+    cmd_context_add_option_must(cmd,on_get_option,'u',"user","测试必须提供用户名");
+    cmd_context_add_option_must(cmd,on_get_option,'p',"pwd","测试必须提供密码");
+
 
     cmd_splitter *ctx = cmd_splitter_alloc(s_on_argv,cmd);
     printf("$ 欢迎进入命令模式，你可以输入\"help\"命令获取帮助\r\n");

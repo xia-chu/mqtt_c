@@ -86,7 +86,7 @@ static inline void cmd_splitter_cmd_line(cmd_splitter *ctx,char *start,int len){
                 break;
             }
             if(pos[1] == ' ' || pos[1] == '\t'){
-                memmove(pos , pos + 1,strlen(pos + 1));
+                memmove(pos , pos + 1,1 + strlen(pos + 1));
             }else{
                 break;
             }
@@ -226,7 +226,7 @@ static const char *mustExist[] = {"选填","必填"};
 static const char defaultPrefix[] = "默认:";
 
 static const char *default_val_str(const char *str){
-    return str ? str : "null";
+    return str ? str : "";
 }
 static option_value_ret s_on_help(void *user_data,printf_func func,cmd_context *cmd,const char *opt_long_name,const char *opt_val){
     int i ;
@@ -525,7 +525,7 @@ int cmd_context_execute(cmd_context *ctx,void *user_data,printf_func func,int ar
         //必选参数查看有未提供
         AVLTreeNode *node = avl_tree_lookup_node(opt_val_map,opt->_long_opt);
         if(node == NULL){
-            func(user_data,"\t参数\"%s\"必选提供!\r\n",opt->_long_opt);
+            func(user_data,"\t参数\"%s\"必选提供.\r\n",opt->_long_opt);
             goto completed;
         }
     }
