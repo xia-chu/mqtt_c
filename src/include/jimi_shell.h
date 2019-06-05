@@ -60,14 +60,14 @@ typedef void *opt_map ;
  * @param long_opt 长参数名
  * @return 参数值
  */
-const char *opt_map_get(opt_map map,const char *long_opt);
+const char *opt_map_get_value(opt_map map,const char *long_opt);
 
 /**
  * 获取参数个数
  * @param map 参数map
  * @return 参数值
  */
-int opt_map_get_size(opt_map map);
+int opt_map_size(opt_map map);
 
 /**
  * 获取索引获取值

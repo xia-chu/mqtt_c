@@ -18,14 +18,14 @@ static void s_on_argv(void *user_data,int argc,char *argv[]){
 static void s_on_complete(void *user_data, printf_func func,cmd_context *cmd,opt_map all_opt){
 
     func(user_data,"%s on_complete\r\n",cmd_context_get_name(cmd));
-    int i = opt_map_get_size(all_opt);
+    int i = opt_map_size(all_opt);
     for(; i != 0 ; --i){
         const char *value = opt_map_value_of_index(all_opt,i - 1);
         const char *key = opt_map_key_of_index(all_opt,i - 1);
         func(user_data,"%s = %s\r\n",key ,value);
     }
 
-    func(user_data,"port = %s\r\n",opt_map_get(all_opt,"port"));
+    func(user_data,"port = %s\r\n",opt_map_get_value(all_opt,"port"));
 }
 
 static option_value_ret on_get_option(void *user_data,

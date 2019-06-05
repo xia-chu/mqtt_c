@@ -545,11 +545,11 @@ completed:
 }
 
 
-int opt_map_get_size(opt_map map){
+int opt_map_size(opt_map map){
     return avl_tree_num_entries(map);
 }
 
-const char *opt_map_get(opt_map map,const char *key){
+const char *opt_map_get_value(opt_map map,const char *key){
     return (const char *)avl_tree_lookup(map,(AVLTreeKey)key);
 }
 
