@@ -416,8 +416,8 @@ int cmd_context_execute(cmd_context *ctx,void *user_data,printf_func func,int ar
             case arg_required:
                 buffer_append(short_opt_str,":",1);
                 break;
-//            case arg_optional:
-//                buffer_append(short_opt_str,"::",2);
+            case arg_optional:
+                buffer_append(short_opt_str,"::",2);
                 break;
             default:
                 break;

@@ -53,6 +53,7 @@ void test_cmd_splitter();
 typedef enum arg_type {
     arg_none = 0,    //no_argument,
     arg_required = 1,//required_argument,
+    arg_optional = 2,//required_optional,
 } arg_type;
 
 
