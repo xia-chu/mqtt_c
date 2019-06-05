@@ -170,6 +170,11 @@ void test_cmd_splitter(){
     cmd_splitter_free(ctx);
 }
 ////////////////////////////////////////////////////////////////////////
+//参数后面是否跟值，比如说help参数后面就不跟值
+typedef enum arg_type {
+    arg_none = 0,    //no_argument,
+    arg_required = 1,//required_argument,
+} arg_type;
 
 //参数对象，加入是 --help参数
 typedef struct option_context{
@@ -216,7 +221,7 @@ option_context *option_context_alloc(on_option_value cb,
 
 static option_context s_help_option;
 static int s_help_option_inited = 0;
-static const char *argsType[] = {"无参","有参","选参"};
+static const char *argsType[] = {"无值","有值"};
 static const char *mustExist[] = {"选填","必填"};
 static const char defaultPrefix[] = "默认:";
 
@@ -349,20 +354,55 @@ const char *cmd_context_get_name(cmd_context *ctx) {
 }
 
 
-int cmd_context_add_option(cmd_context *ctx,
-                           on_option_value cb,
-                           char short_opt,
-                           const char *long_opt,
-                           const char *description,
-                           int opt_must,
-                           arg_type arg_type,
-                           const char *default_val){
+int cmd_context_add_option_full(cmd_context *ctx,
+                                on_option_value cb,
+                                char short_opt,
+                                const char *long_opt,
+                                const char *description,
+                                int opt_must,
+                                arg_type arg_type,
+                                const char *default_val){
     CHECK_PTR(ctx,-1);
     va_list ap;
     option_context *opt = option_context_alloc(cb,short_opt,long_opt,description,opt_must,arg_type,default_val);
     avl_tree_insert(ctx->_options,opt->_long_opt,opt,NULL,avl_tree_free_value);
     return 0;
 }
+
+int cmd_context_add_option(cmd_context *ctx,
+                           on_option_value cb,
+                           char short_opt,
+                           const char *long_opt,
+                           const char *description){
+    return cmd_context_add_option_full(ctx,cb,short_opt,long_opt,description,0,arg_required,NULL);
+}
+
+int cmd_context_add_option_must(cmd_context *ctx,
+                                on_option_value cb,
+                                char short_opt,
+                                const char *long_opt,
+                                const char *description){
+    return cmd_context_add_option_full(ctx,cb,short_opt,long_opt,description,1,arg_required,NULL);
+}
+
+
+int cmd_context_add_option_default(cmd_context *ctx,
+                                   on_option_value cb,
+                                   char short_opt,
+                                   const char *long_opt,
+                                   const char *description,
+                                   const char *default_val){
+    return cmd_context_add_option_full(ctx,cb,short_opt,long_opt,description,0,arg_required,default_val);
+}
+
+int cmd_context_add_option_bool(cmd_context *ctx,
+                                on_option_value cb,
+                                char short_opt,
+                                const char *long_opt,
+                                const char *description){
+    return cmd_context_add_option_full(ctx,cb,short_opt,long_opt,description,0,arg_none,NULL);
+}
+
 
 
 #define LONG_OPT_OFFSET 0xFF
@@ -416,9 +456,9 @@ int cmd_context_execute(cmd_context *ctx,void *user_data,printf_func func,int ar
             case arg_required:
                 buffer_append(short_opt_str,":",1);
                 break;
-            case arg_optional:
-                buffer_append(short_opt_str,"::",2);
-                break;
+//            case arg_optional:
+//                buffer_append(short_opt_str,"::",2);
+//                break;
             default:
                 break;
         }

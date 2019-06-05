@@ -48,14 +48,6 @@ int cmd_splitter_input(cmd_splitter *ctx,const char *data,int len);
  */
 void test_cmd_splitter();
 
-////////////////////////////////////////////////////////////////////
-//参数后面是否跟值，比如说help参数后面就不跟值
-typedef enum arg_type {
-    arg_none = 0,    //no_argument,
-    arg_required = 1,//required_argument,
-    arg_optional = 2,//required_optional,
-} arg_type;
-
 
 ////////////////////////////////////////////////////////////////////
 /**
@@ -158,30 +150,71 @@ typedef enum option_value_ret{
 typedef option_value_ret (*on_option_value)(void *user_data,printf_func func,cmd_context *cmd,const char *opt_long_name,const char *opt_val);
 
 
+
 /**
- * 命令添加参数选项
- * 范例：
- *      cmd_context_add_option(ctx,'h','help',"打印此帮助信息",0,arg_none，NULL)
- *      cmd_context_add_option(ctx,'p','port',"设置端口",1,arg_required,"80")
+ * 添加命令参数
+ * 该参数带值，没有默认值，可以不提供该参数
  * @param ctx 命令对象
  * @param cb 解析到该参数的回调函数
  * @param short_opt 参数短名，例如 -h,如果没有短参数名，可以设置为0
  * @param long_opt 参数长名，例如 --help
  * @param description 参数功能描述,例如 "打印此帮助信息"
- * @param opt_must 该参数是否必选在命令中存在，0:非必须，1:必须
- * @param arg_type 参数后面是否跟值，比如说help参数后面就不跟值
- * @param default_val 默认参数
  * @return 0:成功，-1:失败
  */
 int cmd_context_add_option(cmd_context *ctx,
                            on_option_value cb,
                            char short_opt,
                            const char *long_opt,
-                           const char *description,
-                           int opt_must,
-                           arg_type arg_type,
-                           const char *default_val);
+                           const char *description);
+/**
+ * 添加命令参数
+ * 该参数带值，没有默认值，必须提供该参数，
+ * @param ctx 命令对象
+ * @param cb 解析到该参数的回调函数
+ * @param short_opt 参数短名，例如 -h,如果没有短参数名，可以设置为0
+ * @param long_opt 参数长名，例如 --help
+ * @param description 参数功能描述,例如 "打印此帮助信息"
+ * @return 0:成功，-1:失败
+ */
+int cmd_context_add_option_must(cmd_context *ctx,
+                                on_option_value cb,
+                                char short_opt,
+                                const char *long_opt,
+                                const char *description);
 
+/**
+ * 添加命令参数
+ * 该参数带值，有默认值
+ * @param ctx 命令对象
+ * @param cb 解析到该参数的回调函数
+ * @param short_opt 参数短名，例如 -h,如果没有短参数名，可以设置为0
+ * @param long_opt 参数长名，例如 --help
+ * @param description 参数功能描述,例如 "打印此帮助信息"
+ * @param default_val 默认值
+ * @return 0:成功，-1:失败
+ */
+int cmd_context_add_option_default(cmd_context *ctx,
+                                   on_option_value cb,
+                                   char short_opt,
+                                   const char *long_opt,
+                                   const char *description,
+                                   const char *default_val);
+
+/**
+ * 添加命令参数
+ * 该参数不带值，提供该参数不提供都可以，比如说 ls -l , "-l"参数就是不带值的bool类型
+ * @param ctx 命令对象
+ * @param cb 解析到该参数的回调函数
+ * @param short_opt 参数短名，例如 -h,如果没有短参数名，可以设置为0
+ * @param long_opt 参数长名，例如 --help
+ * @param description 参数功能描述,例如 "打印此帮助信息"
+ * @return 0:成功，-1:失败
+ */
+int cmd_context_add_option_bool(cmd_context *ctx,
+                                on_option_value cb,
+                                char short_opt,
+                                const char *long_opt,
+                                const char *description);
 /**
  * 解析命令行
  * @param ctx 命令行对象
