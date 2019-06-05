@@ -184,7 +184,7 @@ int cmd_context_add_option_must(cmd_context *ctx,
 
 /**
  * 添加命令参数
- * 该参数带值，有默认值
+ * 该参数带值，有默认值，可以不提供该参数
  * @param ctx 命令对象
  * @param cb 解析到该参数的回调函数
  * @param short_opt 参数短名，例如 -h,如果没有短参数名，可以设置为0
