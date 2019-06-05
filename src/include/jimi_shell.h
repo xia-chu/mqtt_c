@@ -13,7 +13,7 @@ extern "C" {
 #endif // __cplusplus
 
 
-typedef void(* on_shell_argv)(void *user_data,int argc,char *argv[]);
+typedef void(* on_argv)(void *user_data,int argc,char *argv[]);
 
 /**
  * 命令行处理对象
@@ -24,7 +24,7 @@ typedef struct cmd_splitter cmd_splitter;
  * 创建shell命令行处理对象
  * @return 对象指针
  */
-cmd_splitter* cmd_splitter_alloc(on_shell_argv callback,void *user_data);
+cmd_splitter* cmd_splitter_alloc(on_argv callback,void *user_data);
 
 
 /**
@@ -55,61 +55,26 @@ typedef enum arg_type {
     arg_required = 1,//required_argument,
 } arg_type;
 
-//参数值类型
-typedef enum value_type{
-    val_null = 0,//无参数
-    val_int,//整形参数
-    val_long,//长整型参数
-    val_double,//双精度浮点型参数
-    val_string,//字符串类型参数
-} value_type;
-
-/**
- * 参数值对象
- */
-typedef struct opt_value opt_value;
-
-/**
- * 获取值类型
- * @param ctx 参数值对象
- * @return 类型
- */
-value_type opt_value_type(opt_value *ctx);
-
-/**
- * 打印opt_value对象的值
- * @param ctx opt_value对象
- * @return 字符串，请勿free
- */
-const char *opt_value_to_string(opt_value *ctx);
-
-/**
- * 转换成字符串
- * @param ctx 参数值对象
- * @return 字符串指针，使用完毕请勿free
- */
-const char *opt_value_to_string(opt_value *ctx);
-
 
 ////////////////////////////////////////////////////////////////////
 /**
- * 参数值列表
+ * 参数值map列表
  */
-typedef void *opt_value_map ;
+typedef void *opt_map ;
 /**
  * 通过长参数名获取值
  * @param map 参数map
  * @param long_opt 长参数名
  * @return 参数值
  */
-opt_value *opt_value_map_get(opt_value_map map,const char *long_opt);
+const char *opt_map_get(opt_map map,const char *long_opt);
 
 /**
  * 获取参数个数
  * @param map 参数map
  * @return 参数值
  */
-int opt_value_map_get_size(opt_value_map map);
+int opt_map_get_size(opt_map map);
 
 /**
  * 获取索引获取值
@@ -117,7 +82,7 @@ int opt_value_map_get_size(opt_value_map map);
  * @param index 索引
  * @return 参数值
  */
-opt_value *opt_value_map_value_of_index(opt_value_map map,int index);
+const char *opt_map_value_of_index(opt_map map,int index);
 
 /**
  * 获取索引获取参数长名
@@ -125,7 +90,7 @@ opt_value *opt_value_map_value_of_index(opt_value_map map,int index);
  * @param index 索引
  * @return 参数长名
  */
-const char *opt_value_map_name_of_index(opt_value_map map,int index);
+const char *opt_map_key_of_index(opt_map map,int index);
 
 ////////////////////////////////////////////////////////////////////
 
@@ -146,10 +111,10 @@ typedef struct cmd_context cmd_context;
 /**
  * 解析命令结束
  * @param cmd
- * @param all_value
+ * @param all_opt
  * @return
  */
-typedef void(*on_cmd_complete)(void *user_data, printf_func func, cmd_context *cmd,opt_value_map all_value);
+typedef void(*on_cmd_complete)(void *user_data, printf_func func, cmd_context *cmd,opt_map all_opt);
 
 
 /**
@@ -195,8 +160,8 @@ typedef option_value_ret (*on_option_value)(void *user_data,printf_func func,cmd
 /**
  * 命令添加参数选项
  * 范例：
- *      cmd_context_add_option(ctx,'h','help',"打印此帮助信息",0,arg_none,val_null,0)
- *      cmd_context_add_option(ctx,'p','port',"设置端口",1,arg_required,val_int,1,80)
+ *      cmd_context_add_option(ctx,'h','help',"打印此帮助信息",0,arg_none，NULL)
+ *      cmd_context_add_option(ctx,'p','port',"设置端口",1,arg_required,"80")
  * @param ctx 命令对象
  * @param cb 解析到该参数的回调函数
  * @param short_opt 参数短名，例如 -h,如果没有短参数名，可以设置为0
@@ -204,9 +169,7 @@ typedef option_value_ret (*on_option_value)(void *user_data,printf_func func,cmd
  * @param description 参数功能描述,例如 "打印此帮助信息"
  * @param opt_must 该参数是否必选在命令中存在，0:非必须，1:必须
  * @param arg_type 参数后面是否跟值，比如说help参数后面就不跟值
- * @param val_type 参数值类型
- * @param have_default_val 是否有默认参数，0:无, 1:有
- * @param ... 默认参数，跟val_type类型匹配，没有默认参数则不填写
+ * @param default_val 默认参数
  * @return 0:成功，-1:失败
  */
 int cmd_context_add_option(cmd_context *ctx,
@@ -216,27 +179,7 @@ int cmd_context_add_option(cmd_context *ctx,
                            const char *description,
                            int opt_must,
                            arg_type arg_type,
-                           value_type val_type,
-                           int have_default_val,
-                           ...);
-
-/**
- * 添加必须输入的选项，比如说要求用户必须输入用户名密码
- * @param ctx 命令对象
- * @param cb 解析到该参数的回调函数
- * @param short_opt 参数短名，例如 -h,如果没有短参数名，可以设置为0
- * @param long_opt 参数长名，例如 --help
- * @param description 参数功能描述,例如 "打印此帮助信息"
- * @param val_type 参数值类型
- * @return 0:成功，-1:失败
- */
-int cmd_context_add_option_must(cmd_context *ctx,
-                                on_option_value cb,
-                                char short_opt,
-                                const char *long_opt,
-                                const char *description,
-                                value_type val_type);
-
+                           const char *default_val);
 
 /**
  * 解析命令行
