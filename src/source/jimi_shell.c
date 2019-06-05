@@ -631,7 +631,7 @@ cmd_context *cmd_context_clear(){
     if(!s_cmd_clear_inited){
         s_cmd_clear._name = "clear";
         s_cmd_clear._description = "清空屏幕";
-        s_cmd_clear._cb = on_cmd_help_complete;
+        s_cmd_clear._cb = on_cmd_clear_complete;
         s_cmd_clear._options = NULL;
         s_cmd_clear_inited = 1;
     }
