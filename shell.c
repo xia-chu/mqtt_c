@@ -8,12 +8,11 @@ static void s_printf(void *user_data,const char *fmt,...){
     va_start(ap,fmt);
     vprintf(fmt,ap);
     va_end(ap);
+    if(fmt[0] == '$'){
+        rewind(stdout);
+    }
 }
 
-static void s_on_argv(void *user_data,int argc,char *argv[]){
-    cmd_manager *manager = (cmd_manager *)user_data;
-    cmd_manager_execute(manager,NULL,s_printf,argc,argv);
-}
 
 static void s_on_complete(void *user_data, printf_func func,cmd_context *cmd,opt_map all_opt){
 
@@ -51,24 +50,18 @@ int main(int argc,char *argv[]){
     cmd_context_add_option_bool(cmd,on_get_option,'d',"ddddd","测试ddddd");
     cmd_context_add_option_must(cmd,on_get_option,'u',"user","测试必须提供用户名");
     cmd_context_add_option_must(cmd,on_get_option,'p',"pwd","测试必须提供密码");
+    cmd_regist(cmd);
+    s_printf(NULL,"$ 欢迎进入命令模式，你可以输入\"help\"命令获取帮助\r\n$ ");
 
-    cmd_manager *manager = cmd_manager_alloc();
-    cmd_manager_add_cmd(manager,cmd);
-
-    cmd_splitter *ctx = cmd_splitter_alloc(s_on_argv,manager);
-    printf("$ 欢迎进入命令模式，你可以输入\"help\"命令获取帮助\r\n");
     char buf[256];
     while(1){
-        printf("$ ");
-        rewind(stdout);
         int i = read(STDIN_FILENO,buf, sizeof(buf));
         if(i > 0){
-            cmd_splitter_input(ctx,buf,i);
+            shell_input(NULL,s_printf,buf,i);
         } else {
             break;
         }
     }
-    cmd_splitter_free(ctx);
-    cmd_manager_free(manager);
+    shell_destory();
     return 0;
 }

@@ -14,14 +14,14 @@
 //最大支持32个参数
 #define MAX_ARGV 32
 
+typedef void(* on_argv)(void *user_data,int argc,char *argv[]);
+
 typedef struct cmd_splitter{
     buffer *_buf;
-    on_argv _callback;
-    void *_user_data;
 } cmd_splitter;
 
 
-cmd_splitter* cmd_splitter_alloc(on_argv callback,void *user_data){
+cmd_splitter* cmd_splitter_alloc(){
     cmd_splitter *ret = (cmd_splitter *)malloc(sizeof(cmd_splitter));
     CHECK_PTR(ret,NULL);
     ret->_buf = buffer_alloc();
@@ -30,8 +30,6 @@ cmd_splitter* cmd_splitter_alloc(on_argv callback,void *user_data){
         LOGE("buffer_alloc failed!");
         return NULL;
     }
-    ret->_callback = callback;
-    ret->_user_data = user_data;
     return ret;
 }
 
@@ -52,7 +50,7 @@ static inline int is_blank(char ch){
             return 0;
     }
 }
-static inline void cmd_splitter_cmd_line(cmd_splitter *ctx,char *start,int len){
+static inline void cmd_splitter_cmd_line(cmd_splitter *ctx,char *start,int len,void *user_data,on_argv callback){
     start[len] = '\0';
     char *argv[MAX_ARGV];
     memset(argv,0,sizeof(argv));
@@ -92,12 +90,12 @@ static inline void cmd_splitter_cmd_line(cmd_splitter *ctx,char *start,int len){
             }
         }
     }
-    if(ctx->_callback){
-        ctx->_callback(ctx->_user_data,argc,argv);
+    if(callback){
+        callback(user_data,argc,argv);
     }
 }
 
-int cmd_splitter_input(cmd_splitter *ctx,const char *data,int len){
+int cmd_splitter_input(cmd_splitter *ctx,const char *data,int len,void *user_data,on_argv callback){
     CHECK_PTR(ctx,-1);
     CHECK_PTR(data,-1);
     if(len <= 0){
@@ -112,7 +110,7 @@ int cmd_splitter_input(cmd_splitter *ctx,const char *data,int len){
             //等待更多数据
             break;
         }
-        cmd_splitter_cmd_line(ctx,start,pos - start);
+        cmd_splitter_cmd_line(ctx,start,pos - start,user_data,callback);
         start = pos + 1;
     }
 
@@ -144,11 +142,11 @@ void test_cmd_splitter(){
                             "setpwm -z 3000 -r 0.40\r\n"
                             "getpwm\r\n";
 
-    cmd_splitter *ctx = cmd_splitter_alloc(argv_test,NULL);
-    cmd_splitter_input(ctx, "\r\n",2);
-    cmd_splitter_input(ctx, "\r\n\r\n",4);
-    cmd_splitter_input(ctx, "\r",1);
-    cmd_splitter_input(ctx, "\n\r\n",3);
+    cmd_splitter *ctx = cmd_splitter_alloc();
+    cmd_splitter_input(ctx, "\r\n",2,NULL,argv_test);
+    cmd_splitter_input(ctx, "\r\n\r\n",4,NULL,argv_test);
+    cmd_splitter_input(ctx, "\r",1,NULL,argv_test);
+    cmd_splitter_input(ctx, "\n\r\n",3,NULL,argv_test);
 
 
     int totalTestCount = 10;
@@ -160,11 +158,11 @@ void test_cmd_splitter(){
             buffer slice_buf;
             buffer_init(&slice_buf);
             buffer_assign(&slice_buf, ptr, slice);
-            cmd_splitter_input(ctx, slice_buf._data, slice_buf._len);
+            cmd_splitter_input(ctx, slice_buf._data, slice_buf._len,NULL,argv_test);
             buffer_release(&slice_buf);
             ptr += slice;
         }
-        cmd_splitter_input(ctx, ptr, http_str + totalSize - ptr + 1);
+        cmd_splitter_input(ctx, ptr, http_str + totalSize - ptr + 1,NULL,argv_test);
     }
 
     cmd_splitter_free(ctx);
@@ -674,8 +672,8 @@ cmd_context *cmd_manager_find(cmd_manager *ctx,const char *key){
 
 int cmd_manager_execute(cmd_manager *ctx,void *user_data,printf_func func,int argc,char *argv[]){
     if(argc < 1){
-        func(user_data,"\t参数不足\r\n");
-        return -1;
+        func(user_data,"$ ");
+        return 0;
     }
     cmd_context *cmd = cmd_manager_find(ctx,argv[0]);
     if(!cmd){
@@ -683,7 +681,66 @@ int cmd_manager_execute(cmd_manager *ctx,void *user_data,printf_func func,int ar
         return -1;
     }
     cmd->_manager = ctx;
-    return cmd_context_execute(cmd,user_data,func,argc,argv);
+    int ret = cmd_context_execute(cmd,user_data,func,argc,argv);
+    func(user_data,"$ ");
+    return ret;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+typedef struct shell_context{
+    cmd_splitter *_splitter;
+    cmd_manager *_manager;
+}shell_context;
+
+static void s_on_argv(void *user_data,int argc,char *argv[]){
+    void **ptr = (void **)user_data;
+    cmd_manager_execute((cmd_manager*)ptr[0],(void *)ptr[1],(printf_func)ptr[2],argc,argv);
+}
+
+shell_context *shell_context_alloc(){
+    shell_context *ret = (shell_context *)malloc(sizeof(shell_context));
+    CHECK_PTR(ret,NULL);
+    ret->_splitter = cmd_splitter_alloc();
+    ret->_manager = cmd_manager_alloc();
+    return ret;
+}
+
+int shell_context_free(shell_context *ctx){
+    CHECK_PTR(ctx,-1);
+    cmd_splitter_free(ctx->_splitter);
+    cmd_manager_free(ctx->_manager);
+    free(ctx);
+    return 0;
+}
+
+int shell_context_input(shell_context *ctx,void *user_data,printf_func func,const char *buf,int len){
+    CHECK_PTR(ctx,-1);
+    void *ptr[3] = {ctx->_manager,user_data,func};
+    return cmd_splitter_input(ctx->_splitter,buf,len,ptr,s_on_argv);
+}
+///////////////////////////////////////////////////////////////
+static shell_context *s_shell_context_instance = NULL;
+shell_context * shell_context_instance(){
+    if(!s_shell_context_instance){
+        s_shell_context_instance = shell_context_alloc();
+    }
+    return s_shell_context_instance;
+}
+
+int shell_input(void *user_data,printf_func func,const char *buf,int len){
+    return shell_context_input(shell_context_instance(),user_data,func,buf,len);
+}
+
+void shell_destory(){
+    if(s_shell_context_instance){
+        shell_context_free(s_shell_context_instance);
+        s_shell_context_instance = NULL;
+    }
+}
+
+int cmd_regist(cmd_context *cmd){
+    return cmd_manager_add_cmd(shell_context_instance()->_manager,cmd);
 }
 
 

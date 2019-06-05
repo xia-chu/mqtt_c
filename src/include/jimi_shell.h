@@ -13,43 +13,6 @@ extern "C" {
 #endif // __cplusplus
 
 
-typedef void(* on_argv)(void *user_data,int argc,char *argv[]);
-
-/**
- * 命令行处理对象
- */
-typedef struct cmd_splitter cmd_splitter;
-
-/**
- * 创建shell命令行处理对象
- * @return 对象指针
- */
-cmd_splitter* cmd_splitter_alloc(on_argv callback,void *user_data);
-
-
-/**
- * 释放命令行处理对象
- * @param ctx 对象指针
- * @return 0：成功
- */
-int cmd_splitter_free(cmd_splitter *ctx);
-
-/**
- * 输入字符串到对象里面来split命令行，支持输入"\ "代表空格
- * @param ctx shell字符串处理对象
- * @param data 零散的分断的字符串，以回车符号作为行分隔符
- * @param len 字符串长度
- * @return 0：成功
- */
-int cmd_splitter_input(cmd_splitter *ctx,const char *data,int len);
-
-/**
- * 测试命令行工具是否正常
- */
-void test_cmd_splitter();
-
-
-////////////////////////////////////////////////////////////////////
 /**
  * 参数值map列表
  */
@@ -227,14 +190,10 @@ int cmd_context_add_option_bool(cmd_context *ctx,
 int cmd_context_execute(cmd_context *ctx,void *user_data,printf_func func,int argc,char *argv[]);
 
 ////////////////////////////////////////////////////////////////////
-typedef struct cmd_manager cmd_manager;
 
-cmd_manager *cmd_manager_alloc();
-int cmd_manager_free(cmd_manager *ctx);
-int cmd_manager_add_cmd(cmd_manager *ctx,cmd_context *cmd);
-cmd_context *cmd_manager_find(cmd_manager *ctx,const char *key);
-int cmd_manager_execute(cmd_manager *ctx,void *user_data,printf_func func,int argc,char *argv[]);
-
+int shell_input(void *user_data,printf_func func,const char *buf,int len);
+void shell_destory();
+int cmd_regist(cmd_context *cmd);
 
 #ifdef __cplusplus
 } // extern "C"
