@@ -617,6 +617,9 @@ AVLTreeNode *avl_tree_node_parent(AVLTreeNode *node)
 
 unsigned int avl_tree_num_entries(AVLTree *tree)
 {
+    if(!tree){
+        return 0;
+    }
 	return tree->num_nodes;
 }
 

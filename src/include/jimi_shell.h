@@ -227,6 +227,14 @@ int cmd_context_add_option_bool(cmd_context *ctx,
 int cmd_context_execute(cmd_context *ctx,void *user_data,printf_func func,int argc,char *argv[]);
 
 ////////////////////////////////////////////////////////////////////
+typedef struct cmd_manager cmd_manager;
+
+cmd_manager *cmd_manager_alloc();
+int cmd_manager_free(cmd_manager *ctx);
+int cmd_manager_add_cmd(cmd_manager *ctx,cmd_context *cmd);
+cmd_context *cmd_manager_find(cmd_manager *ctx,const char *key);
+int cmd_manager_execute(cmd_manager *ctx,void *user_data,printf_func func,int argc,char *argv[]);
+
 
 #ifdef __cplusplus
 } // extern "C"

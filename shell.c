@@ -11,8 +11,8 @@ static void s_printf(void *user_data,const char *fmt,...){
 }
 
 static void s_on_argv(void *user_data,int argc,char *argv[]){
-    cmd_context *cmd = (cmd_context *)user_data;
-    cmd_context_execute(cmd,NULL,s_printf,argc,argv);
+    cmd_manager *manager = (cmd_manager *)user_data;
+    cmd_manager_execute(manager,NULL,s_printf,argc,argv);
 }
 
 static void s_on_complete(void *user_data, printf_func func,cmd_context *cmd,opt_map all_opt){
@@ -46,16 +46,16 @@ int main(int argc,char *argv[]){
     cmd_context_add_option(cmd,on_get_option,'b',"bbbb","测试bbb");
     cmd_context_add_option(cmd,on_get_option,'c',"cccc","测试bbb");
     cmd_context_add_option(cmd,on_get_option,0,"no_short","测试无短参数名");
-
     cmd_context_add_option_default(cmd,on_get_option,'s',"server","设置服务器地址","127.0.0.1:80");
-
     cmd_context_add_option_bool(cmd,on_get_option,'a',"abort","测试中断参数");
     cmd_context_add_option_bool(cmd,on_get_option,'d',"ddddd","测试ddddd");
     cmd_context_add_option_must(cmd,on_get_option,'u',"user","测试必须提供用户名");
     cmd_context_add_option_must(cmd,on_get_option,'p',"pwd","测试必须提供密码");
 
+    cmd_manager *manager = cmd_manager_alloc();
+    cmd_manager_add_cmd(manager,cmd);
 
-    cmd_splitter *ctx = cmd_splitter_alloc(s_on_argv,cmd);
+    cmd_splitter *ctx = cmd_splitter_alloc(s_on_argv,manager);
     printf("$ 欢迎进入命令模式，你可以输入\"help\"命令获取帮助\r\n");
     char buf[256];
     while(1){
@@ -69,6 +69,6 @@ int main(int argc,char *argv[]){
         }
     }
     cmd_splitter_free(ctx);
-    cmd_context_free(cmd);
+    cmd_manager_free(manager);
     return 0;
 }

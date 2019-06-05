@@ -192,6 +192,7 @@ typedef struct cmd_context{
     char *_description;//命令描述
     AVLTree *_options;//参数列表
     on_cmd_complete _cb;//参数解析完毕的回调
+    void *_manager;
 }cmd_context;
 
 
@@ -571,15 +572,119 @@ const char *opt_map_key_of_index(opt_map map,int index){
 
 
 
+//////////////////////////////////////////////////////////////////
+typedef struct cmd_manager{
+    AVLTree *_cmd_map;
+}cmd_manager;
 
 
+static int avl_tree_cmd_key_comp(AVLTreeKey key1, AVLTreeKey key2){
+    return strcmp((char*)key1,(char*)key2);
+}
+
+static void on_cmd_help_complete(void *user_data, printf_func func, cmd_context *cmd,opt_map all_opt){
+    cmd_manager *ctx = (cmd_manager *)cmd->_manager;
+    int num = avl_tree_num_entries(ctx->_cmd_map);
+    int i ;
+
+    int maxLen = 0;
+    for(i = 0 ; i < num ; ++i ){
+        AVLTreeNode *node = avl_tree_get_node_by_index(ctx->_cmd_map,i);
+        int key_len = strlen(avl_tree_node_key(node));
+        if(key_len > maxLen){
+            maxLen = key_len;
+        }
+    }
+
+    for(i = 0 ; i < num ; ++i ){
+        AVLTreeNode *node = avl_tree_get_node_by_index(ctx->_cmd_map,i);
+        const char *key = avl_tree_node_key(node);
+        cmd_context *cmd = (cmd_context *)avl_tree_node_value(node);
+        func(user_data,"  %s",key);
+        int j;
+        for(j = 0; j < maxLen - strlen(key); ++j){
+            func(user_data," ");
+        }
+        func(user_data,"  %s\r\n",cmd->_description);
+    }
+}
+
+static void on_cmd_clear_complete(void *user_data, printf_func func, cmd_context *cmd,opt_map all_opt){
+    func(user_data,"\x1b[2J\x1b[H");
+}
+
+static cmd_context s_cmd_help;
+static cmd_context s_cmd_clear;
+static int s_cmd_help_inited = 0;
+static int s_cmd_clear_inited = 0;
+
+cmd_context *cmd_context_help(){
+    if(!s_cmd_help_inited){
+        s_cmd_help._name = "help";
+        s_cmd_help._description = "打印所有命令";
+        s_cmd_help._cb = on_cmd_help_complete;
+        s_cmd_help._options = NULL;
+        s_cmd_help_inited = 1;
+    }
+    return &s_cmd_help;
+}
+
+cmd_context *cmd_context_clear(){
+    if(!s_cmd_clear_inited){
+        s_cmd_clear._name = "clear";
+        s_cmd_clear._description = "清空屏幕";
+        s_cmd_clear._cb = on_cmd_help_complete;
+        s_cmd_clear._options = NULL;
+        s_cmd_clear_inited = 1;
+    }
+    return &s_cmd_clear;
+}
+
+cmd_manager *cmd_manager_alloc(){
+    cmd_manager *ret = (cmd_manager*) malloc(sizeof(cmd_manager));
+    CHECK_PTR(ret,NULL);
+    ret->_cmd_map  = avl_tree_new(avl_tree_cmd_key_comp);
+    avl_tree_insert(ret->_cmd_map,cmd_context_help()->_name,cmd_context_help(),NULL,NULL);
+    avl_tree_insert(ret->_cmd_map,cmd_context_clear()->_name,cmd_context_clear(),NULL,NULL);
+    return ret;
+}
+
+int cmd_manager_free(cmd_manager *ctx){
+    CHECK_PTR(ctx,-1);
+    avl_tree_free(ctx->_cmd_map);
+    free(ctx);
+    return 0;
+}
+
+static void avl_tree_free_cmd(AVLTreeValue value){
+    cmd_context_free((cmd_context*)value);
+}
+
+int cmd_manager_add_cmd(cmd_manager *ctx,cmd_context *cmd){
+    CHECK_PTR(ctx,-1);
+    avl_tree_insert(ctx->_cmd_map,cmd->_name,cmd,NULL,avl_tree_free_cmd);
+    return 0;
+}
+
+cmd_context *cmd_manager_find(cmd_manager *ctx,const char *key){
+    CHECK_PTR(ctx,NULL);
+    return (cmd_context *)avl_tree_lookup(ctx->_cmd_map,(AVLTreeKey)key);
+}
 
 
-
-
-
-
-
+int cmd_manager_execute(cmd_manager *ctx,void *user_data,printf_func func,int argc,char *argv[]){
+    if(argc < 1){
+        func(user_data,"\t参数不足\r\n");
+        return -1;
+    }
+    cmd_context *cmd = cmd_manager_find(ctx,argv[0]);
+    if(!cmd){
+        func(user_data,"\t未找到该命令:%s,请输入help获取帮助.\r\n",argv[0]);
+        return -1;
+    }
+    cmd->_manager = ctx;
+    return cmd_context_execute(cmd,user_data,func,argc,argv);
+}
 
 
 
