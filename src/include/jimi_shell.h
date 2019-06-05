@@ -50,11 +50,10 @@ void test_cmd_splitter();
 
 ////////////////////////////////////////////////////////////////////
 //参数后面是否跟值，比如说help参数后面就不跟值
-typedef enum opt_type {
-    opt_none = 0,    //no_argument,
-    opt_required = 1,//required_argument,
-    opt_optional = 2,//optional_argument
-} opt_type;
+typedef enum arg_type {
+    arg_none = 0,    //no_argument,
+    arg_required = 1,//required_argument,
+} arg_type;
 
 //参数值类型
 typedef enum value_type{
@@ -131,12 +130,6 @@ const char *opt_value_map_name_of_index(opt_value_map map,int index);
 ////////////////////////////////////////////////////////////////////
 
 /**
- * 命令对象
- */
-typedef struct cmd_context cmd_context;
-
-
-/**
  * printf函数类型声明
  * @param user_data 回调用户指针
  * @param fmt 参数类型列表例如 "%d %s"
@@ -144,13 +137,19 @@ typedef struct cmd_context cmd_context;
  */
 typedef void(*printf_func)(void *user_data,const char *fmt,...);
 
+
+/**
+ * 命令对象
+ */
+typedef struct cmd_context cmd_context;
+
 /**
  * 解析命令结束
  * @param cmd
  * @param all_value
  * @return
  */
-typedef void(*on_cmd_parse_complete)(void *user_data, printf_func func, cmd_context *cmd,opt_value_map all_value);
+typedef void(*on_cmd_complete)(void *user_data, printf_func func, cmd_context *cmd,opt_value_map all_value);
 
 
 /**
@@ -159,7 +158,7 @@ typedef void(*on_cmd_parse_complete)(void *user_data, printf_func func, cmd_cont
  * @param description 命令功能描述
  * @return 命令对象
  */
-cmd_context *cmd_context_alloc(const char *cmd_name,const char *description,on_cmd_parse_complete cb);
+cmd_context *cmd_context_alloc(const char *cmd_name,const char *description,on_cmd_complete cb);
 
 /**
  * 释放命令
@@ -196,15 +195,15 @@ typedef option_value_ret (*on_option_value)(void *user_data,printf_func func,cmd
 /**
  * 命令添加参数选项
  * 范例：
- *      cmd_context_add_option(ctx,'h','help',"打印此帮助信息",0,opt_none,val_null,0)
- *      cmd_context_add_option(ctx,'p','port',"设置端口",1,opt_required,val_int,1,80)
+ *      cmd_context_add_option(ctx,'h','help',"打印此帮助信息",0,arg_none,val_null,0)
+ *      cmd_context_add_option(ctx,'p','port',"设置端口",1,arg_required,val_int,1,80)
  * @param ctx 命令对象
  * @param cb 解析到该参数的回调函数
  * @param short_opt 参数短名，例如 -h,如果没有短参数名，可以设置为0
  * @param long_opt 参数长名，例如 --help
  * @param description 参数功能描述,例如 "打印此帮助信息"
  * @param opt_must 该参数是否必选在命令中存在，0:非必须，1:必须
- * @param opt_type 参数后面是否跟值，比如说help参数后面就不跟值
+ * @param arg_type 参数后面是否跟值，比如说help参数后面就不跟值
  * @param val_type 参数值类型
  * @param have_default_val 是否有默认参数，0:无, 1:有
  * @param ... 默认参数，跟val_type类型匹配，没有默认参数则不填写
@@ -216,21 +215,27 @@ int cmd_context_add_option(cmd_context *ctx,
                            const char *long_opt,
                            const char *description,
                            int opt_must,
-                           opt_type opt_type,
+                           arg_type arg_type,
                            value_type val_type,
                            int have_default_val,
                            ...);
 
 /**
- * 添加无默认参数，无回调的参数
+ * 添加必须输入的选项，比如说要求用户必须输入用户名密码
+ * @param ctx 命令对象
+ * @param cb 解析到该参数的回调函数
+ * @param short_opt 参数短名，例如 -h,如果没有短参数名，可以设置为0
+ * @param long_opt 参数长名，例如 --help
+ * @param description 参数功能描述,例如 "打印此帮助信息"
+ * @param val_type 参数值类型
+ * @return 0:成功，-1:失败
  */
-#define cmd_context_add_option_simple1(ctx,short_opt,long_opt,description,opt_must,opt_type,val_type)  \
-        cmd_context_add_option(ctx,NULL,short_opt,long_opt,description,opt_must,opt_type,val_type,0);
-
-#define cmd_context_add_option_simple2(ctx,short_opt,long_opt,description)  \
-        cmd_context_add_option(ctx,NULL,short_opt,long_opt,description,0,opt_none,val_null,0);
-
-
+int cmd_context_add_option_must(cmd_context *ctx,
+                                on_option_value cb,
+                                char short_opt,
+                                const char *long_opt,
+                                const char *description,
+                                value_type val_type);
 
 
 /**

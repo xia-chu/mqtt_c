@@ -264,7 +264,7 @@ typedef struct option_context{
     char *_long_opt; //参数长描述，比如 --help
     char *_description; //参数说明，比如 "打印此帮助信息"
     int _opt_must;  //该参数是否必选在命令中存在，0:非必须，1:必须
-    opt_type _opt_type; //参数后面是否跟值，比如说help参数后面就不跟值
+    arg_type _arg_type; //参数后面是否跟值，比如说help参数后面就不跟值
     value_type _val_type;//参数值类型
     opt_value *_default_val;//默认参数
 }option_context;
@@ -273,7 +273,7 @@ typedef struct cmd_context{
     char *_name;
     char *_description;//命令描述
     AVLTree *_options;//参数列表
-    on_cmd_parse_complete _cb;//参数解析完毕的回调
+    on_cmd_complete _cb;//参数解析完毕的回调
 }cmd_context;
 
 
@@ -282,7 +282,7 @@ option_context *option_context_alloc(on_option_value cb,
                                      const char *long_opt,
                                      const char *description,
                                      int opt_must,
-                                     opt_type opt_type,
+                                     arg_type arg_type,
                                      value_type val_type,
                                      int have_default_val,
                                      va_list ap){
@@ -293,9 +293,9 @@ option_context *option_context_alloc(on_option_value cb,
     ret->_long_opt = strdup(long_opt);
     ret->_description = strdup(description);
     ret->_opt_must = opt_must;
-    ret->_opt_type = opt_type;
+    ret->_arg_type = arg_type;
     ret->_val_type = val_type;
-    if(have_default_val && val_type != val_null && opt_type != opt_none){
+    if(have_default_val && val_type != val_null && arg_type != arg_none){
         ret->_default_val = opt_value_alloc(val_type,ap);
     }else{
         ret->_default_val = NULL;
@@ -347,7 +347,7 @@ static option_value_ret s_on_help(void *user_data,printf_func func,cmd_context *
         }
 
         //打印是否有参
-        func(user_data,"  %s",argsType[opt->_opt_type]);
+        func(user_data,"  %s",argsType[opt->_arg_type]);
         //打印默认参数
         const char *defaultValue = opt_value_to_string(opt->_default_val);
         func(user_data,"  %s%s",defaultPrefix,defaultValue);
@@ -377,7 +377,7 @@ static option_context *option_context_help(){
         s_help_option._long_opt = "help";
         s_help_option._description = "打印此帮助信息";
         s_help_option._opt_must = 0;
-        s_help_option._opt_type = opt_none;
+        s_help_option._arg_type = arg_none;
         s_help_option._val_type = val_null;
         s_help_option._default_val = NULL;
         s_help_option_inited = 1;
@@ -410,7 +410,7 @@ static void avl_tree_free_value(AVLTreeValue val){
     option_context_free((option_context *)val);
 }
 
-cmd_context *cmd_context_alloc(const char *cmd_name,const char *description,on_cmd_parse_complete cb){
+cmd_context *cmd_context_alloc(const char *cmd_name,const char *description,on_cmd_complete cb){
     cmd_context *ret = (cmd_context *) malloc(sizeof(cmd_context));
     CHECK_PTR(ret,NULL);
     ret->_name = strdup(cmd_name);
@@ -443,17 +443,26 @@ int cmd_context_add_option(cmd_context *ctx,
                            const char *long_opt,
                            const char *description,
                            int opt_must,
-                           opt_type opt_type,
+                           arg_type arg_type,
                            value_type val_type,
                            int have_default_val,
                            ...){
     CHECK_PTR(ctx,-1);
     va_list ap;
     va_start(ap,have_default_val);
-    option_context *opt = option_context_alloc(cb,short_opt,long_opt,description,opt_must,opt_type,val_type,have_default_val,ap);
+    option_context *opt = option_context_alloc(cb,short_opt,long_opt,description,opt_must,arg_type,val_type,have_default_val,ap);
     avl_tree_insert(ctx->_options,opt->_long_opt,opt,NULL,avl_tree_free_value);
     va_end(ap);
     return 0;
+}
+
+int cmd_context_add_option_must(cmd_context *ctx,
+                                on_option_value cb,
+                                char short_opt,
+                                const char *long_opt,
+                                const char *description,
+                                value_type val_type){
+    return cmd_context_add_option(ctx,cb,short_opt,long_opt,description,1,arg_required,val_type,0);
 }
 
 #define LONG_OPT_OFFSET 0xFF
@@ -497,7 +506,7 @@ int cmd_context_execute(cmd_context *ctx,void *user_data,printf_func func,int ar
         //添加长参数
         struct option *long_opt = long_opt_array + i;
         long_opt->name = opt->_long_opt;
-        long_opt->has_arg = opt->_opt_type;
+        long_opt->has_arg = opt->_arg_type;
         long_opt->flag = NULL;
         long_opt->val = i + LONG_OPT_OFFSET;
 
@@ -508,12 +517,12 @@ int cmd_context_execute(cmd_context *ctx,void *user_data,printf_func func,int ar
         avl_tree_insert(opt_short_to_long,(AVLTreeKey)opt->_short_opt,(AVLTreeValue)long_opt->val,NULL,NULL);
         //添加短参数
         buffer_append(short_opt_str,&opt->_short_opt,1);
-        switch (opt->_opt_type){
-            case opt_required:
+        switch (opt->_arg_type){
+            case arg_required:
                 buffer_append(short_opt_str,":",1);
                 break;
-            case opt_optional:
-                buffer_append(short_opt_str,"::",2);
+//            case arg_optional:
+//                buffer_append(short_opt_str,"::",2);
                 break;
             default:
                 break;
