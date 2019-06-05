@@ -534,8 +534,7 @@ int cmd_context_execute(cmd_context *ctx,void *user_data,printf_func func,int ar
     }
 
 completed:
-
-    free(short_opt_str);
+    buffer_free(short_opt_str);
     free(long_opt_array);
     avl_tree_free(opt_short_to_long);
     avl_tree_free(opt_val_map);

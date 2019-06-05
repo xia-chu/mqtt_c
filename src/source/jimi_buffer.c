@@ -8,7 +8,7 @@
 #include "jimi_log.h"
 #include "mqtt_wrapper.h"
 
-#define RESERVED_SIZE 256
+#define RESERVED_SIZE 32
 
 
 buffer *buffer_alloc(){
@@ -32,8 +32,9 @@ int buffer_init(buffer *buf){
 }
 int buffer_release(buffer *buf){
     CHECK_PTR(buf,-1);
-    if(buf->_len && buf->_data){
+    if(buf->_capacity && buf->_data){
         free(buf->_data);
+        //LOGD("free:%d",buf->_capacity);
     }
     buffer_init(buf);
     return 0;
@@ -52,6 +53,7 @@ int buffer_append(buffer *buf,const char *data,int len){
     if(!buf->_capacity){
         //内存尚未开辟
         buf->_data = malloc(len + RESERVED_SIZE);
+        //LOGD("malloc:%d",len + RESERVED_SIZE);
         if(!buf->_data){
             LOGE("out of memory:%d",len);
             return -1;
@@ -73,6 +75,8 @@ int buffer_append(buffer *buf,const char *data,int len){
 
     //已经开辟的容量不够
     buf->_data = realloc(buf->_data,len + buf->_len + RESERVED_SIZE);
+    //LOGD("realloc:%d",len + buf->_len + RESERVED_SIZE);
+
     if(!buf->_data){
         //out of memory
         LOGE("out of memory:%d",len + buf->_len);
@@ -82,6 +86,7 @@ int buffer_append(buffer *buf,const char *data,int len){
     memcpy(buf->_data + buf->_len ,data,len);
     buf->_len += len;
     buf->_data[buf->_len] = '\0';
+    buf->_capacity = buf->_len + RESERVED_SIZE;
     return 0;
 }
 int buffer_assign(buffer *buf,const char *data,int len){
