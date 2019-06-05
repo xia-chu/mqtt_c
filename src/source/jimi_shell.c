@@ -644,6 +644,8 @@ cmd_manager *cmd_manager_alloc(){
     ret->_cmd_map  = avl_tree_new(avl_tree_cmd_key_comp);
     avl_tree_insert(ret->_cmd_map,cmd_context_help()->_name,cmd_context_help(),NULL,NULL);
     avl_tree_insert(ret->_cmd_map,cmd_context_clear()->_name,cmd_context_clear(),NULL,NULL);
+    cmd_context_help()->_manager = ret;
+    cmd_context_clear()->_manager = ret;
     return ret;
 }
 
@@ -660,6 +662,7 @@ static void avl_tree_free_cmd(AVLTreeValue value){
 
 int cmd_manager_add_cmd(cmd_manager *ctx,cmd_context *cmd){
     CHECK_PTR(ctx,-1);
+    cmd->_manager = ctx;
     avl_tree_insert(ctx->_cmd_map,cmd->_name,cmd,NULL,avl_tree_free_cmd);
     return 0;
 }
@@ -680,7 +683,6 @@ int cmd_manager_execute(cmd_manager *ctx,void *user_data,printf_func func,int ar
         func(user_data,"\t未找到该命令:%s,请输入help获取帮助.\r\n",argv[0]);
         return -1;
     }
-    cmd->_manager = ctx;
     int ret = cmd_context_execute(cmd,user_data,func,argc,argv);
     func(user_data,"$ ");
     return ret;

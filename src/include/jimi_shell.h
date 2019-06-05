@@ -190,9 +190,26 @@ int cmd_context_add_option_bool(cmd_context *ctx,
 int cmd_context_execute(cmd_context *ctx,void *user_data,printf_func func,int argc,char *argv[]);
 
 ////////////////////////////////////////////////////////////////////
-
+/**
+ * 输入字符串到shell单例解析器
+ * @param user_data 用户数据指针，printf_func回调第一个参数
+ * @param func printf打印函数指针
+ * @param buf 字符串
+ * @param len 字符串长度
+ * @return
+ */
 int shell_input(void *user_data,printf_func func,const char *buf,int len);
+
+/**
+ * 销毁shell单例解析器
+ */
 void shell_destory();
+
+/**
+ * 注册命令
+ * @param cmd 命令
+ * @return
+ */
 int cmd_regist(cmd_context *cmd);
 
 #ifdef __cplusplus
