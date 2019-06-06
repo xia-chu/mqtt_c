@@ -680,6 +680,7 @@ int cmd_manager_execute(cmd_manager *ctx,void *user_data,printf_func func,int ar
     cmd_context *cmd = cmd_manager_find(ctx,argv[0]);
     if(!cmd){
         func(user_data,"    未找到该命令:%s,请输入help获取帮助.\r\n",argv[0]);
+        func(user_data,"$ ");
         return -1;
     }
     int ret = cmd_context_execute(cmd,user_data,func,argc,argv);
