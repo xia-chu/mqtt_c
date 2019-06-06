@@ -255,7 +255,7 @@ static option_value_ret s_on_help(void *user_data,printf_func func,cmd_context *
         if(opt->_short_opt){
             func(user_data,"  -%c  --%s",opt->_short_opt,opt->_long_opt);
         }else{
-            func(user_data,"      --%s",opt->_long_opt);
+            func(user_data,"    --%s",opt->_long_opt);
         }
 
         int j ;
@@ -477,7 +477,7 @@ int cmd_context_execute(cmd_context *ctx,void *user_data,printf_func func,int ar
             //短参数,我们转换成长参数
            AVLTreeNode *node = avl_tree_lookup_node(opt_short_to_long,(AVLTreeKey)index);
            if(node == NULL){
-               func(user_data,"    未识别的选项\"%c\",输入\"-h\"获取帮助.\r\n",(char)index);
+               func(user_data,"  未识别的选项\"%c\",输入\"-h\"获取帮助.\r\n",(char)index);
                goto completed;
            }
             //转换成长参数
@@ -486,7 +486,7 @@ int cmd_context_execute(cmd_context *ctx,void *user_data,printf_func func,int ar
 
         AVLTreeNode *opt_node = avl_tree_get_node_by_index(ctx->_options,index - LONG_OPT_OFFSET);
         if(!opt_node){
-            func(user_data,"    未识别的选项\"%d\",输入\"-h\"获取帮助.\r\n",index);
+            func(user_data,"  未识别的选项\"%d\",输入\"-h\"获取帮助.\r\n",index);
             goto completed;
         }
 
@@ -524,7 +524,7 @@ int cmd_context_execute(cmd_context *ctx,void *user_data,printf_func func,int ar
         //必选参数查看有未提供
         AVLTreeNode *node = avl_tree_lookup_node(opt_val_map,opt->_long_opt);
         if(node == NULL){
-            func(user_data,"    参数\"%s\"必选提供.\r\n",opt->_long_opt);
+            func(user_data,"  参数\"%s\"必选提供.\r\n",opt->_long_opt);
             goto completed;
         }
     }
@@ -679,7 +679,7 @@ int cmd_manager_execute(cmd_manager *ctx,void *user_data,printf_func func,int ar
     }
     cmd_context *cmd = cmd_manager_find(ctx,argv[0]);
     if(!cmd){
-        func(user_data,"    未找到该命令:%s,请输入help获取帮助.\r\n",argv[0]);
+        func(user_data,"  未找到该命令:%s,请输入help获取帮助.\r\n",argv[0]);
         func(user_data,"$ ");
         return -1;
     }
