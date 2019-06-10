@@ -217,6 +217,15 @@ option_context *option_context_alloc(on_option_value cb,
     return ret;
 }
 
+static void print_blank(int size, void *user_data,printf_func func){
+    if(size > 0){
+        char *blank = malloc(1 + size);
+        memset(blank, ' ', size);
+        blank[size] = '\0';
+        func(user_data, blank);
+        free(blank);
+    }
+}
 
 static option_context s_help_option;
 static int s_help_option_inited = 0;
@@ -258,10 +267,7 @@ static option_value_ret s_on_help(void *user_data,printf_func func,cmd_context *
             func(user_data,"    --%s",opt->_long_opt);
         }
 
-        int j ;
-        for(j = 0 ; j < maxLen_longOpt - strlen(opt->_long_opt) ; ++j){
-            func(user_data," ");
-        }
+        print_blank(maxLen_longOpt - strlen(opt->_long_opt),user_data,func);
 
         //打印是否有参
         func(user_data,"  %s",argsType[opt->_arg_type]);
@@ -269,9 +275,7 @@ static option_value_ret s_on_help(void *user_data,printf_func func,cmd_context *
         const char *defaultValue = default_val_str(opt->_default_val);
         func(user_data,"  %s%s",defaultPrefix,defaultValue);
 
-        for(j = 0 ;j < maxLen_default - strlen(defaultValue) ; ++j){
-            func(user_data," ");
-        }
+        print_blank(maxLen_default - strlen(defaultValue),user_data,func);
 
         //打印是否必填参数
         if(opt->_default_val){
@@ -598,10 +602,9 @@ static void on_cmd_help_complete(void *user_data, printf_func func, cmd_context 
         const char *key = avl_tree_node_key(node);
         cmd_context *cmd = (cmd_context *)avl_tree_node_value(node);
         func(user_data,"  %s",key);
-        int j;
-        for(j = 0; j < maxLen - strlen(key); ++j){
-            func(user_data," ");
-        }
+
+        print_blank(maxLen - strlen(key),user_data,func);
+
         func(user_data,"  %s\r\n",cmd->_description);
     }
 }
