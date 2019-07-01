@@ -13,10 +13,9 @@ void *jimi_malloc(int size){
     return ptr;
 }
 
-int jimi_free(void *ptr){
-    CHECK_PTR(ptr,-1);
+void jimi_free(void *ptr){
+    CHECK_PTR(ptr,);
     free(ptr);
-    return 0;
 }
 
 void *jimi_realloc(void *ptr,int size){

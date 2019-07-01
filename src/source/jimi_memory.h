@@ -9,7 +9,7 @@ extern "C" {
 #endif // __cplusplus
 
 void *jimi_malloc(int size);
-int jimi_free(void *ptr);
+void jimi_free(void *ptr);
 void *jimi_realloc(void *ptr,int size);
 char *jimi_strdup(const char *str);
 

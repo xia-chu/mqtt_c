@@ -9,6 +9,7 @@
 #include "jimi_shell.h"
 #include "jimi_buffer.h"
 #include "jimi_log.h"
+#include "jimi_memory.h"
 #include "avl-tree.h"
 
 //最大支持32个参数
@@ -22,11 +23,11 @@ typedef struct cmd_splitter{
 
 
 cmd_splitter* cmd_splitter_alloc(){
-    cmd_splitter *ret = (cmd_splitter *)malloc(sizeof(cmd_splitter));
+    cmd_splitter *ret = (cmd_splitter *)jimi_malloc(sizeof(cmd_splitter));
     CHECK_PTR(ret,NULL);
     ret->_buf = buffer_alloc();
     if(!ret->_buf){
-        free(ret);
+        jimi_free(ret);
         LOGE("buffer_alloc failed!");
         return NULL;
     }
@@ -36,7 +37,7 @@ cmd_splitter* cmd_splitter_alloc(){
 int cmd_splitter_free(cmd_splitter *ctx){
     CHECK_PTR(ctx,-1);
     buffer_free(ctx->_buf);
-    free(ctx);
+    jimi_free(ctx);
     return 0;
 }
 
@@ -201,16 +202,16 @@ option_context *option_context_alloc(on_option_value cb,
                                      int opt_must,
                                      arg_type arg_type,
                                      const char *default_val){
-    option_context *ret = (option_context *)malloc(sizeof(option_context));
+    option_context *ret = (option_context *)jimi_malloc(sizeof(option_context));
     CHECK_PTR(ret,NULL);
     ret->_cb = cb;
     ret->_short_opt = short_opt;
-    ret->_long_opt = strdup(long_opt);
-    ret->_description = strdup(description);
+    ret->_long_opt = jimi_strdup(long_opt);
+    ret->_description = jimi_strdup(description);
     ret->_opt_must = opt_must;
     ret->_arg_type = arg_type;
     if(default_val && arg_type != arg_none){
-        ret->_default_val = strdup(default_val);
+        ret->_default_val = jimi_strdup(default_val);
     }else{
         ret->_default_val = NULL;
     }
@@ -219,11 +220,11 @@ option_context *option_context_alloc(on_option_value cb,
 
 static void print_blank(int size, void *user_data,printf_func func){
     if(size > 0){
-        char *blank = malloc(1 + size);
+        char *blank = jimi_malloc(1 + size);
         memset(blank, ' ', size);
         blank[size] = '\0';
         func(user_data, blank);
-        free(blank);
+        jimi_free(blank);
     }
 }
 
@@ -314,12 +315,12 @@ int cmd_context_add_option_help(cmd_context *ctx){
 
 int option_context_free(option_context *ctx){
     CHECK_PTR(ctx,-1);
-    free(ctx->_long_opt);
-    free(ctx->_description);
+    jimi_free(ctx->_long_opt);
+    jimi_free(ctx->_description);
     if(ctx->_default_val){
-        free(ctx->_default_val);
+        jimi_free(ctx->_default_val);
     }
-    free(ctx);
+    jimi_free(ctx);
     return 0;
 }
 
@@ -331,10 +332,10 @@ static void avl_tree_free_value(AVLTreeValue val){
 }
 
 cmd_context *cmd_context_alloc(const char *cmd_name,const char *description,on_cmd_complete cb){
-    cmd_context *ret = (cmd_context *) malloc(sizeof(cmd_context));
+    cmd_context *ret = (cmd_context *) jimi_malloc(sizeof(cmd_context));
     CHECK_PTR(ret,NULL);
-    ret->_name = strdup(cmd_name);
-    ret->_description = strdup(description);
+    ret->_name = jimi_strdup(cmd_name);
+    ret->_description = jimi_strdup(description);
     ret->_options = avl_tree_new(avl_tree_option_comp);
     ret->_cb = cb;
     cmd_context_add_option_help(ret);
@@ -345,9 +346,9 @@ cmd_context *cmd_context_alloc(const char *cmd_name,const char *description,on_c
 int cmd_context_free(cmd_context *ctx){
     CHECK_PTR(ctx,-1);
     avl_tree_free(ctx->_options);
-    free(ctx->_description);
-    free(ctx->_name);
-    free(ctx);
+    jimi_free(ctx->_description);
+    jimi_free(ctx->_name);
+    jimi_free(ctx);
     return 0;
 }
 
@@ -429,7 +430,7 @@ int cmd_context_execute(cmd_context *ctx,void *user_data,printf_func func,int ar
 
     int option_size = avl_tree_num_entries(ctx->_options);
     buffer *short_opt_str = buffer_alloc();
-    struct option *long_opt_array = (struct option *) malloc(sizeof(struct option) * (option_size + 1));
+    struct option *long_opt_array = (struct option *) jimi_malloc(sizeof(struct option) * (option_size + 1));
     int i;
 
     for(i = 0 ; i < option_size ; ++i ){
@@ -504,9 +505,9 @@ int cmd_context_execute(cmd_context *ctx,void *user_data,printf_func func,int ar
         if(optarg){
             avl_tree_insert(opt_val_map,
                             opt->_long_opt,
-                            strdup(optarg),
+                            jimi_strdup(optarg),
                             NULL,
-                            free);
+                            jimi_free);
         }else{
             avl_tree_insert(opt_val_map,
                             opt->_long_opt,
@@ -539,7 +540,7 @@ int cmd_context_execute(cmd_context *ctx,void *user_data,printf_func func,int ar
 
 completed:
     buffer_free(short_opt_str);
-    free(long_opt_array);
+    jimi_free(long_opt_array);
     avl_tree_free(opt_short_to_long);
     avl_tree_free(opt_val_map);
     return 0;
@@ -641,7 +642,7 @@ cmd_context *cmd_context_clear(){
 }
 
 cmd_manager *cmd_manager_alloc(){
-    cmd_manager *ret = (cmd_manager*) malloc(sizeof(cmd_manager));
+    cmd_manager *ret = (cmd_manager*) jimi_malloc(sizeof(cmd_manager));
     CHECK_PTR(ret,NULL);
     ret->_cmd_map  = avl_tree_new(avl_tree_cmd_key_comp);
     avl_tree_insert(ret->_cmd_map,cmd_context_help()->_name,cmd_context_help(),NULL,NULL);
@@ -654,7 +655,7 @@ cmd_manager *cmd_manager_alloc(){
 int cmd_manager_free(cmd_manager *ctx){
     CHECK_PTR(ctx,-1);
     avl_tree_free(ctx->_cmd_map);
-    free(ctx);
+    jimi_free(ctx);
     return 0;
 }
 
@@ -704,7 +705,7 @@ static void s_on_argv(void *user_data,int argc,char *argv[]){
 }
 
 shell_context *shell_context_alloc(){
-    shell_context *ret = (shell_context *)malloc(sizeof(shell_context));
+    shell_context *ret = (shell_context *)jimi_malloc(sizeof(shell_context));
     CHECK_PTR(ret,NULL);
     ret->_splitter = cmd_splitter_alloc();
     ret->_manager = cmd_manager_alloc();
@@ -715,7 +716,7 @@ int shell_context_free(shell_context *ctx){
     CHECK_PTR(ctx,-1);
     cmd_splitter_free(ctx->_splitter);
     cmd_manager_free(ctx->_manager);
-    free(ctx);
+    jimi_free(ctx);
     return 0;
 }
 

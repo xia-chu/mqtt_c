@@ -6,6 +6,7 @@
 #include "jimi_log.h"
 #include "mqtt_wrapper.h"
 #include "jimi_buffer.h"
+#include "jimi_memory.h"
 
 #ifndef __alios__
 #include <arpa/inet.h>
@@ -345,32 +346,32 @@ int iot_buffer_append_double(buffer *buffer, uint32_t tag_id , double double_num
 }
 int iot_buffer_append_enum(buffer *buffer, uint32_t tag_id, const char *enum_str){
     int iot_buf_size = 16 + strlen(enum_str);
-    unsigned char *iot_buf = malloc(iot_buf_size);
+    unsigned char *iot_buf = jimi_malloc(iot_buf_size);
     if(!iot_buf){
         LOGE("malloc failed!");
         return -1;
     }
     int iot_len = pack_iot_enum_packet(0,0,0,tag_id,enum_str,iot_buf, iot_buf_size);
     if(buffer_append(buffer,(const char *)iot_buf,iot_len) == -1){
-        free(iot_buf);
+        jimi_free(iot_buf);
         return -1;
     }
-    free(iot_buf);
+    jimi_free(iot_buf);
     return 0;
 }
 int iot_buffer_append_string(buffer *buffer, uint32_t tag_id, const char *str){
     int iot_buf_size = 16 + strlen(str);
-    unsigned char *iot_buf = malloc(iot_buf_size);
+    unsigned char *iot_buf = jimi_malloc(iot_buf_size);
     if(!iot_buf){
         LOGE("malloc failed!");
         return -1;
     }
     int iot_len = pack_iot_string_packet(0,0,0,tag_id,str,iot_buf, iot_buf_size);
     if(buffer_append(buffer,(const char *)iot_buf,iot_len) == -1){
-        free(iot_buf);
+        jimi_free(iot_buf);
         return -1;
     }
-    free(iot_buf);
+    jimi_free(iot_buf);
     return 0;
 }
 

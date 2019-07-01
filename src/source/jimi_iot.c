@@ -7,7 +7,7 @@
 #include <memory.h>
 #include <jimi_buffer.h>
 #include "jimi_iot.h"
-#include "jimi_buffer.h"
+#include "jimi_memory.h"
 #include "md5.h"
 #include "mqtt_wrapper.h"
 #include "iot_proto.h"
@@ -158,15 +158,15 @@ static void iot_on_publish(void *arg,
         return;
     }
     int buf_size = payloadsize * 3 / 4 +10;
-    uint8_t *out = malloc(buf_size);
+    uint8_t *out = jimi_malloc(buf_size);
     int size = av_base64_decode(out,buf_size,payload,payloadsize);
     iot_message_dump(ctx,out,size);
-    free(out);
+    jimi_free(out);
 }
 
 
 void *iot_context_alloc(iot_callback *cb){
-    iot_context *ctx = (iot_context *)malloc(sizeof(iot_context));
+    iot_context *ctx = (iot_context *)jimi_malloc(sizeof(iot_context));
     if(!ctx){
         LOGE("malloc iot_context failed!");
         return NULL;
@@ -188,7 +188,7 @@ int iot_context_free(void *arg){
     }
     buffer_release(&ctx->_topic_publish);
     buffer_release(&ctx->_topic_listen);
-    free(ctx);
+    jimi_free(ctx);
     return 0;
 }
 
@@ -243,13 +243,13 @@ static void mqtt_pub_ack(void *arg,int time_out,pub_type type){
 
 int iot_send_raw_bytes(iot_context *ctx,unsigned char *iot_buf,int iot_len){
     int base64_size = AV_BASE64_SIZE(iot_len) + 10;
-    char *base64 = malloc(base64_size);
+    char *base64 = jimi_malloc(base64_size);
     if(!base64){
         LOGE("memory overflow!");
         return -1;
     }
     if(NULL == av_base64_encode(base64,base64_size,iot_buf,iot_len)){
-        free(base64);
+        jimi_free(base64);
         LOGE("av_base64_encode failed!");
         return -1;
     }
@@ -264,7 +264,7 @@ int iot_send_raw_bytes(iot_context *ctx,unsigned char *iot_buf,int iot_len){
                                     ctx,//user_data
                                     NULL,//free_user_data
                                     10);//timeout_sec
-    free(base64);
+    jimi_free(base64);
     return ret;
 }
 
@@ -296,15 +296,15 @@ int iot_send_enum_pkt(void *arg,uint32_t tag,const char *enum_str){
     iot_context *ctx = (iot_context *)arg;
     CHECK_PTR(ctx,-1);
     int iot_buf_size = 16 + strlen(enum_str);
-    unsigned char *iot_buf = malloc(16 + strlen(enum_str));
+    unsigned char *iot_buf = jimi_malloc(16 + strlen(enum_str));
     int iot_len = pack_iot_enum_packet(1,1,++ctx->_req_id,tag,enum_str,iot_buf, iot_buf_size);
     if(iot_len <= 0) {
         LOGE("pack_iot_enum_packet failed:%d",iot_len);
-        free(iot_buf);
+        jimi_free(iot_buf);
         return -1;
     }
     int ret = iot_send_raw_bytes(ctx,iot_buf,iot_len);
-    free(iot_buf);
+    jimi_free(iot_buf);
     return ret;
 }
 
@@ -312,15 +312,15 @@ int iot_send_string_pkt(void *arg,uint32_t tag,const char *str){
     iot_context *ctx = (iot_context *)arg;
     CHECK_PTR(ctx,-1);
     int iot_buf_size = 16 + strlen(str);
-    unsigned char *iot_buf = malloc(iot_buf_size);
+    unsigned char *iot_buf = jimi_malloc(iot_buf_size);
     int iot_len = pack_iot_string_packet(1,1,++ctx->_req_id,tag,str,iot_buf, iot_buf_size);
     if(iot_len <= 0) {
         LOGE("pack_iot_string_packet failed:%d",iot_len);
-        free(iot_buf);
+        jimi_free(iot_buf);
         return -1;
     }
     int ret = iot_send_raw_bytes(ctx,iot_buf,iot_len);
-    free(iot_buf);
+    jimi_free(iot_buf);
     return ret;
 }
 

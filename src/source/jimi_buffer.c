@@ -6,12 +6,13 @@
 #include <stdlib.h>
 #include "jimi_buffer.h"
 #include "jimi_log.h"
+#include "jimi_memory.h"
 
 #define RESERVED_SIZE 32
 
 
 buffer *buffer_alloc(){
-    buffer *ret = (buffer *) malloc(sizeof(buffer));
+    buffer *ret = (buffer *) jimi_malloc(sizeof(buffer));
     CHECK_PTR(ret,NULL);
     buffer_init(ret);
     return ret;
@@ -20,7 +21,7 @@ buffer *buffer_alloc(){
 int buffer_free(buffer *buf){
     CHECK_PTR(buf,-1);
     buffer_release(buf);
-    free(buf);
+    jimi_free(buf);
     return 0;
 }
 
@@ -32,7 +33,7 @@ int buffer_init(buffer *buf){
 int buffer_release(buffer *buf){
     CHECK_PTR(buf,-1);
     if(buf->_capacity && buf->_data){
-        free(buf->_data);
+        jimi_free(buf->_data);
         //LOGD("free:%d",buf->_capacity);
     }
     buffer_init(buf);
@@ -51,7 +52,7 @@ int buffer_append(buffer *buf,const char *data,int len){
 
     if(!buf->_capacity){
         //内存尚未开辟
-        buf->_data = malloc(len + RESERVED_SIZE);
+        buf->_data = jimi_malloc(len + RESERVED_SIZE);
         //LOGD("malloc:%d",len + RESERVED_SIZE);
         if(!buf->_data){
             LOGE("out of memory:%d",len);
@@ -73,7 +74,7 @@ int buffer_append(buffer *buf,const char *data,int len){
     }
 
     //已经开辟的容量不够
-    buf->_data = realloc(buf->_data,len + buf->_len + RESERVED_SIZE);
+    buf->_data = jimi_realloc(buf->_data,len + buf->_len + RESERVED_SIZE);
     //LOGD("realloc:%d",len + buf->_len + RESERVED_SIZE);
 
     if(!buf->_data){

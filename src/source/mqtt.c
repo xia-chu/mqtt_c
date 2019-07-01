@@ -8,6 +8,8 @@ v2.0 2016/4/19
 #include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
+#include "jimi_memory.h"
+
 
 static const char Mqtt_TrailingBytesForUTF8[256] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -607,7 +609,7 @@ int Mqtt_SendPkt(struct MqttContext *ctx, const struct MqttBuffer *buf, uint32_t
 
     assert(first_ext);
 
-    iov = (struct iovec*)malloc(sizeof(struct iovec) * ext_count);
+    iov = (struct iovec*)jimi_malloc(sizeof(struct iovec) * ext_count);
     if(!iov) {
         return MQTTERR_OUTOFMEMORY;
     }
@@ -623,7 +625,7 @@ int Mqtt_SendPkt(struct MqttContext *ctx, const struct MqttBuffer *buf, uint32_t
     }
 
     i = ctx->writev_func(ctx->user_data, iov, ext_count);
-    free(iov);
+    jimi_free(iov);
 
     return i;
 }

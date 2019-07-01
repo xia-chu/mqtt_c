@@ -7,6 +7,7 @@
 #include "jimi_http.h"
 #include "jimi_log.h"
 #include "jimi_buffer.h"
+#include "jimi_memory.h"
 #include "avl-tree.h"
 
 typedef struct http_request
@@ -22,7 +23,7 @@ static int AVLTreeCompare(AVLTreeKey key1, AVLTreeKey key2){
 }
 
 http_request *http_request_alloc(){
-    http_request *ctx = (http_request*)malloc(sizeof(http_request));
+    http_request *ctx = (http_request*)jimi_malloc(sizeof(http_request));
     CHECK_PTR(ctx,NULL);
     memset(ctx,0, sizeof(http_request));
     ctx->_header = avl_tree_new(AVLTreeCompare);
@@ -35,7 +36,7 @@ int http_request_free(http_request *ctx){
     buffer_release(&ctx->_path);
     buffer_release(&ctx->_body);
     avl_tree_free(ctx->_header);
-    free(ctx);
+    jimi_free(ctx);
     return 0;
 }
 
@@ -61,11 +62,11 @@ int http_request_set_body(http_request *ctx,const char *content_type,const char 
         content_len = strlen(content_data);
     }
     buffer_assign(&ctx->_body,content_data,content_len);
-    avl_tree_insert(ctx->_header,"Content-Type",strdup(content_type),NULL,free);
-    char *len_str = malloc(8);
+    avl_tree_insert(ctx->_header,"Content-Type",jimi_strdup(content_type),NULL,jimi_free);
+    char *len_str = jimi_malloc(8);
     CHECK_PTR(len_str,-1);
     sprintf(len_str,"%d",content_len);
-    avl_tree_insert(ctx->_header,"Content-Length",len_str,NULL,free);
+    avl_tree_insert(ctx->_header,"Content-Length",len_str,NULL,jimi_free);
     return 0;
 }
 
@@ -73,7 +74,7 @@ int http_request_add_header(http_request *ctx,const char *key,const char *value)
     CHECK_PTR(ctx,-1);
     CHECK_PTR(key,-1);
     CHECK_PTR(value,-1);
-    avl_tree_insert(ctx->_header,strdup(key),strdup(value),free,free);
+    avl_tree_insert(ctx->_header,jimi_strdup(key),jimi_strdup(value),jimi_free,jimi_free);
     return 0;
 }
 
@@ -118,7 +119,7 @@ int http_request_dump_to_buffer(http_request *ctx,buffer *out){
         buffer_append(out,"\r\n",0);
     }
     if(nodes){
-        free(nodes);
+        jimi_free(nodes);
     }
     buffer_append(out,"\r\n",0);
     if(ctx->_body._len){
@@ -167,7 +168,7 @@ typedef struct http_response{
 
 
 http_response *http_response_alloc(on_split_response cb,void *user_data){
-    http_response *ctx = (http_response *)malloc(sizeof(http_response));
+    http_response *ctx = (http_response *)jimi_malloc(sizeof(http_response));
     CHECK_PTR(ctx,NULL);
     memset(ctx,0, sizeof(http_response));
     ctx->_header = avl_tree_new(AVLTreeCompare);
@@ -181,7 +182,7 @@ int http_response_free(http_response *ctx){
     CHECK_PTR(ctx,-1);
     buffer_release(&ctx->_data);
     avl_tree_free(ctx->_header);
-    free(ctx);
+    jimi_free(ctx);
     return 0;
 }
 
@@ -281,7 +282,7 @@ int http_response_input(http_response *ctx,const char *data,int len){
                 continue;
             }
             *pos = '\0';
-            avl_tree_insert(ctx->_header, strdup(line_start), strdup(pos + 2), free, free);
+            avl_tree_insert(ctx->_header, jimi_strdup(line_start), jimi_strdup(pos + 2), jimi_free, jimi_free);
         }
 
         const char *content_len = http_response_get_header(ctx, "Content-Length");
@@ -411,23 +412,23 @@ typedef struct http_url{
 
 http_url *http_url_parse(const char *url) {
     CHECK_PTR(url, NULL);
-    char *http = malloc(16), *host = malloc(128);
-    char *path = malloc(strlen(url));
+    char *http = jimi_malloc(16), *host = jimi_malloc(128);
+    char *path = jimi_malloc(strlen(url));
     unsigned short port = 0;
     int is_https = 0;
 
     if (4 == sscanf(url, "%15[^://]://%127[^:]:%hd%s", http, host, &port, path)) {
     } else if(3 == sscanf(url, "%15[^://]://%127[^/]%s", http, host, path)) {
     } else if(3 == sscanf(url,"%15[^://]://%127[^:]:%hd",http,host,&port)){
-        free(path);
+        jimi_free(path);
         path = NULL;
     } else if(2 == sscanf(url,"%15[^://]://%127[^/]",http,host)){
-        free(path);
+        jimi_free(path);
         path = NULL;
     } else{
-        free(path);
-        free(http);
-        free(host);
+        jimi_free(path);
+        jimi_free(http);
+        jimi_free(host);
         return NULL;
     }
 
@@ -443,27 +444,27 @@ http_url *http_url_parse(const char *url) {
         }
     }else{
         LOGW("%s is not a http url!",url);
-        free(path);
-        free(http);
-        free(host);
+        jimi_free(path);
+        jimi_free(http);
+        jimi_free(host);
         return NULL;
     }
-    free(http);
+    jimi_free(http);
 
-    http_url *ctx = (http_url *) malloc(sizeof(http_url));
+    http_url *ctx = (http_url *) jimi_malloc(sizeof(http_url));
     CHECK_PTR(ctx,NULL);
     ctx->_port = port;
     ctx->_is_https = is_https;
-    ctx->_path = path ? path : strdup("/");
+    ctx->_path = path ? path : jimi_strdup("/");
     ctx->_host = host;
     return ctx;
 }
 
 int http_url_free(http_url *ctx){
     CHECK_PTR(ctx,-1);
-    free(ctx->_path);
-    free(ctx->_host);
-    free(ctx);
+    jimi_free(ctx->_path);
+    jimi_free(ctx->_host);
+    jimi_free(ctx);
     return 0;
 }
 

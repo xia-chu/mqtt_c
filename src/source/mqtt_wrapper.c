@@ -3,8 +3,8 @@
 //
 
 #include "mqtt_wrapper.h"
-#include "mqtt_buffer.h"
 #include "jimi_buffer.h"
+#include "jimi_memory.h"
 #include "hash-table.h"
 #include <memory.h>
 #include <stdlib.h>
@@ -88,7 +88,7 @@ static void mqtt_HashTableValueFreeFunc(HashTableValue value){
     if(cb->_free_user_data){
         cb->_free_user_data(cb->_user_data);
     }
-    free(cb);
+    jimi_free(cb);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -303,7 +303,7 @@ static int handle_unsub_ack(void *arg, uint16_t pkt_id){
 //////////////////////////////////////////////////////////////////////
 void *mqtt_alloc_contex(mqtt_callback *callback){
     CHECK_PTR(callback,NULL);
-    mqtt_context *ctx = (mqtt_context *)malloc(sizeof(mqtt_context));
+    mqtt_context *ctx = (mqtt_context *)jimi_malloc(sizeof(mqtt_context));
     if(!ctx){
         LOGE("malloc mqtt_context failed!");
         return NULL;
@@ -345,7 +345,7 @@ int mqtt_free_contex(void *arg){
     buffer_release(&ctx->_remain_data);
     for_each_map(ctx->_req_cb_map,1);
     hash_table_free(ctx->_req_cb_map);
-    free(ctx);
+    jimi_free(ctx);
     return 0;
 }
 
@@ -474,7 +474,7 @@ int mqtt_send_publish_pkt(void *arg,
     }
     CHECK_RET(-1,mqtt_send_packet(ctx));
 
-    mqtt_req_cb_value *value = malloc(sizeof(mqtt_req_cb_value));
+    mqtt_req_cb_value *value = jimi_malloc(sizeof(mqtt_req_cb_value));
     if(value){
         value->_user_data = user_data;
         value->_free_user_data = free_cb;
@@ -504,7 +504,7 @@ int mqtt_send_subscribe_pkt(void *arg,
                                        topics_len));
     CHECK_RET(-1,mqtt_send_packet(ctx));
 
-    mqtt_req_cb_value *value = malloc(sizeof(mqtt_req_cb_value));
+    mqtt_req_cb_value *value = jimi_malloc(sizeof(mqtt_req_cb_value));
     if(value){
         value->_user_data = user_data;
         value->_free_user_data = free_cb;
@@ -531,7 +531,7 @@ int mqtt_send_unsubscribe_pkt(void *arg,
                                          topics_len));
     CHECK_RET(-1,mqtt_send_packet(ctx));
 
-    mqtt_req_cb_value *value = malloc(sizeof(mqtt_req_cb_value));
+    mqtt_req_cb_value *value = jimi_malloc(sizeof(mqtt_req_cb_value));
     if(value){
         value->_user_data = user_data;
         value->_free_user_data = free_cb;

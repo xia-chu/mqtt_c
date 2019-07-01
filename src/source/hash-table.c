@@ -22,8 +22,9 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <stdlib.h>
 #include <string.h>
-
 #include "hash-table.h"
+#include "jimi_memory.h"
+
 
 /* malloc() / free() testing */
 
@@ -113,7 +114,7 @@ static void hash_table_free_entry(HashTable *hash_table, HashTableEntry *entry)
 
 	/* Free the data structure */
 
-	free(entry);
+	jimi_free(entry);
 }
 
 HashTable *hash_table_new(HashTableHashFunc hash_func,
@@ -123,7 +124,7 @@ HashTable *hash_table_new(HashTableHashFunc hash_func,
 
 	/* Allocate a new hash table structure */
 
-	hash_table = (HashTable *) malloc(sizeof(HashTable));
+	hash_table = (HashTable *) jimi_malloc(sizeof(HashTable));
 
 	if (hash_table == NULL) {
 		return NULL;
@@ -139,7 +140,7 @@ HashTable *hash_table_new(HashTableHashFunc hash_func,
 	/* Allocate the table */
 
 	if (!hash_table_allocate_table(hash_table)) {
-		free(hash_table);
+		jimi_free(hash_table);
 
 		return NULL;
 	}
@@ -166,11 +167,11 @@ void hash_table_free(HashTable *hash_table)
 
 	/* Free the table */
 
-	free(hash_table->table);
+	jimi_free(hash_table->table);
 
 	/* Free the hash table structure */
 
-	free(hash_table);
+	jimi_free(hash_table);
 }
 
 void hash_table_register_free_functions(HashTable *hash_table,
@@ -243,7 +244,7 @@ static int hash_table_enlarge(HashTable *hash_table)
 
 	/* Free the old table */
 
-	free(old_table);
+	jimi_free(old_table);
 
 	return 1;
 }
@@ -318,7 +319,7 @@ int hash_table_insert(HashTable *hash_table, HashTableKey key,
 
 	/* Not in the hash table yet.  Create a new entry */
 
-	newentry = (HashTableEntry *) malloc(sizeof(HashTableEntry));
+	newentry = (HashTableEntry *) jimi_malloc(sizeof(HashTableEntry));
 
 	if (newentry == NULL) {
 		return 0;

@@ -8,7 +8,8 @@
 #include <string.h>
 #include <stdint.h>
 #include "jimi_log.h"
- 
+#include "jimi_memory.h"
+
 // Constants are the integer part of the sines of integers (in radians) * 2^32.
 const uint32_t k[64] = {
 0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee ,
@@ -79,7 +80,7 @@ void md5(const uint8_t *initial_msg, size_t initial_len, uint8_t *digest) {
     for (new_len = initial_len + 1; new_len % (512/8) != 448/8; new_len++)
         ;
  
-    msg = (uint8_t*)malloc(new_len + 8);
+    msg = (uint8_t*)jimi_malloc(new_len + 8);
     memcpy(msg, initial_msg, initial_len);
     msg[initial_len] = 0x80; // append the "1" bit; most significant bit is "first"
     for (offset = initial_len + 1; offset < new_len; offset++)
@@ -138,7 +139,7 @@ void md5(const uint8_t *initial_msg, size_t initial_len, uint8_t *digest) {
     }
  
     // cleanup
-    free(msg);
+    jimi_free(msg);
  
     //var char digest[16] := h0 append h1 append h2 append h3 //(Output is in little-endian)
     to_bytes(h0, digest);

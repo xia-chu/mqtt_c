@@ -19,8 +19,8 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <stdlib.h>
-
 #include "avl-tree.h"
+#include "jimi_memory.h"
 
 /* malloc() / free() testing */
 
@@ -65,7 +65,7 @@ void free_node(AVLTreeNode *node){
         return;
     }
     free_node_key_value(node);
-    free(node);
+    jimi_free(node);
 }
 
 
@@ -73,7 +73,7 @@ AVLTree *avl_tree_new(AVLTreeCompareFunc compare_func)
 {
 	AVLTree *new_tree;
 
-	new_tree = (AVLTree *) malloc(sizeof(AVLTree));
+	new_tree = (AVLTree *) jimi_malloc(sizeof(AVLTree));
 
 	if (new_tree == NULL) {
 		return NULL;
@@ -106,7 +106,7 @@ void avl_tree_free(AVLTree *tree)
 
 	/* Free back the main tree data structure */
 
-	free(tree);
+	jimi_free(tree);
 }
 
 int avl_tree_subtree_height(AVLTreeNode *node)
@@ -361,7 +361,7 @@ AVLTreeNode *avl_tree_insert(AVLTree *tree, AVLTreeKey key, AVLTreeValue value,
 
 	/* Create a new node.  Use the last node visited as the parent link. */
 
-	new_node = (AVLTreeNode *) malloc(sizeof(AVLTreeNode));
+	new_node = (AVLTreeNode *) jimi_malloc(sizeof(AVLTreeNode));
 
 	if (new_node == NULL) {
 		return NULL;
@@ -654,7 +654,7 @@ AVLTreeKey *avl_tree_to_array(AVLTree *tree)
 
 	/* Allocate the array */
 
-	array = malloc(sizeof(AVLTreeValue) * tree->num_nodes);
+	array = jimi_malloc(sizeof(AVLTreeValue) * tree->num_nodes);
 
 	if (array == NULL) {
 		return NULL;
@@ -698,7 +698,7 @@ AVLTreeNode **avl_tree_to_array_node(AVLTree *tree){
 
     /* Allocate the array */
 
-    array = malloc(sizeof(AVLTreeNode*) * tree->num_nodes);
+    array = jimi_malloc(sizeof(AVLTreeNode*) * tree->num_nodes);
 
     if (array == NULL) {
         return NULL;

@@ -3,6 +3,8 @@
 #include <string.h>
 #include <assert.h>
 #include "mqtt.h"
+#include "jimi_memory.h"
+
 
 #define MQTT_DEFAULT_ALIGNMENT sizeof(int)
 static const uint32_t MQTT_MIN_EXTENT_SIZE = 256;
@@ -28,10 +30,10 @@ void MqttBuffer_Reset(struct MqttBuffer *buf)
 {
     uint32_t i;
     for(i = 0; i < buf->alloc_count; ++i) {
-        free(buf->allocations[i]);
+        jimi_free(buf->allocations[i]);
     }
     
-    free(buf->allocations);
+    jimi_free(buf->allocations);
 
     MqttBuffer_Init(buf);
 }
@@ -49,20 +51,20 @@ struct MqttExtent *MqttBuffer_AllocExtent(struct MqttBuffer *buf, uint32_t bytes
 
         if(buf->alloc_count == buf->alloc_max_count) {
             uint32_t max_count = buf->alloc_max_count * 2 + 1;
-            char **tmp = (char**)malloc(max_count * sizeof(char**));
+            char **tmp = (char**)jimi_malloc(max_count * sizeof(char**));
             if(NULL == tmp) {
                 return NULL;
             }
             memset(tmp, 0, max_count * sizeof(char**));
             memcpy(tmp, buf->allocations, buf->alloc_max_count * sizeof(char**));
-            free(buf->allocations);
+            jimi_free(buf->allocations);
 
             buf->alloc_max_count = max_count;
             buf->allocations = tmp;
         }
 
         alloc_bytes = aligned_bytes < MQTT_MIN_EXTENT_SIZE ? MQTT_MIN_EXTENT_SIZE : aligned_bytes;
-        chunk = (char*)malloc(alloc_bytes);
+        chunk = (char*)jimi_malloc(alloc_bytes);
         if(NULL == chunk) {
             return NULL;
         }
