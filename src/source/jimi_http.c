@@ -191,7 +191,7 @@ void print_tree(AVLTree *tree){
     printf("####### header #########\r\n");
     for(i = 0 ; i < avl_tree_num_entries(tree) ; ++i){
         AVLTreeNode *node = avl_tree_get_node_by_index(tree,i);
-        printf("%s = %s\r\n",avl_tree_node_key(node),avl_tree_node_value(node));
+        printf("%s = %s\r\n",(char*)avl_tree_node_key(node),(char*)avl_tree_node_value(node));
     }
     printf("\r\n");
 }
