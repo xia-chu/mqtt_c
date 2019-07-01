@@ -5,9 +5,9 @@
 #include <string.h>
 #include <stdarg.h>
 #include "jimi_http.h"
+#include "jimi_log.h"
 #include "jimi_buffer.h"
 #include "avl-tree.h"
-#include "mqtt_wrapper.h"
 
 typedef struct http_request
 {

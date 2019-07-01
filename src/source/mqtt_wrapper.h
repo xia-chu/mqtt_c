@@ -21,24 +21,6 @@
 extern "C" {
 #endif // __cplusplus
 
-//////////////////////////////////////////////////////////////////////
-#define CHECK_PTR(ptr,err) \
-do{ \
-    if(!ptr) { \
-        LOGW("invalid ptr:%s",#ptr);\
-        return err; \
-    } \
-}while(0)
-
-
-#define CHECK_RET(n,...) \
-do{\
-    int ret = __VA_ARGS__;\
-    if(ret <= n){ \
-        LOGW("%s == %d <= %d",#__VA_ARGS__, ret , n);\
-        return ret;\
-    } \
-}while(0)
 
 //////////////////////////////////////////////////////////////////////
 /**

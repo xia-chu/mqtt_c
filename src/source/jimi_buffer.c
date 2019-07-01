@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include "jimi_buffer.h"
 #include "jimi_log.h"
-#include "mqtt_wrapper.h"
 
 #define RESERVED_SIZE 32
 

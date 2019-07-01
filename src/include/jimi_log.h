@@ -86,6 +86,23 @@ do{ \
 #define LOGW(...) PRINT(log_warn,__FILE__,__LINE__,__FUNCTION__,##__VA_ARGS__)
 #define LOGE(...) PRINT(log_error,__FILE__,__LINE__,__FUNCTION__,##__VA_ARGS__)
 
+#define CHECK_PTR(ptr,err) \
+do{ \
+    if(!ptr) { \
+        LOGW("invalid ptr:%s",#ptr);\
+        return err; \
+    } \
+}while(0)
+
+
+#define CHECK_RET(n,...) \
+do{\
+    int ret = __VA_ARGS__;\
+    if(ret <= n){ \
+        LOGW("%s == %d <= %d",#__VA_ARGS__, ret , n);\
+        return ret;\
+    } \
+}while(0)
 
 #ifdef __cplusplus
 } // extern "C"

@@ -8,7 +8,7 @@
 #include <getopt.h>
 #include "jimi_shell.h"
 #include "jimi_buffer.h"
-#include "mqtt_wrapper.h"
+#include "jimi_log.h"
 #include "avl-tree.h"
 
 //最大支持32个参数
