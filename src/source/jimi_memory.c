@@ -30,6 +30,7 @@ void set_strdup_ptr(strdup_ptr ptr){
 }
 
 void *jimi_malloc(int size){
+    CHECK_PTR(size,NULL);
     void *ptr = s_malloc_ptr ? s_malloc_ptr(size) : malloc(size);
     CHECK_PTR(ptr,NULL);
     return ptr;
