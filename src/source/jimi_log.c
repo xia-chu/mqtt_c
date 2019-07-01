@@ -7,13 +7,13 @@
 #include <sys/time.h>
 #include <time.h>
 
-e_log_lev g_log_leg = log_trace;
+static e_log_lev s_log_leg = log_trace;
 
 void set_log_level(e_log_lev lev){
-    g_log_leg = lev;
+    s_log_leg = lev;
 }
 e_log_lev get_log_level(){
-    return g_log_leg;
+    return s_log_leg;
 }
 const char *LOG_CONST_TABLE[][3] = {
         {"\033[44;37m", "\033[34m" , "T"},
@@ -41,4 +41,12 @@ void get_now_time_str(char *buf,int buf_size){
     struct timeval tv;
     gettimeofday(&tv, NULL);
     print_time(&tv,buf,buf_size);
+}
+
+static printf_ptr s_printf = NULL;
+void set_printf_ptr(printf_ptr cb){
+    s_printf = cb;
+}
+printf_ptr get_printf_ptr(){
+    return s_printf ? s_printf : printf;
 }

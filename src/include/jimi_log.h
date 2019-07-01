@@ -45,6 +45,23 @@ void set_log_level(e_log_lev lev);
  */
 e_log_lev get_log_level();
 
+/**
+ * printf回调函数
+ */
+typedef int	(*printf_ptr)(const char * fmt, ...) ;
+
+/**
+ * 设置printf回调函数
+ * @param cb
+ */
+void set_printf_ptr(printf_ptr cb);
+
+/**
+ * 获取printf函数
+ * @return
+ */
+printf_ptr get_printf_ptr();
+
 
 #define _PRINT_(encble_color,print,lev,file,line,func,fmt,...) \
 do{ \
@@ -70,14 +87,7 @@ do{ \
     }\
 } while(0)
 
-#ifdef __alios__
-#include <aos/aos.h>
-    extern int csp_printf(const char *fmt, ...);
-    #define PRINT(lev,file,line,func,fmt,...)  _PRINT_(0,csp_printf,lev,file,line,func,fmt,##__VA_ARGS__)
-#else
-#define PRINT(lev,file,line,func,fmt,...) _PRINT_(1,printf,lev,file,line,func,fmt,##__VA_ARGS__)
-#endif
-
+#define PRINT(lev,file,line,func,fmt,...) _PRINT_(1,get_printf_ptr(),lev,file,line,func,fmt,##__VA_ARGS__)
 
 //以下宏都是写日志宏
 #define LOGT(...) PRINT(log_trace,__FILE__,__LINE__,__FUNCTION__,##__VA_ARGS__)
