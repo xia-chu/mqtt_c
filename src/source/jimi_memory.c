@@ -37,7 +37,9 @@ void *jimi_malloc(int size){
 }
 
 void jimi_free(void *ptr){
-    CHECK_PTR(ptr,);
+    if(ptr == NULL){
+        return;
+    }
     s_free_ptr ? s_free_ptr(ptr) : free(ptr);
 }
 

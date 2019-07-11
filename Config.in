@@ -1,0 +1,27 @@
+config AOS_APP_MQTT_C
+    bool "mqtt_c"
+    select AOS_COMP_NETMGR
+    select AOS_COMP_CLI
+    help
+        mqtt_c Help
+
+if AOS_APP_MQTT_C
+
+choice
+    prompt "Select Test Case"
+    default MQTT_C_CONFIG_CASE_MQTT
+    help
+        select case to build
+
+    config MQTT_C_CONFIG_CASE_MQTT
+        bool "Mqtt"
+        help
+            default case, build main.c
+
+    config MQTT_C_CONFIG_CASE_SHELL
+        bool "Shell"
+        help
+            "case Shell, build shell.c
+endchoice
+
+endif

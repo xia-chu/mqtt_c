@@ -87,8 +87,11 @@ do{ \
     }\
 } while(0)
 
+#ifdef __alios__
+#define PRINT(lev,file,line,func,fmt,...) _PRINT_(0,get_printf_ptr(),lev,file,line,func,fmt,##__VA_ARGS__)
+#else
 #define PRINT(lev,file,line,func,fmt,...) _PRINT_(1,get_printf_ptr(),lev,file,line,func,fmt,##__VA_ARGS__)
-
+#endif
 //以下宏都是写日志宏
 #define LOGT(...) PRINT(log_trace,__FILE__,__LINE__,__FUNCTION__,##__VA_ARGS__)
 #define LOGD(...) PRINT(log_debug,__FILE__,__LINE__,__FUNCTION__,##__VA_ARGS__)

@@ -10,7 +10,7 @@
 #include <signal.h>
 #ifdef __alios__
 #include <netmgr.h>
-#include <aos/network.h>
+#include <network/network.h>
 #ifdef AOS_ATCMD
 #include <atparser.h>
 #endif
@@ -204,16 +204,9 @@ void run_main(){
 }
 int application_start(int argc, char *argv[]){
 #ifdef __alios__
-    #if AOS_ATCMD
-    at.set_mode(ASYN);
-    at.init(AT_RECV_PREFIX, AT_RECV_SUCCESS_POSTFIX,
-            AT_RECV_FAIL_POSTFIX, AT_SEND_DELIMITER, 1000);
-#endif
-
 #ifdef WITH_SAL
     sal_init();
 #endif
-
     netmgr_init();
     netmgr_start(false);
 #endif

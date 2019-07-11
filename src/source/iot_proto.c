@@ -11,7 +11,7 @@
 #ifndef __alios__
 #include <arpa/inet.h>
 #else
-#include <aos/network.h>
+#include <network/network.h>
 #endif
 #include <memory.h>
 #include <stdlib.h>

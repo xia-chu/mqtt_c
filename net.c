@@ -4,7 +4,7 @@
 
 #include "net.h"
 #ifdef __alios__
-#include <aos/network.h>
+#include <network/network.h>
 #else
 #include <sys/socket.h>
 #include <arpa/inet.h>
