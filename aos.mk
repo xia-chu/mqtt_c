@@ -16,7 +16,9 @@ $(NAME)_SOURCES := src/source/avl-tree.c \
                    src/source/mqtt.c \
                    src/source/mqtt_buffer.c \
                    src/source/mqtt_wrapper.c \
+                   src/alios/app_entry.c \
                    net.c
+
 
 ifeq ($(MQTT_C_CONFIG_CASE_MQTT),y)
 $(NAME)_SOURCES += main.c
@@ -26,9 +28,7 @@ ifeq ($(MQTT_C_CONFIG_CASE_SHELL),y)
 $(NAME)_SOURCES += shell.c
 endif
 
-$(NAME)_INCLUDES :=  ./ src/include src/source
+$(NAME)_INCLUDES :=  ./ src src/include src/source src/alios
 $(NAME)_DEFINES  := __alios__
 $(NAME)_COMPONENTS += cli netmgr
-
-GLOBAL_DEFINES += AOS_NO_WIFI
 GLOBAL_INCLUDES += ./

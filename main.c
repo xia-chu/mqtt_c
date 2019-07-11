@@ -1,12 +1,8 @@
 #include <unistd.h>
-#include <errno.h>
-#include <string.h>
-#include <memory.h>
 #include <stdlib.h>
 #include "net.h"
 #include "jimi_iot.h"
 #include "jimi_log.h"
-#include "jimi_http.h"
 #include <signal.h>
 #ifdef __alios__
 #include <netmgr.h>
@@ -14,8 +10,6 @@
 #ifdef AOS_ATCMD
 #include <atparser.h>
 #endif
-#else
-#define application_start main
 #endif
 
 //#define CLIENT_ID "IMEI17328379636"
@@ -202,23 +196,31 @@ void run_main(){
     //是否iot对象
     iot_context_free(user_data._ctx);
 }
-int application_start(int argc, char *argv[]){
-#ifdef __alios__
-#ifdef WITH_SAL
-    sal_init();
-#endif
-    netmgr_init();
-    netmgr_start(false);
-#endif
 
 #ifdef __alios__
-    aos_post_delayed_action(10 * 1000,run_main,NULL);
-    aos_loop_run();
-#else
+#include "alios/app_entry.h"
+
+int linkkit_main(void *paras){
+    int ret;
+    int argc = 0;
+    char **argv = NULL;
+
+    if (paras != NULL) {
+        app_main_paras_t *p = (app_main_paras_t *)paras;
+        argc = p->argc;
+        argv = p->argv;
+    }
     run_main();
-#endif
+}
+
+#else
+
+int main(int argc,char *argv[]){
+    run_main();
     return 0;
 }
+
+#endif
 
 
 
