@@ -339,9 +339,7 @@ static void avl_tree_free_value(AVLTreeValue val){
     option_context_free((option_context *)val);
 }
 #if defined(__alios__) && defined(AOS_COMP_CLI)
-void alios_cli_cmd(char *outbuf, int32_t len, int32_t argc, char **argv){
-    LOGD("%d %s",argc,argv[0]);
-}
+void alios_cli_cmd(char *outbuf, int32_t len, int32_t argc, char **argv);
 #endif
 
 //struct cli_command {
@@ -768,6 +766,21 @@ int shell_input_args(void *user_data,printf_func func,int argc,char *argv[]){
     void *ptr[3] = {ctx->_manager,user_data,func};
     return s_on_argv(ptr,argc,argv);
 }
+
+#if defined(__alios__) && defined(AOS_COMP_CLI)
+static void cli_printf(void *user_data,const char *fmt,...){
+    va_list ap;
+    va_start(ap,fmt);
+    vprintf(fmt,ap);
+    va_end(ap);
+    if(fmt[0] == '$'){
+        rewind(stdout);
+    }
+}
+void alios_cli_cmd(char *outbuf, int32_t len, int32_t argc, char **argv){
+    shell_input_args(NULL,cli_printf,argc,argv);
+}
+#endif
 
 void shell_destory(){
     if(s_shell_context_instance){
