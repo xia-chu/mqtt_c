@@ -64,7 +64,7 @@ static void wifi_service_event(input_event_t *event, void *priv_data)
 
     if (!linkkit_started) {
         alios_setup();
-        aos_task_new("jimi_task",(task_fun)linkkit_main,(void *)&entry_paras,1024*32);
+        aos_task_new("jimi_task",(task_fun)linkkit_main,(void *)&entry_paras,1024*6);
         linkkit_started = 1;
     }
 }
