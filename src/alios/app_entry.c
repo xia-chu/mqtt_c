@@ -7,6 +7,8 @@
 #include <string.h>
 #include <stdarg.h>
 
+#include "jimi_log.h"
+
 #include "aos/kernel.h"
 #include "ulog/ulog.h"
 #include "aos/yloop.h"
@@ -40,7 +42,7 @@ static void wifi_service_event(input_event_t *event, void *priv_data)
     netmgr_ap_config_t config;
     memset(&config, 0, sizeof(netmgr_ap_config_t));
     netmgr_get_ap_config(&config);
-    LOG("wifi_service_event config.ssid %s", config.ssid);
+    LOGI("wifi_service_event config.ssid %s", config.ssid);
     if (strcmp(config.ssid, "adha") == 0 || strcmp(config.ssid, "aha") == 0) {
         //clear_wifi_ssid();
         return;

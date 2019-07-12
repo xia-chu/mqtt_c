@@ -4,12 +4,15 @@
 #include "jimi_iot.h"
 #include "jimi_log.h"
 #include <signal.h>
+
 #ifdef __alios__
 #include <netmgr.h>
 #include <network/network.h>
 #ifdef AOS_ATCMD
 #include <atparser.h>
 #endif
+#else
+#include <sys/socket.h>
 #endif
 
 //#define CLIENT_ID "IMEI17328379636"
@@ -47,7 +50,7 @@ static int send_data_to_sock(void *arg, const struct iovec *iov, int iovcnt){
         const struct iovec *ptr = iov++;
         sent = send(user_data->_fd,ptr->iov_base , ptr->iov_len,0);
         if(-1 == sent){
-            LOGE("failed:%s",strerror(errno));
+            LOGE("failed:%d %s",errno,strerror(errno));
             return -1;
         }
         ret += sent;
@@ -142,6 +145,16 @@ int s_exit_flag  = 0;
 void on_stop(int sig){
     s_exit_flag = 1;
 }
+
+int setSendBuf(int sock, int size) {
+    int ret = setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *)&size, sizeof(size));
+    if (ret == -1) {
+        LOGW("设置发送缓冲区失败!");
+    }
+    return ret;
+}
+
+
 /**
  * 运行主函数
  */
@@ -157,6 +170,7 @@ void run_main(){
     if(user_data._fd  == -1){
         return ;
     }
+    setSendBuf(user_data._fd,2 * 1024);
 
     //回调函数列表
     iot_callback callback = {send_data_to_sock,iot_on_connect,iot_on_message,&user_data};
@@ -199,7 +213,6 @@ void run_main(){
 
 #ifdef __alios__
 #include "alios/app_entry.h"
-
 int linkkit_main(void *paras){
     int ret;
     int argc = 0;
