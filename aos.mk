@@ -13,14 +13,12 @@ $(NAME)_SOURCES := src/source/base64.c \
                    src/source/mqtt.c \
                    src/source/mqtt_buffer.c \
                    src/source/mqtt_wrapper.c \
+                   src/source/avl-tree.c \
+                   src/source/jimi_http.c \
+                   src/source/jimi_shell.c \
                    app_entry.c \
                    net.c \
                    shell_cmd.c
-
-
-$(NAME)_SOURCES += src/source/avl-tree.c \
-                   src/source/jimi_http.c \
-                   src/source/jimi_shell.c 
 
 ifeq ($(MQTT_C_CONFIG_CASE_MQTT),y)
 $(NAME)_SOURCES += mqtt.c
