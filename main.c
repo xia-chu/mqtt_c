@@ -149,7 +149,7 @@ void on_stop(int sig){
 int setSendBuf(int sock, int size) {
     int ret = setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *)&size, sizeof(size));
     if (ret == -1) {
-        LOGW("设置发送缓冲区失败!");
+        LOGW("设置发送缓冲区失败:%d %s",errno,strerror(errno));
     }
     return ret;
 }

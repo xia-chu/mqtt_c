@@ -8,6 +8,7 @@
 #include <stdarg.h>
 
 #include "jimi_log.h"
+#include "jimi_memory.h"
 
 #include "aos/kernel.h"
 #include "ulog/ulog.h"
@@ -29,6 +30,19 @@ static app_main_paras_t entry_paras;
 
 typedef void (*task_fun)(void *);
 
+static char *my_strdup(const char *str){
+    char *ret = jimi_malloc(strlen(str));
+    strcpy(ret,str);
+    return ret;
+}
+
+static void alios_setup(){
+    set_malloc_ptr(aos_malloc);
+    set_free_ptr(aos_free);
+    set_realloc_ptr(aos_realloc);
+    set_strdup_ptr(my_strdup);
+}
+
 static void wifi_service_event(input_event_t *event, void *priv_data)
 {
     if (event->type != EV_WIFI) {
@@ -42,14 +56,15 @@ static void wifi_service_event(input_event_t *event, void *priv_data)
     netmgr_ap_config_t config;
     memset(&config, 0, sizeof(netmgr_ap_config_t));
     netmgr_get_ap_config(&config);
-    LOGI("wifi_service_event config.ssid %s", config.ssid);
+    LOGI("连接wifi成功 %s", config.ssid);
     if (strcmp(config.ssid, "adha") == 0 || strcmp(config.ssid, "aha") == 0) {
         //clear_wifi_ssid();
         return;
     }
 
     if (!linkkit_started) {
-        aos_task_new("iotx_example",(task_fun)linkkit_main,(void *)&entry_paras,1024*6);
+        alios_setup();
+        aos_task_new("jimi_task",(task_fun)linkkit_main,(void *)&entry_paras,1024*32);
         linkkit_started = 1;
     }
 }
