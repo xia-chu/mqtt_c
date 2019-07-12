@@ -69,6 +69,8 @@ static void wifi_service_event(input_event_t *event, void *priv_data)
     }
 }
 
+extern void regist_cmd();
+
 int application_start(int argc, char **argv)
 {
 #ifdef CSP_LINUXHOST
@@ -95,7 +97,9 @@ int application_start(int argc, char **argv)
 #endif
     netmgr_start(false);
 
+    //注册各种命令
+    regist_cmd();
     aos_loop_run();
-
+    shell_destory();
     return 0;
 }

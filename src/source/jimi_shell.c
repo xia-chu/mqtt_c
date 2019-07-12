@@ -11,6 +11,9 @@
 #include "jimi_log.h"
 #include "jimi_memory.h"
 #include "avl-tree.h"
+#if defined(__alios__) && defined(AOS_COMP_CLI)
+#include "aos/cli.h"
+#endif
 
 //最大支持32个参数
 #define MAX_ARGV 32
@@ -194,6 +197,9 @@ typedef struct cmd_context{
     AVLTree *_options;//参数列表
     on_cmd_complete _cb;//参数解析完毕的回调
     void *_manager;
+#if defined(__alios__) && defined(AOS_COMP_CLI)
+    struct cli_command _cli_command;
+#endif
 }cmd_context;
 
 
@@ -332,6 +338,17 @@ static int avl_tree_option_comp(AVLTreeKey key1, AVLTreeKey key2){
 static void avl_tree_free_value(AVLTreeValue val){
     option_context_free((option_context *)val);
 }
+#if defined(__alios__) && defined(AOS_COMP_CLI)
+void alios_cli_cmd(char *outbuf, int32_t len, int32_t argc, char **argv){
+    LOGD("%d %s",argc,argv[0]);
+}
+#endif
+
+//struct cli_command {
+//    const char *name;
+//    const char *help;
+//    void (*function)(char *outbuf, int len, int argc, char **argv);
+//};
 
 cmd_context *cmd_context_alloc(const char *cmd_name,const char *description,on_cmd_complete cb){
     cmd_context *ret = (cmd_context *) jimi_malloc(sizeof(cmd_context));
@@ -341,6 +358,11 @@ cmd_context *cmd_context_alloc(const char *cmd_name,const char *description,on_c
     ret->_options = avl_tree_new(avl_tree_option_comp);
     ret->_cb = cb;
     cmd_context_add_option_help(ret);
+#if defined(__alios__) && defined(AOS_COMP_CLI)
+    ret->_cli_command.name = ret->_name;
+    ret->_cli_command.help = ret->_description;
+    ret->_cli_command.function = alios_cli_cmd;
+#endif
     return ret;
 }
 
@@ -755,13 +777,8 @@ void shell_destory(){
 }
 
 int cmd_regist(cmd_context *cmd){
+#if defined(__alios__) && defined(AOS_COMP_CLI)
+    aos_cli_register_command(&cmd->_cli_command);
+#endif
     return cmd_manager_add_cmd(shell_context_instance()->_manager,cmd);
 }
-
-
-
-
-
-
-
-

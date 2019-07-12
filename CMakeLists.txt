@@ -25,14 +25,11 @@ INCLUDE_DIRECTORIES(${Mqtt_Root}/include)
 file(GLOB Mqtt_src_Root ${Mqtt_Root}/*/*.h ${Mqtt_Root}/*/*.c)
 
 add_library(mqtt STATIC ${Mqtt_src_Root})
-add_executable(client main.c net.c)
-add_executable(bench main_bench.c net.c)
+add_executable(client mqtt.c net.c)
 add_executable(wget wget.c net.c)
-add_executable(shell shell.c net.c)
-
+add_executable(shell shell.c shell_cmd.c)
 
 target_link_libraries(client mqtt pthread)
-target_link_libraries(bench mqtt pthread)
 target_link_libraries(wget mqtt pthread)
 target_link_libraries(shell mqtt pthread)
 

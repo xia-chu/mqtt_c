@@ -13,25 +13,26 @@ $(NAME)_SOURCES := src/source/base64.c \
                    src/source/mqtt.c \
                    src/source/mqtt_buffer.c \
                    src/source/mqtt_wrapper.c \
-                   src/alios/app_entry.c \
-                   net.c
+                   app_entry.c \
+                   net.c \
+                   shell_cmd.c
 
 
-# $(NAME)_SOURCES += src/source/avl-tree.c \
-#                    src/source/jimi_http.c \
-#                    src/source/jimi_shell.c 
+$(NAME)_SOURCES += src/source/avl-tree.c \
+                   src/source/jimi_http.c \
+                   src/source/jimi_shell.c 
 
 ifeq ($(MQTT_C_CONFIG_CASE_MQTT),y)
-$(NAME)_SOURCES += main.c
+$(NAME)_SOURCES += mqtt.c
 endif
 
 ifeq ($(MQTT_C_CONFIG_CASE_SHELL),y)
 $(NAME)_SOURCES += shell.c
 endif
 
-$(NAME)_INCLUDES :=  ./ src src/include src/source src/alios
+$(NAME)_INCLUDES :=  ./ src src/include src/source
 $(NAME)_DEFINES  := __alios__
 $(NAME)_COMPONENTS += cli netmgr
 GLOBAL_INCLUDES += ./
-GLOBAL_DEFINES  := WITH_SAL 
+GLOBAL_DEFINES  := WITH_SAL AOS_COMP_CLI 
 # GLOBAL_DEFINES  += AT_CHECK_SUM=1 DEBUG
