@@ -13,6 +13,7 @@
 #include "avl-tree.h"
 #if defined(__alios__) && defined(AOS_COMP_CLI)
 #include "aos/cli.h"
+#define AOS_CLI_ENABLE
 #endif
 
 //最大支持32个参数
@@ -197,7 +198,7 @@ typedef struct cmd_context{
     AVLTree *_options;//参数列表
     on_cmd_complete _cb;//参数解析完毕的回调
     void *_manager;
-#if defined(__alios__) && defined(AOS_COMP_CLI)
+#ifdef AOS_CLI_ENABLE
     struct cli_command _cli_command;
 #endif
 }cmd_context;
@@ -338,7 +339,7 @@ static int avl_tree_option_comp(AVLTreeKey key1, AVLTreeKey key2){
 static void avl_tree_free_value(AVLTreeValue val){
     option_context_free((option_context *)val);
 }
-#if defined(__alios__) && defined(AOS_COMP_CLI)
+#ifdef AOS_CLI_ENABLE
 void alios_cli_cmd(char *outbuf, int32_t len, int32_t argc, char **argv);
 #endif
 
@@ -356,7 +357,7 @@ cmd_context *cmd_context_alloc(const char *cmd_name,const char *description,on_c
     ret->_options = avl_tree_new(avl_tree_option_comp);
     ret->_cb = cb;
     cmd_context_add_option_help(ret);
-#if defined(__alios__) && defined(AOS_COMP_CLI)
+#ifdef AOS_CLI_ENABLE
     ret->_cli_command.name = ret->_name;
     ret->_cli_command.help = ret->_description;
     ret->_cli_command.function = alios_cli_cmd;
@@ -700,17 +701,23 @@ cmd_context *cmd_manager_find(cmd_manager *ctx,const char *key){
 
 int cmd_manager_execute(cmd_manager *ctx,void *user_data,printf_func func,int argc,char *argv[]){
     if(argc < 1){
+#ifndef AOS_CLI_ENABLE
         func(user_data,"$ ");
+#endif
         return 0;
     }
     cmd_context *cmd = cmd_manager_find(ctx,argv[0]);
     if(!cmd){
         func(user_data,"  未找到该命令:%s,请输入help获取帮助.\r\n",argv[0]);
+#ifndef AOS_CLI_ENABLE
         func(user_data,"$ ");
+#endif
         return -1;
     }
     int ret = cmd_context_execute(cmd,user_data,func,argc,argv);
+#ifndef AOS_CLI_ENABLE
     func(user_data,"$ ");
+#endif
     return ret;
 }
 
@@ -767,15 +774,12 @@ int shell_input_args(void *user_data,printf_func func,int argc,char *argv[]){
     return s_on_argv(ptr,argc,argv);
 }
 
-#if defined(__alios__) && defined(AOS_COMP_CLI)
+#ifdef AOS_CLI_ENABLE
 static void cli_printf(void *user_data,const char *fmt,...){
     va_list ap;
     va_start(ap,fmt);
     vprintf(fmt,ap);
     va_end(ap);
-    if(fmt[0] == '$'){
-        rewind(stdout);
-    }
 }
 void alios_cli_cmd(char *outbuf, int32_t len, int32_t argc, char **argv){
     shell_input_args(NULL,cli_printf,argc,argv);
@@ -790,7 +794,7 @@ void shell_destory(){
 }
 
 int cmd_regist(cmd_context *cmd){
-#if defined(__alios__) && defined(AOS_COMP_CLI)
+#ifdef AOS_CLI_ENABLE
     aos_cli_register_command(&cmd->_cli_command);
 #endif
     return cmd_manager_add_cmd(shell_context_instance()->_manager,cmd);
