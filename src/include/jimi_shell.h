@@ -200,6 +200,16 @@ int cmd_context_execute(cmd_context *ctx,void *user_data,printf_func func,int ar
  */
 int shell_input(void *user_data,printf_func func,const char *buf,int len);
 
+
+/**
+ * 输入命令并执行
+ * @param user_data 用户数据指针，printf_func回调第一个参数
+ * @param func printf打印函数指针
+ * @param argc 参数个数
+ * @param argv 参数指针
+ * @return
+ */
+int shell_input_args(void *user_data,printf_func func,int argc,char *argv[]);
 /**
  * 销毁shell单例解析器
  */

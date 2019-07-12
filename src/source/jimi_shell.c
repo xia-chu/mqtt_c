@@ -15,7 +15,7 @@
 //最大支持32个参数
 #define MAX_ARGV 32
 
-typedef void(* on_argv)(void *user_data,int argc,char *argv[]);
+typedef int(* on_argv)(void *user_data,int argc,char *argv[]);
 
 typedef struct cmd_splitter{
     buffer *_buf;
@@ -51,7 +51,7 @@ static inline int is_blank(char ch){
             return 0;
     }
 }
-static inline void cmd_splitter_cmd_line(cmd_splitter *ctx,char *start,int len,void *user_data,on_argv callback){
+static inline int cmd_splitter_cmd_line(cmd_splitter *ctx,char *start,int len,void *user_data,on_argv callback){
     start[len] = '\0';
     char *argv[MAX_ARGV];
     memset(argv,0,sizeof(argv));
@@ -92,8 +92,9 @@ static inline void cmd_splitter_cmd_line(cmd_splitter *ctx,char *start,int len,v
         }
     }
     if(callback){
-        callback(user_data,argc,argv);
+        return callback(user_data,argc,argv);
     }
+    return -1;
 }
 
 int cmd_splitter_input(cmd_splitter *ctx,const char *data,int len,void *user_data,on_argv callback){
@@ -122,12 +123,13 @@ int cmd_splitter_input(cmd_splitter *ctx,const char *data,int len,void *user_dat
     return 0;
 }
 
-static void argv_test(void *user_data,int argc,char *argv[]){
+static int argv_test(void *user_data,int argc,char *argv[]){
     LOGI("cmd:");
     int i;
     for(i = 0 ; i < argc ; ++i ){
         LOGD("%s",argv[i]);
     }
+    return 0;
 }
 
 void test_cmd_splitter(){
@@ -699,9 +701,9 @@ typedef struct shell_context{
     cmd_manager *_manager;
 }shell_context;
 
-static void s_on_argv(void *user_data,int argc,char *argv[]){
+static int s_on_argv(void *user_data,int argc,char *argv[]){
     void **ptr = (void **)user_data;
-    cmd_manager_execute((cmd_manager*)ptr[0],(void *)ptr[1],(printf_func)ptr[2],argc,argv);
+    return cmd_manager_execute((cmd_manager*)ptr[0],(void *)ptr[1],(printf_func)ptr[2],argc,argv);
 }
 
 shell_context *shell_context_alloc(){
@@ -736,6 +738,13 @@ shell_context * shell_context_instance(){
 
 int shell_input(void *user_data,printf_func func,const char *buf,int len){
     return shell_context_input(shell_context_instance(),user_data,func,buf,len);
+}
+
+int shell_input_args(void *user_data,printf_func func,int argc,char *argv[]){
+    shell_context *ctx = shell_context_instance();
+    CHECK_PTR(ctx,-1);
+    void *ptr[3] = {ctx->_manager,user_data,func};
+    return s_on_argv(ptr,argc,argv);
 }
 
 void shell_destory(){
