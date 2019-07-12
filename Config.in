@@ -2,6 +2,7 @@ config AOS_APP_MQTT_C
     bool "mqtt_c"
     select AOS_COMP_NETMGR
     select AOS_COMP_CLI
+    select AOS_COMP_SAL
     help
         mqtt_c Help
 

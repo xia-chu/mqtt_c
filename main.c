@@ -3,6 +3,7 @@
 #include "net.h"
 #include "jimi_iot.h"
 #include "jimi_log.h"
+#include <jimi_memory.h>
 #include <signal.h>
 
 #ifdef __alios__
@@ -13,6 +14,8 @@
 #endif
 #else
 #include <sys/socket.h>
+#include <string.h>
+#include <errno.h>
 #endif
 
 //#define CLIENT_ID "IMEI17328379636"
@@ -44,21 +47,25 @@ typedef struct {
 static int send_data_to_sock(void *arg, const struct iovec *iov, int iovcnt){
     iot_user_data *user_data = (iot_user_data *)arg;
 #ifdef __alios__
-    int ret = 0;
-    int sent;
-    while(iovcnt--){
-        const struct iovec *ptr = iov++;
-        sent = send(user_data->_fd,ptr->iov_base , ptr->iov_len,0);
-        if(-1 == sent){
-            LOGE("failed:%d %s",errno,strerror(errno));
-            return -1;
-        }
-        ret += sent;
+    int size = 0;
+    for (int i = 0; i < iovcnt; ++i) {
+        size += (iov + i)->iov_len;
+    }
+    char *buf = jimi_malloc(size);
+    int pos = 0;
+    for (int i = 0; i < iovcnt; ++i) {
+        memcpy(buf + pos , (iov + i)->iov_base , (iov + i)->iov_len);
+        pos += (iov + i)->iov_len;
+    }
+    int ret = write(user_data->_fd, buf, size);
+    jimi_free(buf);
+#else
+    int ret = writev(user_data->_fd,iov,iovcnt);
+#endif
+    if(ret == 0){
+        LOGW("send failed:%d %s",errno,strerror(errno));
     }
     return ret;
-#else
-    return writev(user_data->_fd,iov,iovcnt);
-#endif
 }
 
 
@@ -146,15 +153,6 @@ void on_stop(int sig){
     s_exit_flag = 1;
 }
 
-int setSendBuf(int sock, int size) {
-    int ret = setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *)&size, sizeof(size));
-    if (ret == -1) {
-        LOGW("设置发送缓冲区失败:%d %s",errno,strerror(errno));
-    }
-    return ret;
-}
-
-
 /**
  * 运行主函数
  */
@@ -170,8 +168,6 @@ void run_main(){
     if(user_data._fd  == -1){
         return ;
     }
-    setSendBuf(user_data._fd,2 * 1024);
-
     //回调函数列表
     iot_callback callback = {send_data_to_sock,iot_on_connect,iot_on_message,&user_data};
 

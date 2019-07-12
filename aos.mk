@@ -33,3 +33,5 @@ $(NAME)_INCLUDES :=  ./ src src/include src/source src/alios
 $(NAME)_DEFINES  := __alios__
 $(NAME)_COMPONENTS += cli netmgr
 GLOBAL_INCLUDES += ./
+GLOBAL_DEFINES  := WITH_SAL 
+# GLOBAL_DEFINES  += AT_CHECK_SUM=1 DEBUG
