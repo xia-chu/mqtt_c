@@ -72,7 +72,7 @@ jobject to_bool(JNIEnv* env,bool flag){
 
 jobject to_double(JNIEnv* env, double db){
     static jclass jclass_obj = (jclass)env->NewGlobalRef(env->FindClass("java/lang/Double"));
-    static jmethodID jmethodID_init = env->GetMethodID(jclass_obj, "<init>", "()D");
+    static jmethodID jmethodID_init = env->GetMethodID(jclass_obj, "<init>", "(D)V");
     jobject ret = env->NewObject(jclass_obj, jmethodID_init,(jdouble)db);
     return ret;
 }
@@ -149,7 +149,7 @@ static int iot_on_output_s(void *arg, const struct iovec *iov, int iovcnt){
     }
     emitEvent((jobject)arg,"iot_on_output","([B)V",jbyteArrayFromString(env,buf,size));
     jimi_free(buf);
-
+    return size;
 }
 
 /**
@@ -199,7 +199,7 @@ static void iot_on_message_s(void *arg,int req_flag, uint32_t req_id, iot_data *
  * @param cb 回调结构体参数
  * @return  对象指针
  */
-JNI_API(jlong, iot_context_alloc,jobject cb){
+JNI_API(jlong, iot_1context_1alloc,jobject cb){
     static bool s_load_flag = loadAllClass(env);
     iot_callback cb_c = {iot_on_output_s,iot_on_connect_s,iot_on_message_s,env->NewWeakGlobalRef(cb)};
     return (jlong)iot_context_alloc(&cb_c);
@@ -211,7 +211,7 @@ JNI_API(jlong, iot_context_alloc,jobject cb){
  * @param arg 对象指针,iot_context_alloc创建的返回值
  * @return 0代表成功，-1为失败
  */
-JNI_API(jint, iot_context_free,jlong arg){
+JNI_API(jint, iot_1context_1free,jlong arg){
     return iot_context_free((void *)arg);
 }
 
@@ -225,7 +225,7 @@ JNI_API(jint, iot_context_free,jlong arg){
  * @param user_name 用户名，一般为JIMIMAX
  * @return 0为成功，其他为错误代码
  */
-JNI_API(jint, iot_send_connect_pkt,jlong iot_ctx,jstring client_id,jstring secret,jstring user_name){
+JNI_API(jint, iot_1send_1connect_1pkt,jlong iot_ctx,jstring client_id,jstring secret,jstring user_name){
     return iot_send_connect_pkt(
             (void *) iot_ctx,
             stringFromJstring(env, client_id).data(),
@@ -240,7 +240,7 @@ JNI_API(jint, iot_send_connect_pkt,jlong iot_ctx,jstring client_id,jstring secre
  * @param flag 端点值，0或1
  * @return 0为成功，其他为错误代码
  */
-JNI_API(jint, iot_send_bool_pkt,jlong iot_ctx,jint tag_id,jboolean flag){
+JNI_API(jint, iot_1send_1bool_1pkt,jlong iot_ctx,jint tag_id,jboolean flag){
     return iot_send_bool_pkt((void *) iot_ctx, tag_id, flag);
 }
 
@@ -251,7 +251,7 @@ JNI_API(jint, iot_send_bool_pkt,jlong iot_ctx,jint tag_id,jboolean flag){
  * @param double_num 端点值
  * @return 0为成功，其他为错误代码
  */
-JNI_API(jint, iot_send_double_pkt,jlong iot_ctx,jint tag_id,jdouble double_num){
+JNI_API(jint, iot_1send_1double_1pkt,jlong iot_ctx,jint tag_id,jdouble double_num){
     return iot_send_double_pkt((void *) iot_ctx, tag_id, double_num);
 }
 
@@ -262,7 +262,7 @@ JNI_API(jint, iot_send_double_pkt,jlong iot_ctx,jint tag_id,jdouble double_num){
  * @param enum_str 枚举字符串，以'\0'结尾
  * @return 0为成功，其他为错误代码
  */
-JNI_API(jint, iot_send_enum_pkt,jlong iot_ctx,jint tag_id,jstring enum_str){
+JNI_API(jint, iot_1send_1enum_1pkt,jlong iot_ctx,jint tag_id,jstring enum_str){
     return iot_send_enum_pkt((void *) iot_ctx, tag_id, stringFromJstring(env,enum_str).data());
 }
 
@@ -273,7 +273,7 @@ JNI_API(jint, iot_send_enum_pkt,jlong iot_ctx,jint tag_id,jstring enum_str){
  * @param str 字符串，以'\0'结尾
  * @return 0为成功，其他为错误代码
  */
-JNI_API(jint, iot_send_string_pkt,jlong iot_ctx,jint tag_id,jstring str){
+JNI_API(jint, iot_1send_1string_1pkt,jlong iot_ctx,jint tag_id,jstring str){
     return iot_send_string_pkt((void *) iot_ctx, tag_id, stringFromJstring(env,str).data());
 }
 
@@ -285,7 +285,7 @@ JNI_API(jint, iot_send_string_pkt,jlong iot_ctx,jint tag_id,jstring str){
  * @param len 数据长度
  * @return 0代表成功，其他为错误代码
  */
-JNI_API(jint, iot_input_data,jlong iot_ctx,jbyteArray data,int offset, int len){
+JNI_API(jint, iot_1input_1data,jlong iot_ctx,jbyteArray data,int offset, int len){
     jbyte *bytes = env->GetByteArrayElements(data, 0);
     int ret = iot_input_data((void *)iot_ctx,(char *)bytes + offset,len);
     env->ReleaseByteArrayElements(data,bytes,0);
@@ -298,7 +298,7 @@ JNI_API(jint, iot_input_data,jlong iot_ctx,jbyteArray data,int offset, int len){
  * @param iot_ctx 对象指针
  * @return 0为成功，-1为失败
  */
-JNI_API(jint, iot_timer_schedule,jlong iot_ctx){
+JNI_API(jint, iot_1timer_1schedule,jlong iot_ctx){
     return iot_timer_schedule((void *)iot_ctx);
 }
 
