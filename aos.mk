@@ -18,14 +18,14 @@ $(NAME)_SOURCES := src/source/base64.c \
                    src/source/jimi_shell.c \
                    src/aos/app_entry.c \
                    src/aos/mqtt.c \
-                   src/aos/sensor.c \
+                   src/aos/sensor_event.c \
                    net.c \
                    shell_cmd.c
 
 
 $(NAME)_INCLUDES :=  . src src/include src/source src/aos
 $(NAME)_DEFINES  := __alios__
-$(NAME)_COMPONENTS += cli netmgr
+$(NAME)_COMPONENTS += cli netmgr yloop
 GLOBAL_INCLUDES += src/aos
 GLOBAL_DEFINES  := WITH_SAL
 # GLOBAL_DEFINES  += AT_CHECK_SUM=1 DEBUG

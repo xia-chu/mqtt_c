@@ -155,7 +155,7 @@ void run_main(){
 
 #ifdef __alios__
 
-static char *my_strdup(const char *str){
+static char *aos_strdup(const char *str){
     char *ret = jimi_malloc(strlen(str));
     strcpy(ret,str);
     return ret;
@@ -165,7 +165,7 @@ static void setup_memory(){
     set_malloc_ptr(aos_malloc);
     set_free_ptr(aos_free);
     set_realloc_ptr(aos_realloc);
-    set_strdup_ptr(my_strdup);
+    set_strdup_ptr(aos_strdup);
 }
 
 extern void init_sensor();
