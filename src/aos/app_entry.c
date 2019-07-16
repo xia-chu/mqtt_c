@@ -70,6 +70,7 @@ static void wifi_service_event(input_event_t *event, void *priv_data)
 }
 
 extern void regist_cmd();
+extern void init_sensor();
 
 int application_start(int argc, char **argv)
 {
@@ -99,6 +100,7 @@ int application_start(int argc, char **argv)
 
     //注册各种命令
     regist_cmd();
+    init_sensor();
     aos_loop_run();
     shell_destory();
     return 0;
