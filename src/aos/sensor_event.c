@@ -16,11 +16,6 @@ int fd_temp = -1;
 int fd_humi = -1;
 int fd_baro = -1;
 
-int timer_ms = 3000;
-aos_timer_t timer;
-
-void on_timer(void *timer, void *arg);
-
 void init_sensor(void)
 {
     /* open acc sensor */
@@ -52,7 +47,7 @@ void init_sensor(void)
 
     key_init();
 
-    aos_timer_new(&timer,on_timer,NULL,timer_ms,1);
+//    aos_timer_new(&timer,on_timer,NULL,timer_ms,1);
 }
 
 int get_acc_data(float *x, float *y, float *z)
@@ -125,48 +120,6 @@ void key_handle(void *ptr)
     aos_post_event(EV_BUTTON,(int)ptr,(unsigned long)value);
 }
 
-void on_timer(void *timer, void *arg){
-    {
-        float x,y,z;
-        if(!get_acc_data(&x,&y,&z)){
-            unsigned long value;
-            value = 100 * x;
-            aos_post_event(EV_ACC,CODE_AAC_X,value);
-            value = 100 * y;
-            aos_post_event(EV_ACC,CODE_AAC_Y,value);
-            value = 100 * z;
-            aos_post_event(EV_ACC,CODE_AAC_Z,value);
-        }
-    }
-    {
-        float temp;
-        if(!get_temperature_data(&temp)){
-            unsigned long value;
-            value = 100 * temp;
-            aos_post_event(EV_TEMP,CODE_TEMP_DATA,value);
-        }
-    }
-
-    {
-        float humi;
-        if(!get_humidity_data(&humi)){
-            unsigned long value;
-            value = 100 * humi;
-            aos_post_event(EV_HUMIDITY,CODE_HUMIDITY_DATA,value);
-        }
-    }
-
-
-    {
-        float barometer;
-        if(!get_barometer_data(&barometer)){
-            unsigned long value;
-            value = 100 * barometer;
-            aos_post_event(EV_BAROMETER,CODE_BAROMETER_DATA,value);
-        }
-    }
-
-}
 void key_init(void)
 {
     int ret = 0;
