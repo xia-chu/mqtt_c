@@ -122,8 +122,6 @@ void key_handle(void *ptr)
 {
     uint32_t value;
     hal_gpio_input_get(&brd_gpio_table[(int)ptr],&value);
-
-    LOGI("%d %d",(int)ptr,value);
     aos_post_event(EV_BUTTON,(int)ptr,(unsigned long)value);
 }
 
