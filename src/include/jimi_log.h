@@ -6,6 +6,13 @@
 #define JIMI_LOG_H
 
 #include <stdio.h>
+#ifdef ANDROID
+#include <android/log.h>
+#ifdef ANDROID
+extern android_LogPriority LogPriorityArr[];
+#endif
+#endif //ANDROID
+
 #define CLEAR_COLOR "\033[0m"
 
 #ifdef __cplusplus
@@ -63,6 +70,7 @@ void set_printf_ptr(printf_ptr cb);
 printf_ptr get_printf_ptr();
 
 
+#ifndef ANDROID
 #define _PRINT_(encble_color,print,lev,file,line,func,fmt,...) \
 do{ \
     if(lev < get_log_level()){ \
@@ -86,6 +94,15 @@ do{ \
                 ##__VA_ARGS__);\
     }\
 } while(0)
+#else
+#define _PRINT_(encble_color,print,lev,file,line,func,fmt,...) \
+do{ \
+    if(lev < get_log_level()){ \
+        break; \
+    } \
+    __android_log_print(LogPriorityArr[lev],"mqtt","%s " fmt "\r\n",func,##__VA_ARGS__);\
+} while(0)
+#endif
 
 #ifdef __alios__
 #define PRINT(lev,file,line,func,fmt,...) _PRINT_(0,get_printf_ptr(),lev,file,line,func,fmt,##__VA_ARGS__)

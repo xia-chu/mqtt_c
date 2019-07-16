@@ -17,17 +17,12 @@
 #include <errno.h>
 #endif
 
-//#define CLIENT_ID "IMEI17328379636"
-//#define USER_NAME "JIMIMAX"
-//#define SECRET "efbf5c0a07cc413bce2013d60e2e3435"
-//#define SERVER_IP "39.108.84.233"
-//#define SERVER_PORT 1883
 
-#define CLIENT_ID "IMEI866855039412986"
+#define CLIENT_ID "IMEI17328379636"
 #define USER_NAME "JIMIMAX"
-#define SECRET "2d8c4c567a5df8de559d025bc338d05c"
-#define SERVER_IP "39.108.84.233"
-#define SERVER_PORT 1883
+#define SECRET "e145fadffebb304fd87f8502db72f234"
+#define SERVER_IP "172.16.0.106"
+#define SERVER_PORT 7883
 
 typedef struct {
     //iot_cxt对象

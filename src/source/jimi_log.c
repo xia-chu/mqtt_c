@@ -15,12 +15,17 @@ void set_log_level(e_log_lev lev){
 e_log_lev get_log_level(){
     return s_log_leg;
 }
+
 const char *LOG_CONST_TABLE[][3] = {
         {"\033[44;37m", "\033[34m" , "T"},
         {"\033[42;37m", "\033[32m" , "D"},
         {"\033[46;37m", "\033[36m" , "I"},
         {"\033[43;37m", "\033[33m" , "W"},
         {"\033[41;37m", "\033[31m" , "E"}};
+
+#ifdef ANDROID
+android_LogPriority LogPriorityArr[] = {ANDROID_LOG_VERBOSE,ANDROID_LOG_DEBUG,ANDROID_LOG_INFO,ANDROID_LOG_WARN,ANDROID_LOG_ERROR};
+#endif
 
 void print_time(const struct timeval *tv,char *buf,int buf_size) {
     time_t sec_tmp = tv->tv_sec;
