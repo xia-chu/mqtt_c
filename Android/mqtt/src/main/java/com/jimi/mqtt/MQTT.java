@@ -215,4 +215,9 @@ public class MQTT {
      * @return 0为成功，-1为失败
      */
     static private native int iot_timer_schedule(long iot_ctx);
+
+
+    static {
+        System.loadLibrary("mqtt_jni");
+    }
 }
