@@ -16,7 +16,7 @@ int fd_temp = -1;
 int fd_humi = -1;
 int fd_baro = -1;
 
-int timer_ms = 500;
+int timer_ms = 3000;
 aos_timer_t timer;
 
 void on_timer(void *timer, void *arg);
@@ -179,3 +179,22 @@ void key_init(void)
     }
 }
 
+
+#ifdef __alios__
+#include "aos/kernel.h"
+#include "aos/hal/gpio.h"
+#include "soc_init.h"
+void set_gpio(int port, int config, int type){
+    switch (type){
+        case 0:
+            hal_gpio_output_low(&brd_gpio_table[port]);
+            break;
+        case 1:
+            hal_gpio_output_high(&brd_gpio_table[port]);
+            break;
+        default:
+            hal_gpio_output_toggle(&brd_gpio_table[port]);
+            break;
+    }
+}
+#endif

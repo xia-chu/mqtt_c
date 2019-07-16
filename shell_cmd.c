@@ -48,19 +48,7 @@ static void on_complete_getmqtt(void *user_data, printf_func func,cmd_context *c
 #include "aos/kernel.h"
 #include "aos/hal/gpio.h"
 #include "soc_init.h"
-void set_gpio(int port, int config, int type){
-    switch (type){
-        case 0:
-            hal_gpio_output_low(&brd_gpio_table[port]);
-            break;
-        case 1:
-            hal_gpio_output_high(&brd_gpio_table[port]);
-            break;
-        default:
-            hal_gpio_output_toggle(&brd_gpio_table[port]);
-            break;
-    }
-}
+extern void set_gpio(int port, int config, int type);
 #endif
 static void on_complete_setio(void *user_data, printf_func func,cmd_context *cmd,opt_map all_opt){
     int port = atoi(opt_map_get_value(all_opt,"port"));

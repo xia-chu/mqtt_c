@@ -9,6 +9,8 @@
 #include <netmgr.h>
 #include <network/network.h>
 #include "app_entry.h"
+#include "senson_event.h"
+#include "aos/yloop.h"
 #ifdef AOS_ATCMD
 #include <atparser.h>
 #endif
@@ -29,6 +31,9 @@ typedef struct {
     //套接字描述符
     int _fd;
 } iot_user_data;
+
+//数据结构体
+iot_user_data user_data;
 
 /**
  * 发送数据至网络
@@ -69,6 +74,7 @@ static int send_data_to_sock(void *arg, const struct iovec *iov, int iovcnt){
  */
 void on_timer_tick(iot_user_data *user_data){
     iot_timer_schedule(user_data->_ctx);
+    
 }
 
 /**
@@ -80,6 +86,12 @@ void iot_on_connect(void *arg, char ret_code){
     LOGD("ret_code :%d",ret_code);
 }
 
+#ifdef __alios__
+#include "aos/kernel.h"
+#include "aos/hal/gpio.h"
+#include "soc_init.h"
+void set_gpio(int port, int config, int type);
+#endif
 /**
  * 收到服务器下发的端点数据回调
  * @param arg 用户数据指针,即本结构体的_user_data参数
@@ -88,6 +100,25 @@ void iot_on_connect(void *arg, char ret_code){
  * @param data 端点数据，只读
  */
 void iot_on_message(void *arg,int req_flag, uint32_t req_id, iot_data *data){
+    #ifdef __alios__
+    switch (data->_tag_id){
+    case 210112:
+        //led0
+        set_gpio(GPIO_LED_1,OUTPUT_PUSH_PULL,!data->_data._bool);
+        break;
+    case 210115:
+        //led1
+        set_gpio(GPIO_LED_2,OUTPUT_PUSH_PULL,!data->_data._bool);
+        break;
+    case 210114:
+        //led2
+        set_gpio(GPIO_LED_3,OUTPUT_PUSH_PULL,!data->_data._bool);
+        break;
+    default:
+        break;
+    }
+    #endif
+    
     switch (data->_type){
         case iot_bool:
             LOGD("req_flag:%d , req_id:%d , tag_id:%d , type:%d , bool:%d",req_flag,req_id,data->_tag_id,data->_type,data->_data._bool);
@@ -111,9 +142,6 @@ void iot_on_message(void *arg,int req_flag, uint32_t req_id, iot_data *data){
 void run_main(){
     //设置日志等级
     set_log_level(log_trace);
-
-    //数据结构体
-    iot_user_data user_data;
 
     //网络层连接服务器
     user_data._fd = net_connet_server(SERVER_IP,SERVER_PORT,3);
@@ -170,6 +198,42 @@ static void setup_memory(){
 
 extern void init_sensor();
 
+static void on_sensor_event(input_event_t *event, void *priv_data) {
+    switch (event->type){
+    case EV_BUTTON:
+        switch (event->code){
+        case CODE_BUTTON_0:{
+            iot_send_bool_pkt(user_data._ctx,210120,event->value);
+        }
+            break;
+        case CODE_BUTTON_1:{
+            iot_send_bool_pkt(user_data._ctx,210121,event->value);
+        }
+            break;
+        case CODE_BUTTON_2:{
+            iot_send_bool_pkt(user_data._ctx,210122,event->value);
+        }
+            break;
+        default:
+            break;
+        }
+        break;
+     case EV_ACC:
+         break;
+     case EV_TEMP:
+          iot_send_double_pkt(user_data._ctx,210117,event->value / 100.0);
+         break;
+     case EV_HUMIDITY:
+         iot_send_double_pkt(user_data._ctx,210118,event->value / 100.0);
+         break;
+     case EV_BAROMETER:
+         iot_send_double_pkt(user_data._ctx,210119,event->value / 100.0);
+         break;
+    default:
+        break;
+    }
+}
+
 int linkkit_main(void *paras){
     int ret;
     int argc = 0;
@@ -179,8 +243,14 @@ int linkkit_main(void *paras){
         argc = p->argc;
         argv = p->argv;
     }
-    init_sensor();
+
     setup_memory();
+    init_sensor();
+    aos_register_event_filter(EV_BUTTON, on_sensor_event, NULL);
+    aos_register_event_filter(EV_ACC, on_sensor_event, NULL);
+    aos_register_event_filter(EV_TEMP, on_sensor_event, NULL);
+    aos_register_event_filter(EV_HUMIDITY, on_sensor_event, NULL);
+    aos_register_event_filter(EV_BAROMETER, on_sensor_event, NULL);
     run_main();
 }
 #else
