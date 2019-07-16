@@ -154,16 +154,33 @@ void run_main(){
 }
 
 #ifdef __alios__
+
+static char *my_strdup(const char *str){
+    char *ret = jimi_malloc(strlen(str));
+    strcpy(ret,str);
+    return ret;
+}
+
+static void setup_memory(){
+    set_malloc_ptr(aos_malloc);
+    set_free_ptr(aos_free);
+    set_realloc_ptr(aos_realloc);
+    set_strdup_ptr(my_strdup);
+}
+
+extern void init_sensor();
+
 int linkkit_main(void *paras){
     int ret;
     int argc = 0;
     char **argv = NULL;
-
     if (paras != NULL) {
         app_main_paras_t *p = (app_main_paras_t *)paras;
         argc = p->argc;
         argv = p->argv;
     }
+    init_sensor();
+    setup_memory();
     run_main();
 }
 #else

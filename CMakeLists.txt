@@ -22,7 +22,7 @@ set(Mqtt_Root ${CMAKE_SOURCE_DIR}/src)
 INCLUDE_DIRECTORIES(${Mqtt_Root}/include)
 
 #收集源代码
-file(GLOB Mqtt_src_Root ${Mqtt_Root}/*/*.h ${Mqtt_Root}/*/*.c)
+file(GLOB Mqtt_src_Root ${Mqtt_Root}/source/*.c)
 
 add_library(mqtt STATIC ${Mqtt_src_Root})
 add_executable(client mqtt.c net.c)
