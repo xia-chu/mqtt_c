@@ -25,9 +25,9 @@ typedef struct {
 } iot_user_data;
 
 static char s_user_name[] = "JIMIMAX";
-static char s_client_id[32] = "IMEI17328379634";
-static char s_secret[32] = "3ec79d7a4da932faf834c15b687d8caf";
-static char s_server_ip[16] = "39.108.84.233";
+static char s_client_id[64] = "IMEI17328379634";
+static char s_secret[64] = "3ec79d7a4da932faf834c15b687d8caf";
+static char s_server_ip[32] = "39.108.84.233";
 static int  s_server_port = 1883;
 static int  s_timer_ms = 3000;
 static int  s_reconnect_ms = 2000;
