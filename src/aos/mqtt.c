@@ -24,8 +24,9 @@ typedef struct {
     int _fd;
 } iot_user_data;
 
-static char s_wifi_ssid[MAX_SSID_SIZE + 1] = "HUAWEI-Jimi";
-static char s_wifi_pwd[MAX_PWD_SIZE + 1] = "jimi123456";
+static netmgr_ap_config_t s_wifi_config = {"HUAWEI-Jimi","","jimi123456"};
+static netmgr_ap_config_t s_wifi_config_tmp;
+
 static char s_user_name[] = "JIMIMAX";
 static char s_client_id[64] = "IMEI17328379634";
 static char s_secret[64] = "3ec79d7a4da932faf834c15b687d8caf";
@@ -39,6 +40,7 @@ static void on_timer(iot_user_data *user_data);
 static void startup_mqtt(void *);
 static void reconnect_mqtt_delay();
 static void clean_mqtt(iot_user_data *user_data);
+static void set_wifi(const char *ssid,const char *pwd);
 
 extern void set_gpio(int port, int config, int type);
 extern void init_sensor();
@@ -111,6 +113,17 @@ static void on_iot_message(void *arg,int req_flag, uint32_t req_id, iot_data *da
             //led2
             set_gpio(GPIO_LED_3,OUTPUT_PUSH_PULL,!data->_data._bool);
             break;
+        case 210125:
+            //wifi ssid
+            strncpy(s_wifi_config_tmp.ssid, data->_data._string._data, sizeof(s_wifi_config_tmp.ssid) - 1);
+            break;  
+        case 210126:
+            //wifi pwd
+            strncpy(s_wifi_config_tmp.pwd, data->_data._string._data, sizeof(s_wifi_config_tmp.pwd) - 1);
+            break;    
+        case 210127:
+            set_wifi(s_wifi_config_tmp.ssid,s_wifi_config_tmp.pwd);
+            break;    
         default:
             break;
     }
@@ -121,11 +134,11 @@ static void on_event(input_event_t *event, iot_user_data *user_data) {
         case EV_BUTTON:
             switch (event->code){
                 case CODE_BUTTON_0:{
-                    iot_send_bool_pkt(user_data->_ctx,210120,event->value);
+                    iot_send_bool_pkt(user_data->_ctx,210121,event->value);
                 }
                     break;
                 case CODE_BUTTON_1:{
-                    iot_send_bool_pkt(user_data->_ctx,210121,event->value);
+                    iot_send_bool_pkt(user_data->_ctx,210120,event->value);
                 }
                     break;
                 case CODE_BUTTON_2:{
@@ -214,6 +227,21 @@ static void on_timer(iot_user_data *user_data){
     aos_post_delayed_action(s_timer_ms,on_timer,user_data);
 }
 
+static void report_wifi(iot_user_data *user_data){
+    buffer buffer;
+    buffer_init(&buffer);
+    iot_buffer_start(&buffer,1,iot_get_request_id(user_data->_ctx));
+    iot_buffer_append_string(&buffer,210125,s_wifi_config.ssid);
+    iot_buffer_append_string(&buffer,210126,s_wifi_config.pwd);
+    iot_send_buffer(user_data->_ctx,&buffer);
+    buffer_release(&buffer);
+}
+
+static void on_login(iot_user_data *arg){
+    aos_register_event_filter(EV_BUTTON, on_event, arg);
+    on_timer(arg);
+    report_wifi(arg);
+}
 /**
  * 登录iot服务器成功后回调
  * @param arg 用户数据指针
@@ -222,8 +250,7 @@ static void on_timer(iot_user_data *user_data){
 static void on_iot_connect(iot_user_data *arg, char ret_code){
     if(ret_code == 0){
         LOGI("登录mqtt服务器成功");
-        aos_register_event_filter(EV_BUTTON, on_event, arg);
-        on_timer(arg);
+        aos_schedule_call(on_login,arg);
     }else{
         LOGW("登录mqtt服务器失败:%d",ret_code);
         reconnect_mqtt_delay();
@@ -315,13 +342,13 @@ static void setup_memory(){
 
 static void set_wifi(const char *ssid,const char *pwd){
     if(!ssid || !pwd || !strlen(ssid) || !strlen(pwd)){
-        netmgr_start(false);
         return;
     }
-    netmgr_ap_config_t config;
-    strncpy(config.ssid, ssid, sizeof(config.ssid) - 1);
-    strncpy(config.pwd, pwd, sizeof(config.pwd) - 1);
-    netmgr_set_ap_config(&config);
+    strncpy(s_wifi_config.ssid, ssid, sizeof(s_wifi_config.ssid) - 1);
+    strncpy(s_wifi_config.pwd, pwd, sizeof(s_wifi_config.pwd) - 1);
+    //拷贝wifi信息
+    memcpy(&s_wifi_config_tmp,&s_wifi_config,sizeof(s_wifi_config));
+    netmgr_set_ap_config(&s_wifi_config);
     netmgr_start(false);
 }
 
@@ -330,7 +357,7 @@ int application_start(int argc, char **argv) {
     at_init();
     sal_init();
     netmgr_init();
-    set_wifi(s_wifi_ssid,s_wifi_pwd);
+    set_wifi(s_wifi_config.ssid,s_wifi_config.pwd);
 
     regist_cmd();
     init_sensor();
