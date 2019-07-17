@@ -16,7 +16,6 @@ $(NAME)_SOURCES := src/source/base64.c \
                    src/source/avl-tree.c \
                    src/source/jimi_http.c \
                    src/source/jimi_shell.c \
-                   src/aos/app_entry.c \
                    src/aos/mqtt.c \
                    src/aos/sensor_event.c \
                    net.c \
