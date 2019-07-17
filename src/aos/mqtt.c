@@ -34,6 +34,8 @@ static char s_server_ip[32] = "39.108.84.233";
 static int  s_server_port = 1883;
 static int  s_timer_ms = 3000;
 static int  s_reconnect_ms = 2000;
+static int  s_led_shake_ms = 300;
+
 static iot_user_data user_data = {NULL , -1};
 
 static void on_timer(iot_user_data *user_data);
@@ -41,6 +43,7 @@ static void startup_mqtt(void *);
 static void reconnect_mqtt_delay();
 static void clean_mqtt(iot_user_data *user_data);
 static void set_wifi(const char *ssid,const char *pwd);
+static void setup_shake_led(int start);
 
 extern void set_gpio(int port, int config, int type);
 extern void init_sensor();
@@ -251,6 +254,7 @@ static void on_iot_connect(iot_user_data *arg, char ret_code){
     if(ret_code == 0){
         LOGI("登录mqtt服务器成功");
         aos_schedule_call(on_login,arg);
+        setup_shake_led(false);
     }else{
         LOGW("登录mqtt服务器失败:%d",ret_code);
         reconnect_mqtt_delay();
@@ -260,6 +264,7 @@ static void on_iot_connect(iot_user_data *arg, char ret_code){
 static void reconnect_mqtt_delay(){
     aos_cancel_delayed_action(s_reconnect_ms,startup_mqtt,NULL);
     aos_post_delayed_action(s_reconnect_ms,startup_mqtt,NULL);
+    setup_shake_led(true);
 }
 
 static void on_sock_read(int fd, iot_user_data *user_data){
@@ -352,13 +357,36 @@ static void set_wifi(const char *ssid,const char *pwd){
     netmgr_start(false);
 }
 
+static void on_shake_led(void *ptr){
+    static flag = 1;
+    set_gpio(GPIO_LED_1,OUTPUT_PUSH_PULL,flag);
+    set_gpio(GPIO_LED_2,OUTPUT_PUSH_PULL,flag);
+    set_gpio(GPIO_LED_3,OUTPUT_PUSH_PULL,netmgr_get_ip_state() ? 1 : flag);
+    flag = !flag;
+    aos_post_delayed_action(s_led_shake_ms,on_shake_led,ptr);
+}
+
+static void setup_shake_led(int start){
+    aos_cancel_delayed_action(s_led_shake_ms,on_shake_led,NULL);
+    if(start){
+        aos_post_delayed_action(s_led_shake_ms,on_shake_led,NULL);
+    }else{
+        set_gpio(GPIO_LED_1,OUTPUT_PUSH_PULL,1);
+        set_gpio(GPIO_LED_2,OUTPUT_PUSH_PULL,1);
+        set_gpio(GPIO_LED_3,OUTPUT_PUSH_PULL,1);
+    }
+}
+
 int application_start(int argc, char **argv) {
+    //开机后闪烁灯
+    setup_shake_led(true);
+
     aos_set_log_level(AOS_LL_DEBUG);
     at_init();
     sal_init();
     netmgr_init();
     set_wifi(s_wifi_config.ssid,s_wifi_config.pwd);
-
+    
     regist_cmd();
     init_sensor();
     setup_memory();
