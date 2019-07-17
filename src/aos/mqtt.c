@@ -30,10 +30,29 @@ static char s_secret[32] = "3ec79d7a4da932faf834c15b687d8caf";
 static char s_server_ip[16] = "39.108.84.233";
 static int  s_server_port = 1883;
 static int  s_timer_ms = 3000;
+static int  s_reconnect_ms = 2000;
 
 static void on_timer(iot_user_data *user_data);
+static void startup_mqtt(void *);
+static void reconnect_mqtt_delay(int reconnect_ms);
+
 extern void set_gpio(int port, int config, int type);
 extern void init_sensor();
+
+
+static void reconnect_wifi(void *ptr){
+    LOGW("重连wifi！");
+    netmgr_reconnect_wifi();
+}
+
+static void cancel_reconnect_wifi(){
+    aos_cancel_delayed_action(s_timer_ms,reconnect_wifi,NULL);
+}
+
+static void reconnect_wifi_delay(){
+    cancel_reconnect_wifi();
+    aos_post_delayed_action(s_timer_ms,reconnect_wifi,NULL);
+}
 
 /**
  * 发送数据至网络
@@ -42,8 +61,7 @@ extern void init_sensor();
  * @param iovcnt 数据块个数
  * @return -1为失败，>=0 为成功
  */
-static int send_data_to_sock(void *arg, const struct iovec *iov, int iovcnt){
-    iot_user_data *user_data = (iot_user_data *)arg;
+static int send_data_to_sock(iot_user_data *user_data, const struct iovec *iov, int iovcnt){
     int size = 0;
     for (int i = 0; i < iovcnt; ++i) {
         size += (iov + i)->iov_len;
@@ -56,8 +74,12 @@ static int send_data_to_sock(void *arg, const struct iovec *iov, int iovcnt){
     }
     int ret = write(user_data->_fd, buf, size);
     jimi_free(buf);
-    if(ret == 0){
-        LOGW("send failed:%d %s",errno,strerror(errno));
+    if(ret < size){
+        LOGW("发送数据失败:ret = %d , errno = %d(%s)",ret,errno,strerror(errno));
+        //重连wifi
+        reconnect_wifi_delay();
+    }else{
+        cancel_reconnect_wifi();
     }
     return ret;
 }
@@ -108,6 +130,33 @@ static void on_event(input_event_t *event, iot_user_data *user_data) {
                 default:
                     break;
             }
+            break;
+
+        case EV_WIFI: {
+            switch (event->code) {
+                case CODE_WIFI_ON_GOT_IP: {
+                    char ips[16] = {0};
+                    netmgr_wifi_get_ip(ips);
+                    LOGI("网络连接成功，获取到IP:%s",ips);
+                }
+                    break;
+                case CODE_WIFI_ON_DISCONNECT:{
+                    LOGW("网络已断开！");
+                    reconnect_mqtt_delay(s_reconnect_ms);
+                }
+                    break;
+
+                case CODE_WIFI_ON_CONNECTED:{
+                    netmgr_ap_config_t config;
+                    memset(&config, 0, sizeof(netmgr_ap_config_t));
+                    netmgr_get_ap_config(&config);
+                    LOGI("网络连接成功:%s",config.ssid);
+                }
+                    break;
+                default:
+                    break;
+            }
+        }
             break;
         default:
             break;
@@ -163,58 +212,79 @@ static void on_timer(iot_user_data *user_data){
  * @param arg 用户数据指针
  * @param ret_code 错误代码，0为成功
  */
-void on_iot_connect(iot_user_data *arg, char ret_code){
+static void on_iot_connect(iot_user_data *arg, char ret_code){
     if(ret_code == 0){
         LOGI("登录mqtt服务器成功");
-        static int s_flag = 0;
-        if(!s_flag){
-            s_flag = true;
-            init_sensor();
-            aos_register_event_filter(EV_BUTTON, on_event, arg);
-            on_timer(arg);
-        }
+        aos_register_event_filter(EV_BUTTON, on_event, arg);
+        on_timer(arg);
     }else{
         LOGW("登录mqtt服务器失败:%d",ret_code);
     }
 }
 
+static void reconnect_mqtt_delay(int reconnect_ms){
+    aos_post_delayed_action(reconnect_ms,startup_mqtt,NULL);
+}
 
-/**
- * 运行主函数
- */
-void run_main(){
+static void on_sock_read(int fd, iot_user_data *user_data){
+    //socket接收buffer
+    char buffer[256];
+    int size = read(fd,buffer, sizeof(buffer));
+    if(size == 0){
+        //服务器断开连接
+        LOGE("与mqtt服务器间断开链接");
+        reconnect_mqtt_delay(s_reconnect_ms);
+        return;
+    }
+    if(size == -1){
+        LOGW("接收数据失败:%d %s",errno,strerror(errno));
+        reconnect_mqtt_delay(s_reconnect_ms);
+        return;
+    }
+    //收到数据，输入到iot对象
+    iot_input_data(user_data->_ctx,buffer,size);
+}
+
+static void clean_mqtt(iot_user_data *user_data){
+    if(user_data->_ctx){
+        iot_context_free(user_data->_ctx);
+        user_data->_ctx = NULL;
+    }
+
+    if(user_data->_fd != -1){
+        aos_cancel_poll_read_fd(user_data->_fd,on_sock_read,user_data);
+        close(user_data->_fd);
+        user_data->_fd = -1;
+    }
+
+    //取消按键事件监听
+    aos_unregister_event_filter(EV_BUTTON, on_event, user_data);
+    //取消定时器
+    aos_cancel_delayed_action(s_timer_ms,on_timer,user_data);
+}
+
+static void startup_mqtt(void *ptr){
     //设置日志等级
     set_log_level(log_trace);
-
-    //网络层连接服务器
-    static iot_user_data user_data;
+    //对象
+    static iot_user_data user_data = {NULL , -1};
+    //重置对象
+    clean_mqtt(&user_data);
+    //连接socket
     user_data._fd = net_connet_server(s_server_ip,s_server_port,3);
     if(user_data._fd  == -1){
+        //连接服务器失败，延时后重试
+        reconnect_mqtt_delay(s_reconnect_ms);
         return ;
     }
     //回调函数列表
     iot_callback callback = {send_data_to_sock,on_iot_connect,on_iot_message,&user_data};
-
     //创建iot对象
     user_data._ctx = iot_context_alloc(&callback);
+    //监听socket读取事件
+    aos_poll_read_fd(user_data._fd,on_sock_read,&user_data);
     //开始登陆iot服务器
     iot_send_connect_pkt(user_data._ctx,s_client_id,s_secret,s_user_name);
-
-    //socket接收buffer
-    char buffer[1024];
-    while (1){
-        //接收数据
-        int recv = read(user_data._fd,buffer, sizeof(buffer));
-        if(recv == 0){
-            //服务器断开连接
-            LOGE("read eof\r\n");
-            break;
-        }
-        //收到数据，输入到iot对象
-        iot_input_data(user_data._ctx,buffer,recv);
-    }
-    //是否iot对象
-    iot_context_free(user_data._ctx);
 }
 
 
@@ -240,8 +310,10 @@ int linkkit_main(void *paras){
         argc = p->argc;
         argv = p->argv;
     }
+    init_sensor();
     setup_memory();
-    run_main();
+    startup_mqtt(NULL);
+    aos_register_event_filter(EV_WIFI, on_event, NULL);
 }
 
 
