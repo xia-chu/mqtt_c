@@ -31,14 +31,15 @@ static char s_server_ip[16] = "39.108.84.233";
 static int  s_server_port = 1883;
 static int  s_timer_ms = 3000;
 static int  s_reconnect_ms = 2000;
+static iot_user_data user_data = {NULL , -1};
 
 static void on_timer(iot_user_data *user_data);
 static void startup_mqtt(void *);
 static void reconnect_mqtt_delay(int reconnect_ms);
+static void clean_mqtt(iot_user_data *user_data);
 
 extern void set_gpio(int port, int config, int type);
 extern void init_sensor();
-
 
 static void reconnect_wifi(void *ptr){
     LOGW("重连wifi！");
@@ -138,11 +139,12 @@ static void on_event(input_event_t *event, iot_user_data *user_data) {
                     char ips[16] = {0};
                     netmgr_wifi_get_ip(ips);
                     LOGI("网络连接成功，获取到IP:%s",ips);
+                    reconnect_mqtt_delay(s_reconnect_ms);
                 }
                     break;
                 case CODE_WIFI_ON_DISCONNECT:{
                     LOGW("网络已断开！");
-                    reconnect_mqtt_delay(s_reconnect_ms);
+                    clean_mqtt(&user_data);
                 }
                     break;
 
@@ -266,8 +268,6 @@ static void clean_mqtt(iot_user_data *user_data){
 static void startup_mqtt(void *ptr){
     //设置日志等级
     set_log_level(log_trace);
-    //对象
-    static iot_user_data user_data = {NULL , -1};
     //重置对象
     clean_mqtt(&user_data);
     //连接socket

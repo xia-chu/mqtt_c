@@ -43,8 +43,8 @@ static void wifi_service_event(input_event_t *event, void *priv_data) {
     }
 
     static char linkkit_started = 0;
-    if (!linkkit_started && netmgr_get_ip_state()) {
-        aos_task_new("jimi_task",(task_fun)linkkit_main,(void *)&entry_paras,1024*6);
+    if (!linkkit_started) {
+        linkkit_main(&entry_paras);
         linkkit_started = 1;
     }
 }
