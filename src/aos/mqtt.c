@@ -227,7 +227,7 @@ static void on_timer(iot_user_data *user_data){
     {
         //210130
         char time_str[26];
-        get_now_time_str(time_str,sizeof(time_str));
+        sprintf(time_str,"%d",time(NULL));
         iot_buffer_append_string(&buffer,210130,time_str);
     }
     iot_send_buffer(user_data->_ctx,&buffer);
