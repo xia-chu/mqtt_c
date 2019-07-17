@@ -145,6 +145,7 @@ static void on_event(input_event_t *event, iot_user_data *user_data) {
                 case CODE_WIFI_ON_DISCONNECT:{
                     LOGW("网络已断开！");
                     clean_mqtt(&user_data);
+                    reconnect_wifi_delay();
                 }
                     break;
 
@@ -278,7 +279,7 @@ static void startup_mqtt(void *ptr){
     user_data._fd = net_connet_server(s_server_ip,s_server_port,3);
     if(user_data._fd  == -1){
         //连接服务器失败，延时后重试
-        reconnect_mqtt_delay(s_reconnect_ms);
+        reconnect_wifi_delay();
         return ;
     }
     //回调函数列表
