@@ -44,6 +44,7 @@ extern void init_sensor();
 static void reconnect_wifi(void *ptr){
     LOGW("重连wifi！");
     netmgr_reconnect_wifi();
+    reconnect_mqtt_delay(s_reconnect_ms);
 }
 
 static void cancel_reconnect_wifi(){
