@@ -266,6 +266,10 @@ static void clean_mqtt(iot_user_data *user_data){
 }
 
 static void startup_mqtt(void *ptr){
+    if(!netmgr_get_ip_state()){
+        reconnect_wifi_delay();
+        return;
+    }
     //设置日志等级
     set_log_level(log_trace);
     //重置对象
