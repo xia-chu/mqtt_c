@@ -24,6 +24,8 @@ typedef struct {
     int _fd;
 } iot_user_data;
 
+static char s_wifi_ssid[MAX_SSID_SIZE + 1] = "HUAWEI-Jimi";
+static char s_wifi_pwd[MAX_PWD_SIZE + 1] = "jimi123456";
 static char s_user_name[] = "JIMIMAX";
 static char s_client_id[64] = "IMEI17328379634";
 static char s_secret[64] = "3ec79d7a4da932faf834c15b687d8caf";
@@ -278,8 +280,13 @@ static void startup_mqtt(void *ptr){
     //连接socket
     user_data._fd = net_connet_server(s_server_ip,s_server_port,3);
     if(user_data._fd  == -1){
-        //连接服务器失败，延时后重试
-        reconnect_wifi_delay();
+        if(netmgr_get_ip_state()){
+            //网络还在，重连mqtt服务器
+            reconnect_mqtt_delay();    
+        }else{
+             //连接服务器失败，延时后重启wifi
+            reconnect_wifi_delay();
+        }
         return ;
     }
     //回调函数列表
@@ -306,12 +313,24 @@ static void setup_memory(){
     set_strdup_ptr(aos_strdup);
 }
 
+static void set_wifi(const char *ssid,const char *pwd){
+    if(!ssid || !pwd || !strlen(ssid) || !strlen(pwd)){
+        netmgr_start(false);
+        return;
+    }
+    netmgr_ap_config_t config;
+    strncpy(config.ssid, ssid, sizeof(config.ssid) - 1);
+    strncpy(config.pwd, pwd, sizeof(config.pwd) - 1);
+    netmgr_set_ap_config(&config);
+    netmgr_start(false);
+}
+
 int application_start(int argc, char **argv) {
     aos_set_log_level(AOS_LL_DEBUG);
     at_init();
     sal_init();
     netmgr_init();
-    netmgr_start(false);
+    set_wifi(s_wifi_ssid,s_wifi_pwd);
 
     regist_cmd();
     init_sensor();
