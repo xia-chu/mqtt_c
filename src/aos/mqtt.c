@@ -53,6 +53,7 @@ extern void regist_cmd();
 static void reconnect_wifi(void *ptr){
     LOGW("重连wifi！");
     netmgr_reconnect_wifi();
+    reconnect_mqtt_delay();
 }
 
 static void cancel_reconnect_wifi(){
@@ -314,8 +315,6 @@ static void clean_mqtt(iot_user_data *user_data){
 }
 
 static void startup_mqtt(void *ptr){
-    //设置日志等级
-    set_log_level(log_trace);
     //重置对象
     clean_mqtt(&user_data);
     //连接socket
@@ -330,6 +329,9 @@ static void startup_mqtt(void *ptr){
         }
         return ;
     }
+    net_set_sock_timeout(user_data._fd,1,5);
+    net_set_sock_timeout(user_data._fd,0,5);
+
     //回调函数列表
     iot_callback callback = {send_data_to_sock,on_iot_connect,on_iot_message,&user_data};
     //创建iot对象
@@ -387,6 +389,8 @@ static void setup_shake_led(int start){
 }
 
 int application_start(int argc, char **argv) {
+    //设置日志等级
+    set_log_level(log_trace);
     //开机后闪烁灯
     setup_shake_led(true);
 
