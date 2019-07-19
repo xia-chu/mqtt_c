@@ -41,6 +41,7 @@ static iot_user_data user_data = {NULL , -1};
 static void on_timer(iot_user_data *user_data);
 static void startup_mqtt(void *);
 static void reconnect_mqtt_delay();
+static void cancel_reconnect_mqtt();
 static void clean_mqtt(iot_user_data *user_data);
 static void set_wifi(const char *ssid,const char *pwd);
 static void setup_shake_led(int start);
@@ -52,7 +53,6 @@ extern void regist_cmd();
 static void reconnect_wifi(void *ptr){
     LOGW("重连wifi！");
     netmgr_reconnect_wifi();
-    reconnect_mqtt_delay();
 }
 
 static void cancel_reconnect_wifi(){
@@ -86,10 +86,10 @@ static int send_data_to_sock(iot_user_data *user_data, const struct iovec *iov, 
     jimi_free(buf);
     if(ret < size){
         LOGW("发送数据失败:ret = %d , errno = %d(%s)",ret,errno,strerror(errno));
-        //重连wifi
-        reconnect_wifi_delay();
+        //重连mqtt
+        reconnect_mqtt_delay();
     }else{
-        cancel_reconnect_wifi();
+        cancel_reconnect_mqtt();
     }
     return ret;
 }
@@ -267,8 +267,11 @@ static void on_iot_connect(iot_user_data *arg, char ret_code){
     }
 }
 
-static void reconnect_mqtt_delay(){
+static void cancel_reconnect_mqtt(){
     aos_cancel_delayed_action(s_reconnect_ms,startup_mqtt,NULL);
+}
+static void reconnect_mqtt_delay(){
+    cancel_reconnect_mqtt();
     aos_post_delayed_action(s_reconnect_ms,startup_mqtt,NULL);
     setup_shake_led(true);
 }
